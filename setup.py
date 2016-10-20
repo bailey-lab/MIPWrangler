@@ -262,7 +262,7 @@ class Packages():
         self.packages_["bcftools"] = self.__bcftools()
         self.packages_["hts"] = self.__hts()
         self.packages_["restbed"] = self.__restbed()
-        self.packages_["MIPWrangler"] = self.__MIPWrangler()
+        self.packages_["mipwrangler"] = self.__MIPWrangler()
         '''
         
         self.packages_["mlpack"] = self.__mlpack()
@@ -1261,7 +1261,7 @@ class Setup:
                        "bcftools": self.bcftools,
                        "hts": self.hts,
                        "restbed": self.restbed,
-                       "MIPWrangler": self.MIPWrangler
+                       "mipwrangler": self.MIPWrangler
                        }
         '''
         "mlpack": self.mlpack,
@@ -1736,7 +1736,7 @@ class Setup:
         self.__defaultBibBuild("seqserver", version)
         
     def MIPWrangler(self, version):
-        self.__defaultBibBuild("MIPWrangler", version)
+        self.__defaultBibBuild("mipwrangler", version)
         
     def njhRInside(self, version):
         self.__defaultBibBuild("njhrinside", version)
