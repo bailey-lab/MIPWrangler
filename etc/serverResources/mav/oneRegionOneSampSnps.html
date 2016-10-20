@@ -1,0 +1,79 @@
+
+<!DOCTYPE HTML>
+<html>
+  <meta charset="utf-8">
+  <head>
+		<title>Overlap View</title>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
+		<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+	  <script>
+		  var locSplit = window.location.toString().split(/[\/]+/);
+			var rName = locSplit[2];
+			$("head").append("<script rel='stylesheet' type='text/javascript' src='/" + rName + "/jsLibs' />");
+			$("head").append("<script rel='stylesheet' type='text/javascript' src='/" + rName + "/jsOwn' />");
+			$("head").append("<script rel='stylesheet' type='text/javascript' src='/" + rName + "/jsMav' />");
+			$("head").append("<link rel='stylesheet' type='text/css' href='/" + rName + "/cssLibs' />");
+			$("head").append("<link rel='stylesheet' type='text/css' href='/" + rName + "/cssOwn' />");
+			$("head").append("<link rel='stylesheet' type='text/css' href='/" + rName + "/cssMav' />");
+		</script> 	<link rel="stylesheet" href="/ssv/cssOwn">
+	<link rel="stylesheet" href="/ssv/cssMiv">
+  </head>
+  <body>
+    <script>
+    	$(document).ready(function(){
+	    	var mainData;
+	        var baseColors = {};
+			var locSplit = window.location.toString().split(/[\/]+/);
+			var rName = locSplit[2];
+			var sampName = locSplit.pop();
+			var geneName = locSplit.pop();
+			addDiv("body", "topNav");
+			createNavBar("#topNav", rName, geneName, sampName, "");
+			addMainDiv("body", true);
+			addDiv("#mainContent", "seqView");
+			$("#jumboTitle").html(geneName + ":" + sampName);
+			ajax('/' + rName + '/oneGeneOneSampAlnData/' + geneName + "/" + sampName, function(md){ mainData = md; });
+			if(mainData){
+				ajax('/' + rName + '/baseColors', function(bc){ baseColors = bc; });
+				var cellWidth = 20;
+				var cellHeight = 25;
+				var SeqViewer = new njhSeqView("#seqView",  mainData, cellWidth, cellHeight, baseColors, false);
+				
+				initSeqViewer(SeqViewer);
+				var snpData;
+				ajax('/' + rName + '/oneGeneOneSampSnpData/' + geneName + "/" + sampName, function(md){ snpData = md; });
+				//console.log(snpData);
+				//add seq snps
+				seqSnps = snpData["seqSnps"];
+				for (seq in seqSnps){
+					var currentTargetName =seq;
+					console.log(currentTargetName);
+					var pan = d3.select("#mainContent")
+					.append("div")
+					.attr("class", "panel panel-info")
+					.attr("id",currentTargetName + "Info");
+					pan.append("div").attr("class","panel-heading" ).append("h1").text(currentTargetName + " Seq Snps");
+					pan.append("div").attr("class", "panel-body").attr("id", currentTargetName + "Tab");
+					var currentTable = new njhTable("#" + currentTargetName + "Tab", seqSnps[seq], geneName + "_" + sampName + "_" + currentTargetName  + "_SeqSnpInfo", false);
+				}
+				//add protein snps
+				proteinSnps = snpData["proteinSnps"];
+				for (prot in proteinSnps){
+					var currentTargetName =prot;
+					console.log(currentTargetName);
+					var pan = d3.select("#mainContent")
+						.append("div")
+						.attr("class", "panel panel-info")
+						.attr("id",currentTargetName + "ProtInfo");
+					pan.append("div").attr("class","panel-heading" ).append("h1").text(currentTargetName + " Protein AA Changes");
+					pan.append("div").attr("class", "panel-body").attr("id", currentTargetName + "ProtTab");
+					var currentTable = new njhTable("#" + currentTargetName + "ProtTab", proteinSnps[prot], geneName + "_" + sampName + "_" + currentTargetName  + "_SeqAAChangesInfo", false);
+				}
+			}else{
+				$("<p> Snp and sequence data not currently loaded</p>").insertAfter("#jumboTitle");
+			}
+		});
+    </script>
+  </body>
+</html>
