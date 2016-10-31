@@ -23,7 +23,7 @@ $(document).ready(function(){
 				// bar graph for the sample info
 				var sampleChart = new njhSampleChart("#sampleChartMaster", mainSampInfoTab, sampName +  "_sampChart","p_targetName", "c_barcodeFrac","c_clusterID", ["p_targetName", "h_popUID", "c_clusterID", "c_barcodeCnt", "c_barcodeFrac"]);
 				//update the chart and table on click of the sample checkboxes
-				function updateChartOnClick() { 
+				function updateChartOnClick(columns) { 
 					var gifLoading = prsentDivGifLoading();
 					//get all currently checked sample boxes and then update the current samples  
 				    var allVals = [];
