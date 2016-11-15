@@ -138,7 +138,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 						alignerObj, collapserObj,
 						pars.popIteratorMap);
 
-
+		std::cout << pars.mipName << ": " << pars.previousPopFilename << std::endl;
 		if ("" != pars.previousPopFilename) {
 			sampColl.renamePopWithSeqs(getSeqs<readObject>(pars.previousPopFilename), pars.previousPopErrors);
 		}
