@@ -185,9 +185,8 @@ void mipsterAnalysisSetUp::setUpMipPopulationClustering(
 			"skipOnLetterCounterDifference");
 	setOption(pars_.colOpts_.skipOpts_.fractionDifferenceCutOff_, "-skipCutOff",
 			"fractionDifferenceCutOff");
-	std::string previousPopDir = "";
-	setOption(previousPopDir, "-refDir", "Directory with possible reference sequence to rename popUIDs to");
-	auto refPopFile = bib::files::make_path(previousPopDir, pars.mipName);
+	setOption(pars.previousPopDir, "-refDir", "Directory with possible reference sequence to rename popUIDs to");
+	auto refPopFile = bib::files::make_path(pars.previousPopDir, pars.mipName);
 	if(bfs::exists(refPopFile)){
 		pars.previousPopFilename = refPopFile.string();
 	}
@@ -250,7 +249,9 @@ void mipsterAnalysisSetUp::setUpMipPopulationClusteringMultiple(
 			"skipOnLetterCounterDifference");
 	setOption(pars_.colOpts_.skipOpts_.fractionDifferenceCutOff_, "-skipCutOff",
 			"fractionDifferenceCutOff");
-	setOption(pars.previousPopFilename, "-previousPop", "previousPopFilename");
+
+	setOption(pars.previousPopDir, "-refDir", "Directory with possible reference sequence to rename popUIDs to");
+
 	processComparison(pars.previousPopErrors, "previousPop");
   setOption(pars.runsRequired, "-runsRequired", "runsRequired");
   setOption(pars.cutOff, "-cutoff", "FractionCutoff");
