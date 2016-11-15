@@ -158,6 +158,7 @@ struct mipPopulationClusteringPars : mipCorePars{
 	CollapseIterations popIteratorMap;
 	CollapseIterations iteratorMap;
 	std::string previousPopFilename = "";
+	std::string previousPopDir = "";
 	comparison previousPopErrors;
 	std::string seqFileSuffix = "_clustered.fastq";
 	std::string mipName = "";
@@ -177,12 +178,17 @@ struct mipPopulationClusteringParsMultiple : public mipPopulationClusteringPars{
 		ret.differentPar = differentPar;
 		ret.popIteratorMap = popIteratorMap;
 		ret.iteratorMap = iteratorMap;
-		ret.previousPopFilename = previousPopFilename;
 		ret.previousPopErrors = previousPopErrors;
 		ret.seqFileSuffix = seqFileSuffix;
 		ret.groupingsFile = groupingsFile;
+		ret.previousPopDir = previousPopDir;
+
 
 		ret.mipName = newMipName;
+		auto refPopFile = bib::files::make_path(ret.previousPopDir, ret.mipName);
+		if(bfs::exists(refPopFile)){
+			ret.previousPopFilename = refPopFile.string();
+		}
 
 		ret.allowableErrors = allowableErrors;
 		ret.masterDir = masterDir;
