@@ -185,7 +185,7 @@ struct mipPopulationClusteringParsMultiple : public mipPopulationClusteringPars{
 
 
 		ret.mipName = newMipName;
-		auto refPopFile = bib::files::make_path(ret.previousPopDir, ret.mipName);
+		auto refPopFile = bib::files::make_path(ret.previousPopDir, ret.mipName + ".fasta");
 		if(bfs::exists(refPopFile)){
 			ret.previousPopFilename = refPopFile.string();
 		}
