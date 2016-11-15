@@ -137,8 +137,11 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		sampColl.doPopulationClustering(allSamples,
 						alignerObj, collapserObj,
 						pars.popIteratorMap);
+		if (seqPars.verbose_) {
+			std::cout << "Ref file for " << pars.mipName << ": "
+					<< pars.previousPopFilename << std::endl;
+		}
 
-		std::cout << pars.mipName << ": " << pars.previousPopFilename << std::endl;
 		if ("" != pars.previousPopFilename) {
 			sampColl.renamePopWithSeqs(getSeqs<readObject>(pars.previousPopFilename), pars.previousPopErrors);
 		}
