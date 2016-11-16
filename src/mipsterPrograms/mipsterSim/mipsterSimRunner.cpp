@@ -36,8 +36,9 @@ int mipsterSimRunner::mipSimSetup(const bib::progutils::CmdArgs & inputCommands)
 	std::string mipFile = "";
 	std::string genomeNames = "";
 	std::string regionNames = "";
-
+	bool includeTrim = false;
 	seqSetUp setUp(inputCommands);
+	setUp.setOption(includeTrim, "--includeTrim", "Include a fasta with arms trimmed off targets");
 	setUp.setOption(genomeDirectory, "--genomeDirectory", "Genome Directory", true);
 	setUp.setOption(mipArmsDirectory, "--mipArmsDirectory", "Mip Arms Directory", true);
 	setUp.setOption(genomeNames, "--genomes", "Genomes", true);
@@ -77,7 +78,23 @@ int mipsterSimRunner::mipSimSetup(const bib::progutils::CmdArgs & inputCommands)
 			logJson[region][genome]["searchForArmsCmd"] = searchForArmsCmdOutput.toJson();
 			logJson[region][genome]["extractMipBedSeqCmdOutput"] = extractMipBedSeqCmdOutput.toJson();
 			logJson[region][genome]["getFastaFromBedCmdOutput"] = getFastaFromBedCmdOutput.toJson();
-
+			if(includeTrim){
+				std::stringstream outFastaName;
+				outFastaName << bib::files::join(setUp.pars_.directoryName_,genome) << "_" << region << "-mips.fasta";
+				auto opts = SeqIOOptions::genFastaIn(outFastaName.str(), false);
+				SeqInput reader(opts);
+				auto seqs = reader.readAllReads<readObject>();
+				for(auto & seq : seqs){
+					seq.processNameForMeta();
+					auto mipName = seq.getMeta("mipTar");
+					readVecTrimmer::trimOffEndBases(seq,mCol.mips_.at(mipName).ligationArm_.size());
+					readVecTrimmer::trimOffForwardBases(seq,mCol.mips_.at(mipName).extentionArm_.size());
+				}
+				std::stringstream outOutFastaName;
+				outOutFastaName << bib::files::join(setUp.pars_.directoryName_, "trimmed_" + genome) << "_" << region << "-mips.fasta";
+				auto outOpts = SeqIOOptions::genFastaOut(outOutFastaName.str());
+				SeqOutput::write(seqs, outOpts);
+			}
 		}
 	}
 	std::ofstream logFile;
