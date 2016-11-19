@@ -12,15 +12,104 @@ namespace bibseq {
 
 mipsterSimRunner::mipsterSimRunner()
     : bib::progutils::programRunner({
-	addFunc("extractMipCaptureSequence", extractMipCaptureSequence, false),
-	addFunc("simMips", simMips, false),
-	addFunc("createArmFastaFiles", createArmFastaFiles, false),
-	addFunc("searchForArms", searchForArms, false),
-	addFunc("mipSimSetup", mipSimSetup, false)
-}, "mipsterSim") {
+		addFunc("extractMipCaptureSequence", extractMipCaptureSequence, false),
+		addFunc("simMips", simMips, false),
+		addFunc("createArmFastaFiles", createArmFastaFiles, false),
+		addFunc("searchForArms", searchForArms, false),
+		addFunc("mipSimSetup", mipSimSetup, false),
+		addFunc("testMipExtract", testMipExtract, false)
+	}, "mipsterSim") {
+
+}//
+
+int mipsterSimRunner::testMipExtract(const bib::progutils::CmdArgs & inputCommands) {
+	std::string genomeDirectory = "";
+	std::string outDir = "";
+	std::string mipFile = "";
+	std::string genomeNames = "";
+	std::string regionNames = "";
+	bool includeTrim = false;
+	uint32_t numThreads = 1;
+	seqSetUp setUp(inputCommands);
+	setUp.setOption(numThreads, "--numThreads", "Number of threads to use");
+	setUp.setOption(includeTrim, "--includeTrim", "Include a fasta with arms trimmed off targets");
+	setUp.setOption(genomeDirectory, "--genomeDirectory", "Genome Directory", true);
+	setUp.setOption(genomeNames, "--genomes", "Genomes", true);
+	setUp.setOption(regionNames, "--regionNames", "Region Names");
+	setUp.setOption(mipFile, "--mipArmsFilename", "Mip Arms File", true);
+	setUp.processDirectoryOutputName("mipSimSetup_TODAY", true);
+	setUp.finishSetUp(std::cout);
+	setUp.startARunLog(setUp.pars_.directoryName_);
+
+	MipCollection mCol(mipFile, 6);
+	VecStr regions;
+	if("" == regionNames){
+		regions = bib::tokenizeString(regionNames, ",");
+	}else{
+		regions = mCol.getMipRegions();
+	}
+	for(const auto & region : regions){
+		auto mips = mCol.getMipTarsForRegion(region);
+		for(const auto & m : mips){
+			auto extOpts = SeqIOOptions::genFastaOut(bib::files::make_path(setUp.pars_.directoryName_, region + "_ext-arm").string());
+			auto ligOpts = SeqIOOptions::genFastaOut(bib::files::make_path(setUp.pars_.directoryName_, region + "_lig-arm").string());
+			seqInfo extArm("[mipTar=" + mCol.mips_[m].name_ + ";mipFam=" + mCol.mips_[m].familyName_ +";]", mCol.mips_[m].extentionArm_);
+			seqInfo ligArm("[mipTar=" + mCol.mips_[m].name_ + ";mipFam=" + mCol.mips_[m].familyName_ +";]", seqUtil::reverseComplement(mCol.mips_[m].ligationArm_, "DNA"));
+			SeqOutput::write(std::vector<seqInfo>{extArm}, extOpts);
+			SeqOutput::write(std::vector<seqInfo>{ligArm}, ligOpts);
+		}
+	}
+
+	auto genomes = bib::tokenizeString(genomeNames, ",");
+
+	VecStr cmds;
+	for(const auto & region : regions){
+		auto mipTars = mCol.getMipTarsForRegion(region);
+		for(const auto & mipTar : mipTars){
+			for(const auto & genome : genomes){
+				std::string outStub = bib::files::make_path(outDir, genome + "_" + mipTar).string();
+				std::stringstream bowtie2Cmd;
+				bowtie2Cmd << " bowtie2  -p 60 -D 20 -R 3 -N 1 -L 18 -i S,1,0.5 --gbar 1 -k 500 --end-to-end "
+						<< "-x " << bib::files::make_path(genomeDirectory, genome)
+						<< " -f -1 " << mipTar << "_ext-arm.fasta"
+						<< " -2 " << mipTar << "_lig-arm.fasta"
+						<< " -S " << outStub + ".sam";
+				std::stringstream samtoolsCmds;
+				samtoolsCmds
+						<< "samtools view -Sb " << outStub << ".sam | "
+						<< "samtools sort - -o " << outStub << ".sorted.bam && "
+						<< "samtools index " << outStub << ".sorted.bam";
+				std::stringstream extractMipBedSeqCmd;
+				extractMipBedSeqCmd << "mipster extractMipCaptureSequence -bam "
+						<< bib::files::join(setUp.pars_.directoryName_,genome) << "_" << mipTar << ".sorted.bam -out "
+						<< bib::files::join(setUp.pars_.directoryName_,genome) << "_" << mipTar << "-mips.bed";
+				std::stringstream getFastaFromBedCmd;
+				getFastaFromBedCmd << "experimental getFastaWithBed "
+						<< "--twoBit " << genomeDirectory
+						<< genome << ".2bit "
+						<< "--file "<< bib::files::join(setUp.pars_.directoryName_,genome) << "_" << mipTar << "-mips.bed "
+						<< "--outFile "<< bib::files::join(setUp.pars_.directoryName_,genome) << "_" << mipTar << "-mips.fasta";
+				VecStr currentCmd{bowtie2Cmd.str(), samtoolsCmds.str(), extractMipBedSeqCmd.str(), getFastaFromBedCmd.str()};
+				if(includeTrim){
+					std::stringstream trimFastaCmd;
+					trimFastaCmd << "sequenceTools trimBetweenSeqs  "
+							<< "--fasta " << bib::files::join(setUp.pars_.directoryName_,genome) << "_" << mipTar << "-mips.fasta "
+							<< "--forwardSeq " << mCol.mips_.at(mipTar).extentionArm_ << " "
+							<< "--backSeq " << mCol.mips_.at(mipTar).ligationArm_ << " "
+							<< "--out "<< bib::files::join(setUp.pars_.directoryName_, "trimmed_" + genome) << "_" << mipTar << "-mips.fasta ";
+					currentCmd.emplace_back(trimFastaCmd.str());
+				}
+				cmds.emplace_back(bib::conToStr(currentCmd, " && "));
+			}
+		}
+	}
+	auto runOuts = bib::sys::runCmdsThreaded(cmds, numThreads, setUp.pars_.verbose_, setUp.pars_.debug_);
+	Json::Value logJson = bib::json::toJson(runOuts);
+	std::ofstream logFile;
+	openTextFile(logFile, OutOptions(setUp.pars_.directoryName_ + "cmdLogs.json"));
+	logFile << logJson;
+	return 0;
 }
-
-
 
 
 

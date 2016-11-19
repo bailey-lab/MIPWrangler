@@ -20,6 +20,7 @@ class mipsterSimRunner : public bib::progutils::programRunner {
   static int extractMipCaptureSequence(const bib::progutils::CmdArgs & inputCommands);
   static int simMips(const bib::progutils::CmdArgs & inputCommands);
 
+  static int testMipExtract(const bib::progutils::CmdArgs & inputCommands);
 
 };
 } // namespace bibseq
