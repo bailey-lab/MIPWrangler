@@ -25,6 +25,8 @@ struct mipCorePars{
 	std::string logFilename = "";
 	bool overWriteLog = false;
 	bool overWriteDirs = false;
+	bool infoFilesRequired = false;
+	bool logFileRequired = true;
 	void processDefaults(seqSetUp & setUp);
 
 	void addCorePathsToConfig(Json::Value & config);

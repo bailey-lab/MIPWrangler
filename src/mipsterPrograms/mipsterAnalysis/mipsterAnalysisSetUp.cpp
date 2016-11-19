@@ -22,13 +22,15 @@ void mipsterAnalysisSetUp::processMultipleDefaults(mipCorePars & pars){
 		failed_ = true;
 		addWarning("Number of threads can't be zero");
 	}
-	setOption(pars.logFilename, "--logFile", "Name of a file to log information about the run",true);
+	setOption(pars.logFilename, "--logFile", "Name of a file to log information about the run", pars.logFileRequired);
 	setOption(pars.overWriteLog, "--overWriteLog", "Overwrite the log file");
 }
 
 
 void mipsterAnalysisSetUp::setUpRunGzExtractStitch(
 		runGzExtractStitchPars & pars) {
+	pars.infoFilesRequired = true;
+	pars.logFileRequired = false;
 	pars.logFilename = "gzStitchLog";
 	processMultipleDefaults(pars);
 	setOption(pars.trim, "--trim",
@@ -76,6 +78,7 @@ void mipsterAnalysisSetUp::setUpMipIllumArmExtraction(
 void mipsterAnalysisSetUp::setUpMipIllumArmExtractionMultiple(
 		mipIllumArmExtractionParsMultiple & pars) {
 	pars.logFilename = "mipArmExtractLog";
+	pars.logFileRequired = false;
 	processMultipleDefaults(pars);
 	pars_.qFilPars_.checkingQFrac_ = true;
 	processQualityFiltering();
@@ -116,6 +119,7 @@ void mipsterAnalysisSetUp::setUpMipBarcodeCorrection(mipBarcodeCorrectionPars & 
 
 void mipsterAnalysisSetUp::setUpMipBarcodeCorrectionMultiple(mipBarcodeCorrectionParsMultiple & pars){
 	pars.logFilename = "mipBarCor";
+	pars.logFileRequired = false;
 	processMultipleDefaults(pars);
 	pars_.gap_ = "5,1";
 	pars_.gapRight_ = "0,0";
@@ -154,6 +158,7 @@ void mipsterAnalysisSetUp::setUpMipClustering(mipClusteringPars & pars) {
 
 void mipsterAnalysisSetUp::setUpMipClusteringMultiple(mipClusteringParsMultiple & pars) {
 	pars.logFilename = "mipClustering";
+	pars.logFileRequired = false;
 	processMultipleDefaults(pars);
 	setOption(pars.parameterFile, "--par", "Name of the parameters file for the clustering");
 	setOption(pars.useReadLen, "--useReadLen", "Use Read Length large differences to skip alignment comparison");
@@ -242,6 +247,7 @@ void mipsterAnalysisSetUp::setUpMipPopulationClustering(
 void mipsterAnalysisSetUp::setUpMipPopulationClusteringMultiple(
 		mipPopulationClusteringParsMultiple & pars) {
 	pars.logFilename = "mipPopClus";
+	pars.logFileRequired = false;
 	processMultipleDefaults(pars);
   setOption(pars.parameters, "-par", "ParametersFileName");
 	setOption(pars.seqFileSuffix, "--seqFileSuffix", "The ending of the sequence append to sample name");

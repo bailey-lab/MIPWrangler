@@ -12,12 +12,12 @@ void mipCorePars::processDefaults(seqSetUp & setUp) {
 	setUp.setOption(masterDir, "--masterDir", "Name of main analysis directory",
 			true);
 	if (!setUp.setOption(mipArmsFileName, "--mipArmsFilename",
-			"Name of the mip arms file")) {
+			"Name of the mip arms file", infoFilesRequired)) {
 		mipArmsFileName = bib::files::join(VecStr { masterDir, "resources",
 				"mip_arm_id.tab.txt" });
 	}
 	if (!setUp.setOption(mipsSamplesFile, "--mipSampleFile",
-			"Mip sample filename, two columns, one column is mips, other is samples")) {
+			"Mip sample filename, two columns, one column is mips, other is samples", infoFilesRequired)) {
 		mipsSamplesFile = bib::files::join(VecStr { masterDir, "resources",
 				"allMipsSamplesNames.tab.txt" });
 	}
