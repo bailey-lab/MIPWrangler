@@ -33,7 +33,7 @@ int mipsterSimRunner::testMipExtract(const bib::progutils::CmdArgs & inputComman
 	setUp.setOption(numThreads, "--numThreads", "Number of threads to use");
 	setUp.setOption(includeTrim, "--includeTrim", "Include a fasta with arms trimmed off targets");
 	setUp.setOption(genomeDirectory, "--genomeDirectory", "Genome Directory", true);
-	setUp.setOption(genomeNames, "--genomes", "Genomes", true);
+	setUp.setOption(genomeNames, "--genomes", "Genomes");
 	setUp.setOption(regionNames, "--regionNames", "Region Names");
 	setUp.setOption(mipFile, "--mipArmsFilename", "Mip Arms File", true);
 	setUp.processDirectoryOutputName("mipSimSetup_TODAY", true);
@@ -58,8 +58,19 @@ int mipsterSimRunner::testMipExtract(const bib::progutils::CmdArgs & inputComman
 			SeqOutput::write(std::vector<seqInfo>{ligArm}, ligOpts);
 		}
 	}
-
-	auto genomes = bib::tokenizeString(genomeNames, ",");
+	VecStr genomes;
+	if(genomeNames != ""){
+		 genomes = bib::tokenizeString(genomeNames, ",");
+	}else{
+		auto files = bib::files::filesInFolder(genomeDirectory);
+		for(const auto & f : files){
+			if(!bfs::is_directory(f)){
+				if(bib::endsWith(f.string(), ".fasta")){
+					genomes.emplace_back(f.filename().replace_extension("").string());
+				}
+			}
+		}
+	}
 
 	VecStr cmds;
 	for(const auto & region : regions){
