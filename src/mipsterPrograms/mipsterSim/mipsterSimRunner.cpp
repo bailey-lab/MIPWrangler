@@ -43,7 +43,7 @@ int mipsterSimRunner::testMipExtract(const bib::progutils::CmdArgs & inputComman
 
 	MipCollection mCol(mipFile, 6);
 	VecStr regions;
-	if("" == regionNames){
+	if("" != regionNames){
 		regions = bib::tokenizeString(regionNames, ",");
 	}else{
 		regions = mCol.getMipRegions();
@@ -185,7 +185,6 @@ int mipsterSimRunner::mipSimSetup(const bib::progutils::CmdArgs & inputCommands)
 					auto outOpts = SeqIOOptions::genFastaOut(outOutFastaName.str());
 					SeqOutput::write(seqs, outOpts);
 				}
-
 			}
 		}
 	}
