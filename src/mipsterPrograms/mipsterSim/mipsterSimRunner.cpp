@@ -24,7 +24,6 @@ mipsterSimRunner::mipsterSimRunner()
 
 int mipsterSimRunner::testMipExtract(const bib::progutils::CmdArgs & inputCommands) {
 	std::string genomeDirectory = "";
-	std::string outDir = "";
 	std::string mipFile = "";
 	std::string genomeNames = "";
 	std::string regionNames = "";
@@ -67,12 +66,12 @@ int mipsterSimRunner::testMipExtract(const bib::progutils::CmdArgs & inputComman
 		auto mipTars = mCol.getMipTarsForRegion(region);
 		for(const auto & mipTar : mipTars){
 			for(const auto & genome : genomes){
-				std::string outStub = bib::files::make_path(outDir, genome + "_" + mipTar).string();
+				std::string outStub = bib::files::make_path(setUp.pars_.directoryName_, genome + "_" + mipTar).string();
 				std::stringstream bowtie2Cmd;
 				bowtie2Cmd << " bowtie2  -p 60 -D 20 -R 3 -N 1 -L 18 -i S,1,0.5 --gbar 1 -k 500 --end-to-end "
 						<< "-x " << bib::files::make_path(genomeDirectory, genome)
-						<< " -f -1 " << mipTar << "_ext-arm.fasta"
-						<< " -2 " << mipTar << "_lig-arm.fasta"
+						<< " -f -1 " << bib::files::join(setUp.pars_.directoryName_,mipTar)  << "_ext-arm.fasta"
+						<< " -2 " << bib::files::join(setUp.pars_.directoryName_,mipTar) << "_lig-arm.fasta"
 						<< " -S " << outStub + ".sam";
 				std::stringstream samtoolsCmds;
 				samtoolsCmds
