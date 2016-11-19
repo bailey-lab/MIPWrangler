@@ -48,13 +48,13 @@ int mipsterSimRunner::testMipExtract(const bib::progutils::CmdArgs & inputComman
 	}else{
 		regions = mCol.getMipRegions();
 	}
-	for(const auto & region : regions){
-		auto mips = mCol.getMipTarsForRegion(region);
-		for(const auto & m : mips){
-			auto extOpts = SeqIOOptions::genFastaOut(bib::files::make_path(setUp.pars_.directoryName_, region + "_ext-arm").string());
-			auto ligOpts = SeqIOOptions::genFastaOut(bib::files::make_path(setUp.pars_.directoryName_, region + "_lig-arm").string());
-			seqInfo extArm("[mipTar=" + mCol.mips_[m].name_ + ";mipFam=" + mCol.mips_[m].familyName_ +";]", mCol.mips_[m].extentionArm_);
-			seqInfo ligArm("[mipTar=" + mCol.mips_[m].name_ + ";mipFam=" + mCol.mips_[m].familyName_ +";]", seqUtil::reverseComplement(mCol.mips_[m].ligationArm_, "DNA"));
+	for(const auto & reg : regions){
+		auto mipTars = mCol.getMipTarsForRegion(reg);
+		for(const auto & mipTar : mipTars){
+			auto extOpts = SeqIOOptions::genFastaOut(bib::files::make_path(setUp.pars_.directoryName_, mipTar + "_ext-arm").string());
+			auto ligOpts = SeqIOOptions::genFastaOut(bib::files::make_path(setUp.pars_.directoryName_, mipTar + "_lig-arm").string());
+			seqInfo extArm("[mipTar=" + mCol.mips_[mipTar].name_ + ";mipFam=" + mCol.mips_[mipTar].familyName_ +";]", mCol.mips_[mipTar].extentionArm_);
+			seqInfo ligArm("[mipTar=" + mCol.mips_[mipTar].name_ + ";mipFam=" + mCol.mips_[mipTar].familyName_ +";]", seqUtil::reverseComplement(mCol.mips_[mipTar].ligationArm_, "DNA"));
 			SeqOutput::write(std::vector<seqInfo>{extArm}, extOpts);
 			SeqOutput::write(std::vector<seqInfo>{ligArm}, ligOpts);
 		}
