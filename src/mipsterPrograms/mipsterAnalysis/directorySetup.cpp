@@ -24,7 +24,7 @@ int mipsterAnalysisRunner::runGzExtractStitch(const bib::progutils::CmdArgs & in
 	}
 #if defined( __APPLE__ ) || defined( __APPLE_CC__ ) || defined( macintosh ) || defined( __MACH__ )
 	//apple zcat is stupid and requires files end with .Z because why not
-	//using brew install gzcat instead
+	//using brew install gnutls instead
 	std::string zcatCmd = "gzcat";
 #else
 	std::string zcatCmd = "zcat";
