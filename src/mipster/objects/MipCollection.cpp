@@ -93,10 +93,13 @@ VecStr MipCollection::getMipRegionsForFams(const VecStr & mipFams) const{
 }
 
 
-MipCollection::MipCollection(const std::string & mipArmIdFile, uint32_t allowableArmError) {
+MipCollection::MipCollection(const std::string & mipArmIdFile,
+		uint32_t allowableArmError) :
+		allowableArmError_(allowableArmError) {
 	table mipInfo(mipArmIdFile, "whitespace", true);
 	VecStr neededColumns = { "mip_id", "extension_arm", "ligation_arm",
-			"mip_family", "extension_barcode_length", "ligation_barcode_length", "gene_name" };
+			"mip_family", "extension_barcode_length", "ligation_barcode_length",
+			"gene_name" };
 	VecStr columnsNotFound;
 	for (const auto & col : neededColumns) {
 		if (!bib::in(col, mipInfo.columnNames_)) {

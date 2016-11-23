@@ -106,6 +106,7 @@ int mipsterSimRunner::testMipExtract(const bib::progutils::CmdArgs & inputComman
 							<< "--fasta " << bib::files::join(setUp.pars_.directoryName_,genome) << "_" << mipTar << "-mips.fasta "
 							<< "--forwardSeq " << mCol.mips_.at(mipTar).extentionArm_ << " "
 							<< "--backSeq " << mCol.mips_.at(mipTar).ligationArm_ << " "
+							<< "--hqMismatches " << mCol.allowableArmError_ << " "
 							<< "--out "<< bib::files::join(setUp.pars_.directoryName_, "trimmed_" + genome) << "_" << mipTar << "-mips.fasta ";
 					currentCmd.emplace_back(trimFastaCmd.str());
 				}
