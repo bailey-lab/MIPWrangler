@@ -7,6 +7,8 @@
 
 
 #include "mav.hpp"
+#include <experimental/objects/dataContainers/graphs.h>
+
 
 namespace bibseq {
 

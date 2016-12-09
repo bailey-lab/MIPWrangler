@@ -7,7 +7,12 @@
 
     
 #include "mipsterSimRunner.hpp"
-    
+
+#include <experimental/BamToolsUtils.h>
+#include <experimental/objects/BioDataObject.h>
+#include <experimental/simulation.h>
+
+
 namespace bibseq {
 
 mipsterSimRunner::mipsterSimRunner()
