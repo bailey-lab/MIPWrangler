@@ -10,7 +10,7 @@
 #include "mipster/common.h"
 #include <bibseq/objects/seqObjects/readObject.hpp>
 #include <bibseq/alignment/aligner.h>
-#include <experimental/objects/BioDataObject/RefSeqGeneRecord.hpp>
+#include <elucidator/objects/BioDataObject/RefSeqGeneRecord.hpp>
 
 
 namespace bibseq {

@@ -8,9 +8,9 @@
     
 #include "mipsterSimRunner.hpp"
 
-#include <experimental/BamToolsUtils.h>
-#include <experimental/objects/BioDataObject.h>
-#include <experimental/simulation.h>
+#include <elucidator/BamToolsUtils.h>
+#include <elucidator/objects/BioDataObject.h>
+#include <elucidator/simulation.h>
 
 
 namespace bibseq {
