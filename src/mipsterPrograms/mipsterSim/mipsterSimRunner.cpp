@@ -95,7 +95,7 @@ int mipsterSimRunner::testMipExtract(const bib::progutils::CmdArgs & inputComman
 						<< "samtools sort - -o " << outStub << ".sorted.bam && "
 						<< "samtools index " << outStub << ".sorted.bam";
 				std::stringstream extractMipBedSeqCmd;
-				extractMipBedSeqCmd << "mipster extractMipCaptureSequence -bam "
+				extractMipBedSeqCmd << "MIPWrangler extractMipCaptureSequence -bam "
 						<< bib::files::join(setUp.pars_.directoryName_,genome) << "_" << mipTar << ".sorted.bam -out "
 						<< bib::files::join(setUp.pars_.directoryName_,genome) << "_" << mipTar << "-mips.bed";
 				std::stringstream getFastaFromBedCmd;
@@ -161,14 +161,14 @@ int mipsterSimRunner::mipSimSetup(const bib::progutils::CmdArgs & inputCommands)
 		/**@todo add saftey check for region */
 		for(const auto & genome : genomes){
 			std::stringstream searchForArmsCmd;
-			searchForArmsCmd << "mipster searchForArms "
+			searchForArmsCmd << "MIPWrangler searchForArms "
 					<< "--genomeDirectory " << genomeDirectory << " "
 					<< "--genome " << genome << " "
 					<< "--mipGene " << region << " "
 					<< "--outDir " << setUp.pars_.directoryName_ << " "
 					<< "--mipArmsDirectory " << mipArmsDirectory;
 			std::stringstream extractMipBedSeqCmd;
-			extractMipBedSeqCmd << "mipster extractMipCaptureSequence -bam "
+			extractMipBedSeqCmd << "MIPWrangler extractMipCaptureSequence -bam "
 					<< bib::files::join(setUp.pars_.directoryName_,genome) << "_" << region << ".sorted.bam -out "
 					<< bib::files::join(setUp.pars_.directoryName_,genome) << "_" << region << "-mips.bed";
 			std::stringstream getFastaFromBedCmd;
