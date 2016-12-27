@@ -99,7 +99,7 @@ int mipsterSimRunner::testMipExtract(const bib::progutils::CmdArgs & inputComman
 						<< bib::files::join(setUp.pars_.directoryName_,genome) << "_" << mipTar << ".sorted.bam -out "
 						<< bib::files::join(setUp.pars_.directoryName_,genome) << "_" << mipTar << "-mips.bed";
 				std::stringstream getFastaFromBedCmd;
-				getFastaFromBedCmd << "experimental getFastaWithBed "
+				getFastaFromBedCmd << "elucidator getFastaWithBed "
 						<< "--twoBit " << genomeDirectory
 						<< genome << ".2bit "
 						<< "--file "<< bib::files::join(setUp.pars_.directoryName_,genome) << "_" << mipTar << "-mips.bed "
@@ -172,7 +172,7 @@ int mipsterSimRunner::mipSimSetup(const bib::progutils::CmdArgs & inputCommands)
 					<< bib::files::join(setUp.pars_.directoryName_,genome) << "_" << region << ".sorted.bam -out "
 					<< bib::files::join(setUp.pars_.directoryName_,genome) << "_" << region << "-mips.bed";
 			std::stringstream getFastaFromBedCmd;
-			getFastaFromBedCmd << "experimental getFastaWithBed "
+			getFastaFromBedCmd << "elucidator getFastaWithBed "
 					<< "--twoBit " << genomeDirectory
 					<< genome << ".2bit "
 					<< "--file "<< bib::files::join(setUp.pars_.directoryName_,genome) << "_" << region << "-mips.bed "
