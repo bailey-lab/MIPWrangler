@@ -64,10 +64,10 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 			seqPars.qScorePars_,
 			seqPars.colOpts_.alignOpts_.countEndGaps_,
 			seqPars.colOpts_.iTOpts_.weighHomopolyer_);
-	std::string alnCacheDir = bib::files::join(
+	bfs::path alnCacheDir = bib::files::join(
 			VecStr { directoryMaster.populationClusteringDir_.string(), pars.mipName,
 					"alnCache" });
-	alignerObj.processAlnInfoInputNoCheck(alnCacheDir, seqPars.debug_);
+	alignerObj.processAlnInfoInputNoCheck(alnCacheDir.string(), seqPars.debug_);
 
 	collapser collapserObj = collapser(seqPars.colOpts_);
 	collapse::SampleCollapseCollection sampColl(genOpts, pars.masterDir,
@@ -143,7 +143,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		}
 
 		if ("" != pars.previousPopFilename) {
-			sampColl.renamePopWithSeqs(getSeqs<readObject>(pars.previousPopFilename), pars.previousPopErrors);
+			sampColl.renamePopWithSeqs(getSeqs<readObject>(pars.previousPopFilename.string()), pars.previousPopErrors);
 		}
 		//auto sampTab = sampColl.genSampleCollapseInfo(std::set<std::string>{foundSamples.begin(), foundSamples.end()});
 		//auto popTab = sampColl.genPopulationCollapseInfo();
@@ -168,10 +168,10 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 	}
 
 
-	alignerObj.processAlnInfoOutputNoCheck(alnCacheDir, seqPars.debug_);
+	alignerObj.processAlnInfoOutputNoCheck(alnCacheDir.string(), seqPars.debug_);
 
 	std::ofstream logfile;
-	openTextFile(logfile, OutOptions(bib::files::make_path(mipFamilyDir,"log.txt").string()));
+	openTextFile(logfile, OutOptions(bib::files::make_path(mipFamilyDir,"log.txt")));
 	logfile << "Ran on: " << bib::getCurrentDate() << std::endl;
 	logfile << "Number of Alignments Done: "
 			<< alignerObj.numberOfAlingmentsDone_ << "\n";
@@ -234,7 +234,7 @@ int mipsterAnalysisRunner::mipPopulationClusteringMultiple(
 	Json::Value logInfo;
 	std::ofstream logFile;
 	openTextFile(logFile,
-			mipMaster.directoryMaster_.logsDir_.string() + pars.logFilename, ".json",
+			bib::files::make_path(mipMaster.directoryMaster_.logsDir_ , pars.logFilename), ".json",
 			pars.overWriteLog, true);
 	logInfo["date"] = getCurrentDate();
 	logInfo["workingDir"] = inputCommands.workingDir_;
@@ -277,7 +277,7 @@ int mipsterAnalysisRunner::mipPopulationClusteringMultiple(
 			OutOptions(
 					bib::files::make_path(
 							mipMaster.directoryMaster_.populationClusteringDir_,
-							"allInfo.tab.txt").string()), "\t", true);
+							"allInfo.tab.txt")), "\t", true);
 	tabOpts.out_.overWriteFile_ = true;
 	std::vector<bfs::path> infofilePaths;
 	for(const auto & mip : mipMaster.names_->mips_){

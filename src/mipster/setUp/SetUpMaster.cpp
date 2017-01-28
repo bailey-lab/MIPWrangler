@@ -39,11 +39,11 @@ void SetUpMaster::makeClusteringDirs()const{
 	}
 }
 
-SetUpMaster::SetUpMaster(const std::string & masterDir) :
+SetUpMaster::SetUpMaster(const bfs::path & masterDir) :
 		directoryMaster_(masterDir), mipArmFnp_(
-				bib::files::join(directoryMaster_.resourceDir_.string(),
+				bib::files::make_path(directoryMaster_.resourceDir_,
 						"mip_arm_id.tab.txt")), mipsSampsNamesFnp_(
-				bib::files::join(directoryMaster_.resourceDir_.string(),
+				bib::files::make_path(directoryMaster_.resourceDir_,
 						"allMipsSamplesNames.tab.txt")) {
 }
 
@@ -55,7 +55,7 @@ bfs::path SetUpMaster::getMipSerDir() const{
 	return directoryMaster_.getMipSerDir(mipServerName_);
 }
 
-void SetUpMaster::setMipArmFnp(const std::string & mipArmFnp) {
+void SetUpMaster::setMipArmFnp(const bfs::path & mipArmFnp) {
 	if(!bfs::exists(mipArmFnp)){
 		std::stringstream ss;
 		ss << "Error in " << __PRETTY_FUNCTION__ << " " << mipArmFnp
@@ -65,7 +65,7 @@ void SetUpMaster::setMipArmFnp(const std::string & mipArmFnp) {
 	mipArmFnp_ = mipArmFnp;
 }
 
-void SetUpMaster::setMipsSampsNamesFnp(const std::string & mipsSampsNamesFnp){
+void SetUpMaster::setMipsSampsNamesFnp(const bfs::path & mipsSampsNamesFnp){
 	if(!bfs::exists(mipsSampsNamesFnp)){
 		std::stringstream ss;
 		ss << "Error in " << __PRETTY_FUNCTION__ << " " << mipsSampsNamesFnp
@@ -126,18 +126,18 @@ void SetUpMaster::createDirStructSkeleton() const {
 		readmeMarkDown << "+ mipInfo.json  "<< std::endl;
 		readmeMarkDown << "	This file should contain all important information for each mip target, including genomic location, copies captured,important snps etc  "<< std::endl;
 		if(!bfs::exists(mipArmFnp_)){
-			std::ofstream mipArm(mipArmFnp_);
+			std::ofstream mipArm(mipArmFnp_.string());
 			mipArm << "REPLACE ME!" << std::endl;
 		}
 		if(!bfs::exists(mipsSampsNamesFnp_)){
-			std::ofstream mipSampNames(mipsSampsNamesFnp_);
+			std::ofstream mipSampNames(mipsSampsNamesFnp_.string());
 			mipSampNames << "REPLACE ME!" << std::endl;
 		}
 	}
 }
 
-void SetUpMaster::createDirStructSkeleton(const std::string & mipSampleFile,
-		const std::string & mipArms) {
+void SetUpMaster::createDirStructSkeleton(const bfs::path & mipSampleFile,
+		const bfs::path & mipArms) {
 	if (bfs::exists(directoryMaster_.masterDir_)) {
 		std::stringstream ss;
 		ss << "Error in " << __PRETTY_FUNCTION__ << " directory "
@@ -792,9 +792,9 @@ void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 				samplesExtracted,numThreads);
 		if (!extractionMasterTab.content_.empty()) {
 			TableIOOpts allExtractInfoOpts(InOptions(), "\t",
-					OutOptions(
+					OutOptions(bfs::path(
 							getMipSerDir().string()
-									+ "extractionInfo/allExtractInfo.tab.txt"), "\t", true);
+									+ "extractionInfo/allExtractInfo.tab.txt")), "\t", true);
 			allExtractInfoOpts.out_.overWriteFile_ = true;
 			extractionMasterTab.outPutContents(allExtractInfoOpts);
 			std::vector<bfs::path> extractInfoFilepaths;
@@ -812,9 +812,9 @@ void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 				if(bib::in(tar.first, allTargets)){
 					tar.second.trimElementsAtFirstOccurenceOf("(");
 					TableIOOpts tarOpts(
-							OutOptions(
+							OutOptions(bfs::path(
 									getMipSerDir().string() + "extractionInfo/"
-											+ tar.first + ".tab.txt"), "\t", true);
+											+ tar.first + ".tab.txt")), "\t", true);
 					tarOpts.out_.overWriteFile_ = true;
 					tar.second.outPutContents(tarOpts);
 				}
@@ -831,8 +831,8 @@ void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 					pathMipPopClusSampInfo(mipFam));
 		}
 		TableIOOpts allPopInfoOpts(InOptions(), "\t",
-				OutOptions(
-						getMipSerDir().string() + "popClusInfo/allInfo.tab.txt"),
+				OutOptions(bfs::path(
+						getMipSerDir().string() + "popClusInfo/allInfo.tab.txt")),
 				"\t", true);
 		allPopInfoOpts.out_.overWriteFile_ = true;
 		MasterTableStaticCache allPopInfo(allPopInfoOpts, popClusInfofilepaths);
@@ -840,9 +840,9 @@ void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 		for (auto & samp : bySample) {
 			if(bib::in(samp.first, names_->samples_)){
 				TableIOOpts sampOpts(
-						OutOptions(
-								getMipSerDir().string() + "popClusInfo/" + samp.first
-										+ ".tab.txt"), "\t", true);
+						OutOptions(bib::files::make_path(
+								getMipSerDir(), "popClusInfo/" ,samp.first
+										+ ".tab.txt")), "\t", true);
 				sampOpts.out_.overWriteFile_ = true;
 				samp.second.sortTable("p_geneName", "p_targetName", "c_clusterID", false);
 				samp.second.outPutContents(sampOpts);
@@ -856,9 +856,9 @@ void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 table SetUpMaster::gatherExtractStats(const std::vector<MipFamSamp> & samplesExtracted, uint32_t numThreads)const {
 
 	TableIOOpts allExtractInfoOpts(InOptions(), "\t",
-			OutOptions(
-					getMipSerDir().string()
-							+ "extractionInfo/allExtractInfo.tab.txt"), "\t", true);
+			OutOptions(bib::files::make_path(
+					getMipSerDir()
+							,"extractionInfo", "allExtractInfo.tab.txt")), "\t", true);
 	allExtractInfoOpts.out_.overWriteFile_ = true;
 	bool needsUpdate = false;
 	if (!bfs::exists(allExtractInfoOpts.out_.outFilename_)) {

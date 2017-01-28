@@ -13,16 +13,16 @@ namespace bibseq {
 
 struct mipCorePars{
 
-	std::string masterDir = "";
-	std::string mipsSamplesFile = "";
+	bfs::path masterDir = "";
+	bfs::path mipsSamplesFile = "";
 	uint32_t allowableErrors = 0;
 	uint32_t wiggleRoom = 0;
 
 	std::string seqFileSuffix = ".extendedFrags.fastq";
 
-	std::string mipArmsFileName = "";
+	bfs::path mipArmsFileName = "";
 	uint32_t numThreads = 1;
-	std::string logFilename = "";
+	bfs::path logFilename = "";
 	bool overWriteLog = false;
 	bool overWriteDirs = false;
 	bool infoFilesRequired = false;
@@ -34,7 +34,7 @@ struct mipCorePars{
 };
 
 struct runGzExtractStitchPars : mipCorePars{
-	std::string dir = "";
+	bfs::path dir = "";
 	uint32_t minOverlap = 10;
 	uint32_t maxOverlap = 150;
 	double mismatchDensity = 0.25;
@@ -119,7 +119,7 @@ struct mipBarcodeCorrectionParsMultiple : public mipBarcodeCorrectionPars  {
 };
 
 struct mipClusteringPars : mipCorePars{
-	std::string parameterFile = "";
+	bfs::path parameterFile = "";
   bool useReadLen = false;
   uint32_t readlenDiff = 15;
   CollapseIterations iterMap;
@@ -150,7 +150,7 @@ struct mipClusteringParsMultiple : mipClusteringPars{
 
 struct mipPopulationClusteringPars : mipCorePars{
 
-	std::string parameters = "";
+	bfs::path parameters = "";
 	uint32_t cutOff = 1;
 	double fracCutoff = 0.005;
 	uint32_t runsRequired = 1;
@@ -159,12 +159,12 @@ struct mipPopulationClusteringPars : mipCorePars{
 	bool differentPar = false;
 	CollapseIterations popIteratorMap;
 	CollapseIterations iteratorMap;
-	std::string previousPopFilename = "";
-	std::string previousPopDir = "";
+	bfs::path previousPopFilename = "";
+	bfs::path previousPopDir = "";
 	comparison previousPopErrors;
 	std::string seqFileSuffix = "_clustered.fastq";
 	std::string mipName = "";
-	std::string groupingsFile = "";
+	bfs::path groupingsFile = "";
 
 };
 

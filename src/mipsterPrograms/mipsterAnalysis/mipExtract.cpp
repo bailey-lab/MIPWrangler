@@ -320,7 +320,7 @@ int mipsterAnalysisRunner::mipIllumExtractByArmAndFilterMultiple(
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 	std::ofstream logFile;
 	openTextFile(logFile,
-			bib::files::join(mipMaster.directoryMaster_.logsDir_.string(), pars.logFilename),
+			bib::files::make_path(mipMaster.directoryMaster_.logsDir_, pars.logFilename),
 			".txt", pars.overWriteLog, true);
 	logFile << "Ran on: " << getCurrentDate() << std::endl;
 	logFile << "Ran from: " << inputCommands.workingDir_ << std::endl;

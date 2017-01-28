@@ -13,13 +13,13 @@ void mipCorePars::processDefaults(seqSetUp & setUp) {
 			true);
 	if (!setUp.setOption(mipArmsFileName, "--mipArmsFilename",
 			"Name of the mip arms file", infoFilesRequired)) {
-		mipArmsFileName = bib::files::join(VecStr { masterDir, "resources",
-				"mip_arm_id.tab.txt" });
+		mipArmsFileName = bib::files::make_path(masterDir.string(), "resources",
+				"mip_arm_id.tab.txt");
 	}
 	if (!setUp.setOption(mipsSamplesFile, "--mipSampleFile",
 			"Mip sample filename, two columns, one column is mips, other is samples", infoFilesRequired)) {
-		mipsSamplesFile = bib::files::join(VecStr { masterDir, "resources",
-				"allMipsSamplesNames.tab.txt" });
+		mipsSamplesFile = bib::files::make_path(masterDir, "resources",
+				"allMipsSamplesNames.tab.txt");
 	}
 	setUp.setOption(overWriteDirs, "--overWriteDirs",
 			"Over write the barcode correction sample dir if it already exists");

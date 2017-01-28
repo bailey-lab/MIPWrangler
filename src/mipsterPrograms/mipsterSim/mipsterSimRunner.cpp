@@ -123,7 +123,7 @@ int mipsterSimRunner::testMipExtract(const bib::progutils::CmdArgs & inputComman
 	auto runOuts = bib::sys::runCmdsThreaded(cmds, numThreads, setUp.pars_.verbose_, setUp.pars_.debug_);
 	Json::Value logJson = bib::json::toJson(runOuts);
 	std::ofstream logFile;
-	openTextFile(logFile, OutOptions(setUp.pars_.directoryName_ + "cmdLogs.json"));
+	openTextFile(logFile, OutOptions(bib::files::make_path( setUp.pars_.directoryName_,"cmdLogs.json")));
 	logFile << logJson;
 	return 0;
 }
@@ -206,7 +206,7 @@ int mipsterSimRunner::mipSimSetup(const bib::progutils::CmdArgs & inputCommands)
 		}
 	}
 	std::ofstream logFile;
-	openTextFile(logFile,OutOptions(setUp.pars_.directoryName_ + "cmdLogs.json"));
+	openTextFile(logFile,OutOptions(bib::files::make_path(setUp.pars_.directoryName_ ,"cmdLogs.json")));
 	logFile << logJson;
 	return 0;
 }
@@ -475,7 +475,7 @@ void simMipLib(const LibAdundInfo & libInfo,
 	}
 
 	std::ofstream libOutFile;
-	openTextFile(libOutFile, OutOptions(bib::files::make_path(workingDir, libInfo.libName_ + ".fasta").string()));
+	openTextFile(libOutFile, OutOptions(bib::files::make_path(workingDir, libInfo.libName_ + ".fasta")));
 	std::mutex seqFileLock;
 
 
@@ -666,11 +666,11 @@ int mipsterSimRunner::simMips(const bib::progutils::CmdArgs & inputCommands) {
 	bfs::copy(mipFile, bib::files::make_path(idFilesDir, bfs::path(mipFile).filename().string()));
 	MipsSamplesNames names(mCol.getMipFamsForRegions(regions), getVectorOfMapKeys(libraryAbundances));
 	std::ofstream sampleNamesFile;
-	openTextFile(sampleNamesFile, OutOptions(bib::files::make_path(idFilesDir, "allMipsSamplesNames.tab.txt").string()));
+	openTextFile(sampleNamesFile, OutOptions(bib::files::make_path(idFilesDir, "allMipsSamplesNames.tab.txt")));
 	names.write(sampleNamesFile);
 	std::ofstream logFile;
 	Json::Value jsonLog;
-	openTextFile(logFile, OutOptions(std::string(setUp.pars_.directoryName_ + "simProgramLogs.json")));
+	openTextFile(logFile, OutOptions(bfs::path(setUp.pars_.directoryName_ + "simProgramLogs.json")));
 	for (const auto & lib : libraryAbundances) {
 
 		sim::simMipLib(lib.second, mCol, regions, refDir,

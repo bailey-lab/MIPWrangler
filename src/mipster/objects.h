@@ -12,3 +12,4 @@
 #include "mipster/objects/MipMapResult.hpp"
 #include "mipster/objects/MippedRead.hpp"
 #include "mipster/objects/MipOverlapGraph.hpp"
+#include "mipster/objects/MipsOnGenome.hpp"

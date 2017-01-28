@@ -71,7 +71,7 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 			alignerObj.resetAlnCache();
 			alignerObj.processAlnInfoInputNoCheck(
 					bib::files::join(sampDirMaster.clusAlnCacheDir_.string(),
-							mipSampName.mipFam_),seqPars.debug_);
+							mipSampName.mipFam_).string(),seqPars.debug_);
 			alignerObj.numberOfAlingmentsDone_ = 0;
 
 			std::unordered_map<std::string, uint32_t> idenToIndex;
@@ -109,7 +109,7 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 			}
 			alignerObj.processAlnInfoOutputNoCheck(
 					bib::files::join(sampDirMaster.clusAlnCacheDir_.string(),
-							mipSampName.mipFam_), seqPars.debug_);
+							mipSampName.mipFam_).string(), seqPars.debug_);
 			SeqIOOptions opts = SeqIOOptions::genFastqOut(
 					bib::files::make_path(mipFamilyDir,  mipSampName.mipFam_).string() + "_clustered");
 
@@ -118,7 +118,7 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 			auto mipFamilyAllClustersDir = bib::files::makeDir(mipFamilyDir,
 					bib::files::MkdirPar("allInputClusters"));
 			std::ofstream outInfoFile;
-			openTextFile(outInfoFile, OutOptions(bib::files::make_path(mipFamilyDir,"info.tab.txt").string()));
+			openTextFile(outInfoFile, OutOptions(bib::files::make_path(mipFamilyDir,"info.tab.txt")));
 			outInfoFile
 					<< "clusterName\tbarcodes\tbarcodeFraction\treads\treadsFraction"
 					<< std::endl;
@@ -153,7 +153,7 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 			auto mipFamilyClustersDir = bib::files::makeDir(mipFamilyDir, bib::files::MkdirPar("clusters"));
 			clusterVec::allWriteClustersInDir(clusters, mipFamilyClustersDir.string(), opts);
 			std::ofstream logfile;
-			openTextFile(logfile, OutOptions(bib::files::make_path(mipFamilyDir,"log.txt").string()));
+			openTextFile(logfile, OutOptions(bib::files::make_path(mipFamilyDir,"log.txt")));
 			logfile << "Ran on: " << bib::getCurrentDate() << std::endl;
 			logfile << "Number of Alignments Done: "
 					<< alignerObj.numberOfAlingmentsDone_ << "\n";
@@ -219,7 +219,7 @@ int mipsterAnalysisRunner::mipClusteringMultiple(const bib::progutils::CmdArgs &
 	Json::Value logInfo;
 	std::ofstream logFile;
 	openTextFile(logFile,
-			mipMaster.directoryMaster_.logsDir_.string() + pars.logFilename, ".json",
+			bib::files::make_path(mipMaster.directoryMaster_.logsDir_, pars.logFilename), ".json",
 			pars.overWriteLog, true);
 	logInfo["date"] = getCurrentDate();
 	logInfo["workingDir"] = inputCommands.workingDir_;

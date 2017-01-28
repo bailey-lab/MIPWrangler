@@ -16,12 +16,12 @@ namespace bibseq {
 
 class SetUpMaster {
 public:
-	SetUpMaster(const std::string & masterDir);
+	SetUpMaster(const bfs::path & masterDir);
 
 	MipAnalysisDirectoryMaster directoryMaster_;
 
-	std::string mipArmFnp_;
-	std::string mipsSampsNamesFnp_;
+	bfs::path mipArmFnp_;
+	bfs::path mipsSampsNamesFnp_;
 
 	std::string rawDataSuffix_;
 
@@ -33,16 +33,16 @@ public:
 	void setServerName(const std::string & mipServerName);
 	bfs::path getMipSerDir() const;
 
-	void setMipArmFnp(const std::string & mipArmFnp);
-	void setMipsSampsNamesFnp(const std::string & mipsSampsNamesFnp);
+	void setMipArmFnp(const bfs::path & mipArmFnp);
+	void setMipsSampsNamesFnp(const bfs::path & mipsSampsNamesFnp);
 	void setRawDataSuffix(const std::string & rawDataSuffix);
 
 	void loadMipsSampsInfo(uint32_t allowableArmErrors);
 
 	void createDirStructSkeleton() const;
 
-	void createDirStructSkeleton(const std::string & mipSampleFile,
-			const std::string & mipArms);
+	void createDirStructSkeleton(const bfs::path & mipSampleFile,
+			const bfs::path & mipArms);
 
 	void createTopSampleDirs() const;
 	void createPopClusMipDirs(uint32_t numThreads) const;

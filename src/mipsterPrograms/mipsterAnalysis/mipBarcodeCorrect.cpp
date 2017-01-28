@@ -56,7 +56,7 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 	bool foundNone = true;
 	alignerObj.resetAlnCache();
 	alignerObj.processAlnInfoInputNoCheck(
-			bib::files::join(sampDirMaster.barCorAlnCacheDir_.string(), mipSampName.mipFam_),
+			bib::files::make_path(sampDirMaster.barCorAlnCacheDir_, mipSampName.mipFam_).string(),
 			setUpPars.debug_);
 	for (const auto & mipName : mipsForFam) {
 		if(setUpPars.debug_){
@@ -174,14 +174,14 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 	} else {
 		std::ofstream filterInfoFile;
 		openTextFile(filterInfoFile,
-				OutOptions(bib::files::make_path(mipFamilyDir , "barcodeFilterStats.tab.txt").string()));
+				OutOptions(bib::files::make_path(mipFamilyDir , "barcodeFilterStats.tab.txt")));
 		filterStats.printInfo(filterInfoFile, "\t");
 
 		alignerObj.processAlnInfoOutputNoCheck(
 				bib::files::join(sampDirMaster.barCorAlnCacheDir_.string(),
-						mipSampName.mipFam_), setUpPars.debug_);
+						mipSampName.mipFam_).string(), setUpPars.debug_);
 		std::ofstream logfile;
-		openTextFile(logfile, OutOptions(bib::files::make_path(mipFamilyDir, "log.txt").string()));
+		openTextFile(logfile, OutOptions(bib::files::make_path(mipFamilyDir, "log.txt")));
 		logfile << "Ran on: " << bib::getCurrentDate() << std::endl;
 		logfile << "Number of Alignments Done: "
 				<< alignerObj.numberOfAlingmentsDone_ << "\n";
@@ -216,7 +216,7 @@ int mipsterAnalysisRunner::mipBarcodeCorrection(const bib::progutils::CmdArgs & 
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 	//check for extraction directory and the rawDir and the extractInfo file
 	SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, MipFamSamp("", pars.sampleName));
-	std::string extractInfoFilename = bib::files::join(sampDirMaster.extractDir_.string(), "extractInfoByTarget.txt");
+	bfs::path extractInfoFilename = bib::files::make_path(sampDirMaster.extractDir_, "extractInfoByTarget.txt");
 
 	sampDirMaster.checkForExtractDirectoryThrow();
 	checkExistenceThrow(extractInfoFilename, __PRETTY_FUNCTION__);
@@ -263,8 +263,8 @@ int mipsterAnalysisRunner::mipBarcodeCorrectionMultiple(const bib::progutils::Cm
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 	Json::Value logInfo;
 	std::ofstream logFile;
-	openTextFile(logFile,
-			mipMaster.directoryMaster_.logsDir_.string() + pars.logFilename, ".json",
+	openTextFile(logFile,bib::files::make_path(
+			mipMaster.directoryMaster_.logsDir_, pars.logFilename), ".json",
 			pars.overWriteLog, true);
 	logInfo["date"] = getCurrentDate();
 	logInfo["workingDir"] = inputCommands.workingDir_;
@@ -333,12 +333,12 @@ int mipsterAnalysisRunner::mipBarcodeCorrectionMultiple(const bib::progutils::Cm
 
 	//std::unordered_map<std::string, MasterTableCache> sampleExtractTables;
 	for(const auto & samp : mipMaster.names_->samples_){
-		std::string sampBarCorDir = bib::files::join(VecStr{samp, samp + "_mipBarcodeCorrection/"});
-		TableIOOpts barFilOpts = TableIOOpts(OutOptions(
-				sampBarCorDir + "barcodeFilterStats.tab.txt", ".tab.txt", "tab",
+		bfs::path sampBarCorDir = bib::files::join(VecStr{samp, samp + "_mipBarcodeCorrection/"});
+		TableIOOpts barFilOpts = TableIOOpts(OutOptions(bib::files::make_path(
+				sampBarCorDir, "barcodeFilterStats.tab.txt"), ".tab.txt", "tab",
 				false,true, false), "\t", true);
 		barFilOpts.hasHeader_ = true;
-		MasterTableCache masterBarFilterTab(barFilOpts, sampBarCorDir, true,
+		MasterTableCache masterBarFilterTab(barFilOpts, sampBarCorDir.string(), true,
 				2, std::regex(".*barcodeFilterStats.tab.txt"));
 		masterBarFilterTab.writeTab();
 	}

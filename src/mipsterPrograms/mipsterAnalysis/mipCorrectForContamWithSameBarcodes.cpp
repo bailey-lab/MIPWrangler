@@ -180,8 +180,8 @@ int mipsterAnalysisRunner::mipCorrectForContamWithSameBarcodesMultiple(
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 	Json::Value logInfo;
 	std::ofstream logFile;
-	openTextFile(logFile,
-			mipMaster.directoryMaster_.logsDir_.string() + pars.logFilename, ".json",
+	openTextFile(logFile,bib::files::make_path(
+			mipMaster.directoryMaster_.logsDir_, pars.logFilename), ".json",
 			pars.overWriteLog, true);
 	logInfo["date"] = getCurrentDate();
 	logInfo["workingDir"] = inputCommands.workingDir_;

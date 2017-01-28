@@ -35,7 +35,7 @@ MipsSamplesNames::MipsSamplesNames(const VecStr & mips, const VecStr & samples) 
 	removeDuplicates(samples_);
 	removeDuplicates(mips_);
 }
-MipsSamplesNames::MipsSamplesNames(const std::string & mipSampleFilename) {
+MipsSamplesNames::MipsSamplesNames(const bfs::path & mipSampleFilename) {
 	table mipSampInfo(mipSampleFilename, "\t", true);
 	VecStr missingCols;
 	VecStr neededCols { "mips", "samples" };

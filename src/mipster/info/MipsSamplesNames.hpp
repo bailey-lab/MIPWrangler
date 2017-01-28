@@ -32,7 +32,7 @@ struct MipTarFamSamp {
 
 class MipsSamplesNames {
 public:
-	MipsSamplesNames(const std::string & mipSampleFilename);
+	MipsSamplesNames(const bfs::path & mipSampleFilename);
 	MipsSamplesNames(const VecStr & mips, const VecStr & samples);
 	VecStr mips_;
 	VecStr samples_;

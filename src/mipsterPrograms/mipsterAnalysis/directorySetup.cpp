@@ -48,16 +48,16 @@ int mipsterAnalysisRunner::runGzExtractStitch(const bib::progutils::CmdArgs & in
 		throw std::runtime_error{ss.str()};
 	}
 
-	bib::appendAsNeeded(pars.dir, "/");
+	pars.dir = bib::appendAsNeededRet(pars.dir.string(), "/");
 
 	if(!bfs::exists(pars.dir)){
 		std::stringstream ss;
-		ss << bib::bashCT::boldRed(pars.dir) << " doesn't exist";
+		ss << bib::bashCT::boldRed(pars.dir.string()) << " doesn't exist";
 		throw std::runtime_error {ss.str()};
 	}
 
 	std::ofstream logFile;
-	openTextFile(logFile, bib::files::join( mipMaster.directoryMaster_.logsDir_.string(),
+	openTextFile(logFile, bib::files::make_path( mipMaster.directoryMaster_.logsDir_,
 			pars.logFilename), ".json", setUp.pars_.ioOptions_.out_);
 
 
@@ -87,7 +87,7 @@ int mipsterAnalysisRunner::runGzExtractStitch(const bib::progutils::CmdArgs & in
 	logs["mainCommand"] = setUp.commands_.commandLine_;
 	Json::Value & extractLog = logs["extractLog"];
 	std::mutex logsLock;
-	const std::string zcatTempCmd = zcatCmd + " " + pars.dir + "REPLACETHIS.gz > "
+	const std::string zcatTempCmd = zcatCmd + " " + pars.dir.string() + "REPLACETHIS.gz > "
 			+ mipMaster.directoryMaster_.masterDir_.string() + "DIRNAME/REPLACETHIS";
 	auto extractFiles =
 			[&pars,&samplesExtracted,&samplesEmpty](bib::concurrent::LockableQueue<std::string> & filesKeys,
@@ -111,7 +111,7 @@ int mipsterAnalysisRunner::runGzExtractStitch(const bib::progutils::CmdArgs & in
 
 					for(const auto & f : readPairs.at(key)){
 						auto fqName = bib::files::bfs::path(f);
-						auto inputName = bib::files::join(pars.dir,fqName.string());
+						auto inputName = bib::files::make_path(pars.dir,fqName);
 						//if the file is empty copy to an empty directory to avoid concatenating errors
 						if(bfs::file_size(inputName) == 0){
 							std::string emptyDir = bib::files::makeDirP(sampDir, bib::files::MkdirPar("emptyFiles")).string();

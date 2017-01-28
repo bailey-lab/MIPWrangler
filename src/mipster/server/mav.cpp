@@ -39,18 +39,18 @@ mav::mav(const Json::Value & config) :
 		//set up extraction info
 		masterExtractInfo_ = std::make_shared<TableCache>(
 				TableIOOpts(
-						InOptions(
+						InOptions(bfs::path(
 								mipMaster_->getMipSerDir().string()
-										+ "extractionInfo/allExtractInfo.tab.txt"), "\t", true));
+										+ "extractionInfo/allExtractInfo.tab.txt")), "\t", true));
 		auto samplesExtracted = parseJsonForMipSamps(config["samplesExtracted"]);
 		for (const auto & sampleExtracted : samplesExtracted) {
 			extractInfosBySamp_.emplace(sampleExtracted.samp_,
-					TableCache(TableIOOpts(InOptions(mipMaster_->pathSampleExtractInfo(sampleExtracted).string()),
+					TableCache(TableIOOpts(InOptions(mipMaster_->pathSampleExtractInfo(sampleExtracted)),
 							"\t", true)));
 		}
 
 		for (const auto & mipTar : mipMaster_->getAllMipTargets()) {
-			TableIOOpts mipExtractOpt(InOptions(mipMaster_->pathMipExtractInfo(mipTar).string()),
+			TableIOOpts mipExtractOpt(InOptions(mipMaster_->pathMipExtractInfo(mipTar)),
 									"\t", true);
 			extractInfosByTar_.emplace(mipTar,
 					TableCache(mipExtractOpt));
@@ -66,12 +66,12 @@ mav::mav(const Json::Value & config) :
 					TableCache(
 							TableIOOpts(
 									InOptions(
-											mipMaster_->pathMipPopClusSampInfo(mipFam).string()),
+											mipMaster_->pathMipPopClusSampInfo(mipFam)),
 									"\t", true)));
 			popClusPopInfoByTar_.emplace(mipFam.mipFam_,
 					TableCache(
 							TableIOOpts(
-									InOptions(mipMaster_->pathMipPopClusPopInfo(mipFam).string()),
+									InOptions(mipMaster_->pathMipPopClusPopInfo(mipFam)),
 									"\t", true)));
 			seqs_->updateAddCache(mipFam.mipFam_,
 					SeqIOOptions::genFastqIn(
@@ -81,7 +81,7 @@ mav::mav(const Json::Value & config) :
 		for (const auto & samp : mipMaster_->names_->samples_) {
 			TableIOOpts sampPopClusOpt(
 					InOptions(
-							mipMaster_->pathSampPopClusSampInfo(MipFamSamp("", samp)).string()),
+							mipMaster_->pathSampPopClusSampInfo(MipFamSamp("", samp))),
 					"\t", true);
 			if (sampPopClusOpt.in_.inExists()) {
 				popClusInfoBySample_.emplace(samp, TableCache(sampPopClusOpt));

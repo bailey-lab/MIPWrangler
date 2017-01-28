@@ -286,9 +286,9 @@ int mipsterServerRunner::mipServerSetUp(const bib::progutils::CmdArgs & inputCom
 	}
 
 	watch.startNewLap("snp_info");
-	if(!fexists(outDirName + "allSeqSnps.txt") && refSeqGenesFilename != ""){
-		std::ofstream outFile(bib::files::findNonexitantFile(outDirName + "allSeqSnps.txt"));
-		std::ofstream outFileProt(bib::files::findNonexitantFile(outDirName + "allProteinAAChange.tab.txt"));
+	if(!bfs::exists(outDirName + "allSeqSnps.txt") && refSeqGenesFilename != ""){
+		std::ofstream outFile(bib::files::findNonexitantFile(outDirName + "allSeqSnps.txt").string());
+		std::ofstream outFileProt(bib::files::findNonexitantFile(outDirName + "allProteinAAChange.tab.txt").string());
 
 		auto mipNames = bibseq::getVectorOfMapKeys(mipAnalysisFolders);
 		bib::sort(mipNames);
@@ -329,7 +329,7 @@ int mipsterServerRunner::mipServerSetUp(const bib::progutils::CmdArgs & inputCom
 							//printVector(seqNames);
 							std::string refGenome = genomicDir + geneName + "_genomic.fasta";
 							//std::cout << record->toStrLine() << std::endl;
-							if (!fexists(refGenome)) {
+							if (!bfs::exists(refGenome)) {
 								//if(!bib::in(record->chrom_, seqNames)){
 								//if(false){
 								//std::cout << "showOneGeneOneSamp: couldn't find chrom: " << record->chrom_ << " in " << vectorToString(seqNames, ",") << std::endl;
@@ -342,7 +342,7 @@ int mipsterServerRunner::mipServerSetUp(const bib::progutils::CmdArgs & inputCom
 									if (bib::beginsWith(mipAnalysis.first, geneName)) {
 										std::string seqFilename = mipAnalysis.second.string()
 												+ "/final/" + sampName + ".fastq";
-										if (fexists(seqFilename)) {
+										if (bfs::exists(seqFilename)) {
 											/**@todo fix this */
 											SeqIOOptions opts =SeqIOOptions::genFastqIn(seqFilename);
 											addOtherVec(allReads,
