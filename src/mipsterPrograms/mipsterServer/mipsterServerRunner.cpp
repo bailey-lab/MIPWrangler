@@ -185,10 +185,10 @@ int mipsterServerRunner::mipServerSetUp(const bib::progutils::CmdArgs & inputCom
 
 	std::unordered_map<std::string, std::set<std::string>> sampNamesForGeneSet;
 	watch.startNewLap("Read in analysis results");
-	std::string allInfoBySampleDir = bib::files::makeDir(outDirName, bib::files::MkdirPar("allInfoBySample"));
-	std::string namesDir = bib::files::makeDir(outDirName, bib::files::MkdirPar("names"));
+	bfs::path allInfoBySampleDir = bib::files::makeDir(outDirName, bib::files::MkdirPar("allInfoBySample"));
+	bfs::path namesDir = bib::files::makeDir(outDirName, bib::files::MkdirPar("names"));
 	std::ofstream mipAnalysisFoldersFile;
-	openTextFile(mipAnalysisFoldersFile,namesDir + "mipAnalysisFolders",".tab.txt", false, true);
+	openTextFile(mipAnalysisFoldersFile,bib::files::make_path(namesDir, "mipAnalysisFolders").string(),".tab.txt", false, true);
 
 	for (const auto & mipAnalysis : mipAnalysisFolders) {
 		mipAnalysisFoldersFile << mipAnalysis.first << "\t" << mipAnalysis.second.string() << "\n";
@@ -231,7 +231,7 @@ int mipsterServerRunner::mipServerSetUp(const bib::progutils::CmdArgs & inputCom
 	std::unordered_map<std::string, VecStr> geneNamesForSamp;
 	for(auto & samp: allInfoBySample){
 		samp.second.sortTable("mipName", false);
-		samp.second.outPutContents(TableIOOpts(OutOptions(allInfoBySampleDir + samp.first, ".tab.txt"), "\t", samp.second.hasHeader_));
+		samp.second.outPutContents(TableIOOpts(OutOptions(bib::files::make_path(allInfoBySampleDir , samp.first).string(), ".tab.txt"), "\t", samp.second.hasHeader_));
 
 		auto mipNames = samp.second.getColumnLevels("mipName");
 		auto geneNames = samp.second.getColumnLevels("geneName");
@@ -249,37 +249,37 @@ int mipsterServerRunner::mipServerSetUp(const bib::progutils::CmdArgs & inputCom
 
 
 	std::ofstream sampAnalysisFoldersFile;
-	openTextFile(sampAnalysisFoldersFile,namesDir + "sampAnalysisFolders",".tab.txt", false, true);
+	openTextFile(sampAnalysisFoldersFile,bib::files::make_path(namesDir, "sampAnalysisFolders").string(),".tab.txt", false, true);
 	for(const auto & sampAnalysis : sampAnalysisFolders){
 		sampAnalysisFoldersFile << sampAnalysis.first << "\t" << sampAnalysis.second.string() << "\n";
 	}
 	std::ofstream sampleMipAnalysisFoldersFile;
-	openTextFile(sampleMipAnalysisFoldersFile,namesDir + "sampleMipAnalysisFolders",".tab.txt", false, true);
+	openTextFile(sampleMipAnalysisFoldersFile,bib::files::make_path(namesDir, "sampleMipAnalysisFolders").string(),".tab.txt", false, true);
 	for(const auto & sampAnalysis : sampleMipAnalysisFolders){
 		for(const auto & mipAnalysis : sampAnalysis.second){
 			sampleMipAnalysisFoldersFile << sampAnalysis.first << "\t" << mipAnalysis.first << "\t" << mipAnalysis.second.string() << "\n";
 		}
 	}
 	std::ofstream sampNamesForMipFile;
-	openTextFile(sampNamesForMipFile,namesDir + "sampNamesForMip",".tab.txt", false, true);
+	openTextFile(sampNamesForMipFile, bib::files::make_path(namesDir, "sampNamesForMip").string(),".tab.txt", false, true);
 	for (auto & names : sampNamesForMip) {
 		bib::sort(names.second);
 		sampNamesForMipFile << names.first << "\t" << vectorToString(names.second, ",") << "\n";
 	}
 	std::ofstream mipNamesForSampFile;
-	openTextFile(mipNamesForSampFile,namesDir + "mipNamesForSamp",".tab.txt", false, true);
+	openTextFile(mipNamesForSampFile,bib::files::make_path(namesDir , "mipNamesForSamp").string(),".tab.txt", false, true);
 	for (auto & names : mipNamesForSamp) {
 		bib::sort(names.second);
 		mipNamesForSampFile << names.first << "\t" << vectorToString(names.second, ",") << "\n";
 	}
 	std::ofstream sampNamesForGeneFile;
-	openTextFile(sampNamesForGeneFile,namesDir + "sampNamesForGene",".tab.txt", false, true);
+	openTextFile(sampNamesForGeneFile,bib::files::make_path(namesDir , "sampNamesForGene").string(),".tab.txt", false, true);
 	for (auto & names : sampNamesForGene) {
 		bib::sort(names.second);
 		sampNamesForGeneFile << names.first << "\t" << vectorToString(names.second, ",") << "\n";
 	}
 	std::ofstream geneNamesForSampFile;
-	openTextFile(geneNamesForSampFile,namesDir + "geneNamesForSamp",".tab.txt", false, true);
+	openTextFile(geneNamesForSampFile,bib::files::make_path(namesDir , "geneNamesForSamp").string(),".tab.txt", false, true);
 	for (auto & names : geneNamesForSamp) {
 		bib::sort(names.second);
 		geneNamesForSampFile << names.first << "\t" << vectorToString(names.second, ",") << "\n";

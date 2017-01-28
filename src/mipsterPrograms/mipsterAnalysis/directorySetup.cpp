@@ -114,7 +114,7 @@ int mipsterAnalysisRunner::runGzExtractStitch(const bib::progutils::CmdArgs & in
 						auto inputName = bib::files::join(pars.dir,fqName.string());
 						//if the file is empty copy to an empty directory to avoid concatenating errors
 						if(bfs::file_size(inputName) == 0){
-							std::string emptyDir = bib::files::makeDirP(sampDir, bib::files::MkdirPar("emptyFiles"));
+							std::string emptyDir = bib::files::makeDirP(sampDir, bib::files::MkdirPar("emptyFiles")).string();
 							bfs::copy(inputName, bib::files::join(emptyDir, bfs::path(inputName).filename().string()));
 							continue;
 						}
@@ -162,10 +162,10 @@ int mipsterAnalysisRunner::runGzExtractStitch(const bib::progutils::CmdArgs & in
 						laneCatLogs["R2"] = r2_runOut.toJson();
 
 						for(const auto & r1f : r1_files){
-							bfs::rename(r1f.first, sampRawDir + r1f.first.filename().string());
+							bfs::rename(r1f.first, sampRawDir.string() + r1f.first.filename().string());
 						}
 						for(const auto & r2f : r2_files){
-							bfs::rename(r2f.first, sampRawDir + r2f.first.filename().string());
+							bfs::rename(r2f.first, sampRawDir.string() + r2f.first.filename().string());
 						}
 						log["laneCatLogs"] = laneCatLogs;
 					}

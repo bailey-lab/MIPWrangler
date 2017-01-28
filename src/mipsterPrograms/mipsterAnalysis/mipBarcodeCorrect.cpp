@@ -41,7 +41,7 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 		std::cout << "Making directory for mip: " << mipSampName.mipFam_
 				<< " in samp: " << mipSampName.samp_ << std::endl;
 	}
-	std::string mipFamilyDir = bib::files::makeDir(
+	bfs::path mipFamilyDir = bib::files::makeDir(
 			sampDirMaster.barCorDir_.string(),bib::files::MkdirPar( mipSampName.mipFam_,
 			pars.overWriteDirs));
 	if (setUpPars.debug_) {
@@ -49,7 +49,7 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 				<< " in samp: " << mipSampName.samp_ << std::endl;
 	}
 	uint32_t mipCorrectedNumber = 0;
-	SeqIOOptions outOpts = SeqIOOptions::genFastqOut( mipFamilyDir + mipSampName.mipFam_
+	SeqIOOptions outOpts = SeqIOOptions::genFastqOut( mipFamilyDir.string() + mipSampName.mipFam_
 					+ "_all.fastq");
 	SeqOutput writer(outOpts);
 	writer.openOut();
@@ -73,7 +73,7 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 			charCounter ligBarCounter(std::vector<char> { 'A', 'C', 'G', 'T' });
 			charCounter extBarCounter(std::vector<char> { 'A', 'C', 'G', 'T' });
 			std::ofstream barcodeFile;
-			openTextFile(barcodeFile, mipFamilyDir + mipName + "_barcodes",
+			openTextFile(barcodeFile, bib::files::make_path(mipFamilyDir, mipName ).string() + "_barcodes",
 					".tab.txt", false, true);
 			//barcodeFile << "Barcode\treadCnt\tfilePos" << std::endl;
 			barcodeFile << "Barcode\treadCnt" << "\n";
@@ -153,13 +153,13 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 			if (mipMaster.mips_->mips_.at(mipName).ligBarcodeLen_ > 0) {
 				std::ofstream ligBarCompOutFile;
 				openTextFile(ligBarCompOutFile,
-						mipFamilyDir + mipName + "_ligBarNucComp", ".tab.txt", false, true);
+						bib::files::make_path(mipFamilyDir,  mipName + "_ligBarNucComp").string(), ".tab.txt", false, true);
 				ligBarCounter.resetAlphabet(true);
 				ligBarCounter.setFractions();
 				ligBarCounter.outPutInfo(ligBarCompOutFile, false);
 			}
 			std::ofstream extBarCompOutFile;
-			openTextFile(extBarCompOutFile, mipFamilyDir + mipName + "_extBarNucComp",
+			openTextFile(extBarCompOutFile, bib::files::make_path(mipFamilyDir, mipName).string() + "_extBarNucComp",
 					".tab.txt", false, true);
 			extBarCounter.resetAlphabet(true);
 			extBarCounter.setFractions();
@@ -174,14 +174,14 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 	} else {
 		std::ofstream filterInfoFile;
 		openTextFile(filterInfoFile,
-				OutOptions(mipFamilyDir + "barcodeFilterStats.tab.txt"));
+				OutOptions(bib::files::make_path(mipFamilyDir , "barcodeFilterStats.tab.txt").string()));
 		filterStats.printInfo(filterInfoFile, "\t");
 
 		alignerObj.processAlnInfoOutputNoCheck(
 				bib::files::join(sampDirMaster.barCorAlnCacheDir_.string(),
 						mipSampName.mipFam_), setUpPars.debug_);
 		std::ofstream logfile;
-		openTextFile(logfile, OutOptions(mipFamilyDir + "log.txt"));
+		openTextFile(logfile, OutOptions(bib::files::make_path(mipFamilyDir, "log.txt").string()));
 		logfile << "Ran on: " << bib::getCurrentDate() << std::endl;
 		logfile << "Number of Alignments Done: "
 				<< alignerObj.numberOfAlingmentsDone_ << "\n";

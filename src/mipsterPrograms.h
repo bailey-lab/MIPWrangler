@@ -9,3 +9,4 @@
 #include "mipsterPrograms/mipsterUtils.h"
 #include "mipsterPrograms/mipsterSim.h"
 #include "mipsterPrograms/mipsterSetUp.h"
+#include "mipsterPrograms/mipsterMipExplorer.h"

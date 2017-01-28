@@ -21,17 +21,17 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 	alignerObjForFamilyDet.resetAlnCache();
 	alignerObjForFamilyDet.processAlnInfoInputNoCheck(sampDirMaster.extractAlnCacheDir_.string(), verbose);
 	//set up sub directories
-	std::string filteredOffDir = bib::files::makeDir(sampDirMaster.extractDir_.string(), bib::files::MkdirPar("filteredOff"));
+	bfs::path filteredOffDir = bib::files::makeDir(sampDirMaster.extractDir_.string(), bib::files::MkdirPar("filteredOff"));
 	//create out files
 	MultiSeqOutCache<seqInfo> mipOuts;
 	mipOuts.setOpenLimit(pars.fileOpenLimit_);
 
 	mipOuts.addReader("indeterminate",
-			SeqIOOptions(filteredOffDir + "indeterminate", sampleIOOpts.outFormat_,sampleIOOpts.out_));
+			SeqIOOptions(bib::files::make_path(filteredOffDir, "indeterminate").string(), sampleIOOpts.outFormat_,sampleIOOpts.out_));
 	mipOuts.addReader("unmatchedReads",
-			SeqIOOptions(filteredOffDir + "unmatchedReads", sampleIOOpts.outFormat_,sampleIOOpts.out_));
+			SeqIOOptions(bib::files::make_path(filteredOffDir, "unmatchedReads").string(), sampleIOOpts.outFormat_,sampleIOOpts.out_));
 	mipOuts.addReader("smallFragment",
-			SeqIOOptions(filteredOffDir + "smallFragment", sampleIOOpts.outFormat_,sampleIOOpts.out_));
+			SeqIOOptions(bib::files::make_path(filteredOffDir, "smallFragment").string(), sampleIOOpts.outFormat_,sampleIOOpts.out_));
 	VecStr filterOutNames =
 			{ "_failedQuality", "_failedLigation", "_failedMinLen", "_containsNs" };
 	VecStr allMipTargets = mipMaster.getAllMipTargets();

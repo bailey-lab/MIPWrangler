@@ -199,4 +199,17 @@ std::vector<Mip::ArmPosScore> Mip::getPossibleLigArmPos(const seqInfo & read) co
 	return ret;
 }
 
+void Mip::writeOutArms(const OutOptions & opts) const{
+	auto extOpts = SeqIOOptions::genFastaOut(bib::files::make_path(opts.outFilename_, name_ + "_ext-arm").string());
+	auto ligOpts = SeqIOOptions::genFastaOut(bib::files::make_path(opts.outFilename_, name_ + "_lig-arm").string());
+	extOpts.out_.overWriteFile_ = opts.overWriteFile_;
+	extOpts.out_.append_ = opts.append_;
+	ligOpts.out_.overWriteFile_ = opts.overWriteFile_;
+	ligOpts.out_.append_ = opts.append_;
+	seqInfo extArm("[mipTar=" + name_ + ";mipFam=" + familyName_ +";]", extentionArm_);
+	seqInfo ligArm("[mipTar=" + name_ + ";mipFam=" + familyName_ +";]", seqUtil::reverseComplement(ligationArm_, "DNA"));
+	SeqOutput::write(std::vector<seqInfo>{extArm}, extOpts);
+	SeqOutput::write(std::vector<seqInfo>{ligArm}, ligOpts);
+}
+
 } /* namespace bibseq */

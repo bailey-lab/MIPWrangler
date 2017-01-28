@@ -65,7 +65,7 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 		//now check to see if there are any reads to cluster
 		//if all of them were contamination this should be zero
 		if(!identicalClusters.empty()){
-			std::string mipFamilyDir = bib::files::makeDir(
+			bfs::path mipFamilyDir = bib::files::makeDir(
 					sampDirMaster.clusDir_.string(), bib::files::MkdirPar(mipSampName.mipFam_,
 					pars.overWriteDirs));
 			alignerObj.resetAlnCache();
@@ -111,14 +111,14 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 					bib::files::join(sampDirMaster.clusAlnCacheDir_.string(),
 							mipSampName.mipFam_), seqPars.debug_);
 			SeqIOOptions opts = SeqIOOptions::genFastqOut(
-					mipFamilyDir + mipSampName.mipFam_ + "_clustered");
+					bib::files::make_path(mipFamilyDir,  mipSampName.mipFam_).string() + "_clustered");
 
 			renameReadNames(clusters, "[samp=" + mipSampName.samp_ + ";" + "mipFam=" + mipSampName.mipFam_ +"]",
 					true, true, true);
 			auto mipFamilyAllClustersDir = bib::files::makeDir(mipFamilyDir,
 					bib::files::MkdirPar("allInputClusters"));
 			std::ofstream outInfoFile;
-			openTextFile(outInfoFile, OutOptions(mipFamilyDir + "info.tab.txt"));
+			openTextFile(outInfoFile, OutOptions(bib::files::make_path(mipFamilyDir,"info.tab.txt").string()));
 			outInfoFile
 					<< "clusterName\tbarcodes\tbarcodeFraction\treads\treadsFraction"
 					<< std::endl;
@@ -137,7 +137,7 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 				clus.appendName("_R" + estd::to_string(readAmount));
 				readAmounts[clus.seqBase_.name_] = readAmount;
 				SeqIOOptions outOpts = opts;
-				outOpts.out_.outFilename_ = mipFamilyAllClustersDir + clus.seqBase_.name_;
+				outOpts.out_.outFilename_ = mipFamilyAllClustersDir.string() + clus.seqBase_.name_;
 				SeqOutput clusWriter(outOpts);
 				clusWriter.openWrite(begReads);
 			}
@@ -151,9 +151,9 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 			}
 			SeqOutput::write(clusters, opts);
 			auto mipFamilyClustersDir = bib::files::makeDir(mipFamilyDir, bib::files::MkdirPar("clusters"));
-			clusterVec::allWriteClustersInDir(clusters, mipFamilyClustersDir, opts);
+			clusterVec::allWriteClustersInDir(clusters, mipFamilyClustersDir.string(), opts);
 			std::ofstream logfile;
-			openTextFile(logfile, OutOptions(mipFamilyDir + "log.txt"));
+			openTextFile(logfile, OutOptions(bib::files::make_path(mipFamilyDir,"log.txt").string()));
 			logfile << "Ran on: " << bib::getCurrentDate() << std::endl;
 			logfile << "Number of Alignments Done: "
 					<< alignerObj.numberOfAlingmentsDone_ << "\n";

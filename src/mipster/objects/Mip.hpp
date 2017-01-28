@@ -66,6 +66,8 @@ public:
 			const QualFilteringPars & qFilPars) const;
 
 
+	void writeOutArms(const OutOptions & opts) const;
+
 };
 
 } /* namespace bibseq */

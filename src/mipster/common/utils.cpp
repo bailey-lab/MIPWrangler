@@ -23,7 +23,7 @@ void checkExistenceThrow(const bfs::path & dirName){
 	if(!bfs::exists(dirName)){
 		std::stringstream ss;
 		ss << "Error" << std::endl;
-		ss << dirName << " needs to be exist "<< std::endl;
+		ss << dirName << " needs to exist "<< std::endl;
 		throw std::runtime_error{ss.str()};
 	}
 }

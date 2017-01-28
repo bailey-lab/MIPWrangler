@@ -19,7 +19,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		const MipsSamplesNames & mipSamps,
 		const mipPopulationClusteringPars & pars,
 		const SeqSetUpPars & seqPars) {
-	std::string mipFamilyDir = bib::files::makeDir(
+	bfs::path mipFamilyDir = bib::files::makeDir(
 			directoryMaster.populationClusteringDir_.string() + mipSamp.mipFam_,
 			bib::files::MkdirPar("analysis/", pars.overWriteDirs));
 	bib::stopWatch watch;
@@ -171,7 +171,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 	alignerObj.processAlnInfoOutputNoCheck(alnCacheDir, seqPars.debug_);
 
 	std::ofstream logfile;
-	openTextFile(logfile, OutOptions(mipFamilyDir + "log.txt"));
+	openTextFile(logfile, OutOptions(bib::files::make_path(mipFamilyDir,"log.txt").string()));
 	logfile << "Ran on: " << bib::getCurrentDate() << std::endl;
 	logfile << "Number of Alignments Done: "
 			<< alignerObj.numberOfAlingmentsDone_ << "\n";

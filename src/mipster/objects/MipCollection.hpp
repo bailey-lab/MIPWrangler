@@ -22,12 +22,15 @@ public:
 	 * @param mipArmIdFile The id file that holds all the info for the mips
 	 * @param allowableArmError The number of errors to allow in arms
 	 */
-	MipCollection(const std::string & mipArmIdFile, uint32_t allowableArmError);
+	MipCollection(const bfs::path & mipArmIdFile, uint32_t allowableArmError);
 
+	bfs::path mipArmIdFnp_;/**< The file info was read from*/
+	uint32_t allowableArmError_; /**< allowable error in the arms*/
 	std::unordered_map<std::string, Mip> mips_; /**< Map to hold mip info, key is the mip target name*/
 	std::unordered_map<std::string, VecStr> mipNamesForFamily_; /**< Map to hold mip target names for mip family*/
 	VecStr mipFamilies_; /**< All mip family names*/
-	uint32_t allowableArmError_; /**< allowable error in the arms*/
+
+
 
 	VecStr getMipsForFamily(const std::string & family) const;
 	VecStr getMipsForFamily(const VecStr & families) const;

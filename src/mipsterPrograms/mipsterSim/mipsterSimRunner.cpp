@@ -63,6 +63,7 @@ int mipsterSimRunner::testMipExtract(const bib::progutils::CmdArgs & inputComman
 			SeqOutput::write(std::vector<seqInfo>{ligArm}, ligOpts);
 		}
 	}
+
 	VecStr genomes;
 	if(genomeNames != ""){
 		 genomes = bib::tokenizeString(genomeNames, ",");
@@ -290,6 +291,14 @@ int mipsterSimRunner::searchForArms(const bib::progutils::CmdArgs & inputCommand
 	return 0;
 }
 
+
+
+
+
+
+
+
+
 int mipsterSimRunner::extractMipCaptureSequence(const bib::progutils::CmdArgs & inputCommands) {
 	seqSetUp setUp(inputCommands);
 	setUp.processDefaultReader({"-bam"}, true);
@@ -297,99 +306,32 @@ int mipsterSimRunner::extractMipCaptureSequence(const bib::progutils::CmdArgs & 
 	setUp.pars_.ioOptions_.out_.outFileFormat_ = "bed";
 	setUp.finishSetUp(std::cout);
 
-	BamTools::BamReader bReader;
-	BamTools::BamAlignment bAln;
-	bReader.Open(setUp.pars_.ioOptions_.firstName_);
-	checkBamOpenThrow(bReader);
-	loadBamIndexThrow(bReader);
-	auto refs = bReader.GetReferenceData();
-	BamAlnsCache alnCache;
-	std::vector<BedRecordCore> beds;
-	std::string genomeFile = bfs::path(setUp.pars_.ioOptions_.firstName_).filename().string();
-	std::string genome = genomeFile.substr(0, genomeFile.find("_"));
-	while (bReader.GetNextAlignment(bAln)) {
-		if (bAln.IsPaired()) {
-			if(bAln.MateRefID != bAln.RefID){
+	std::vector<MipMapResult> results = getMipMapResults(setUp.pars_.ioOptions_.firstName_);
 
-				// do non-concordant chromosome mapping operation
-				std::stringstream ss;
-				ss << __PRETTY_FUNCTION__ << ": Error, input has dis-concordant mapping" << std::endl;
-				throw std::runtime_error{ss.str()};
-			}
-			if(!bAln.IsMapped() || !bAln.IsMateMapped()){
-
-				// do non-mapping operation
-				std::stringstream ss;
-				ss << __PRETTY_FUNCTION__ << ": Error, input is non-mapping: " << std::endl;
-				throw std::runtime_error{ss.str()};
-			}
-
-			if (bAln.MatePosition == bAln.Position) {
-				if (!alnCache.has(bAln.Name)) {
-					//if mapped to the same place and the mate is yet to be encountered
-					//enter into cache for until mate is encountered
-					alnCache.add(bAln);
-					continue;
-				}
-			}
-			if (bAln.MatePosition <= bAln.Position) {
-				if (!alnCache.has(bAln.Name)) {
-					//since input should be sorted if matePosition is less than this positiion
-					//it should be in the cache therefore program was unable to find mate
-
-					//do orphaned operation
-					std::stringstream ss;
-					ss << __PRETTY_FUNCTION__ << ": Error, all input should be paired " << std::endl;
-					throw std::runtime_error{ss.str()};
-				} else {
-					auto search = alnCache.get(bAln.Name);
-					//need to check to see if there is an overlap
-					if(search->GetEndPosition() > bAln.Position){
-						//overlap
-
-						//do overlapped pairs operation
-					}else{
-						//no overlap, single read count both
-
-						//do no overlap pairs operation
-					}
-
-					std::stringstream ss;
-					bool reverseStrand = false;
-					if( (bAln.IsFirstMate() && bAln.IsReverseStrand())){
-						reverseStrand = true;
-					}else if(search->IsFirstMate() && search->IsReverseStrand()){
-						reverseStrand = true;
-					}
-
-					ss << refs[bAln.RefID].RefName
-							<< "\t" << search->Position
-							<< "\t" << bAln.GetEndPosition()
-							<< "\t" << bib::replaceString(bAln.Name, ";]", ";genome=" + genome + ";]")
-							<< "\t" << 255
-							<< "\t" << (reverseStrand ? '-' : '+');
-					beds.emplace_back(ss.str());
-					// now that operations have been computed, remove first mate found from cache
-					alnCache.remove(search->Name);
-				}
-			} else {
-				//enter into cache for until mate is encountered
-				alnCache.add(bAln);
-			}
-		}else{
-			//unpaired read
-
-			//do unpaired read operation
-			std::stringstream ss;
-			ss << __PRETTY_FUNCTION__ << ": Error, all input should be paired " << std::endl;
-			throw std::runtime_error{ss.str()};
-		}
-	}
 
 	std::ofstream outFile;
 	openTextFile(outFile, setUp.pars_.ioOptions_.out_);
-	for(const auto & bed : beds){
-		outFile << bed.toDelimStr() << std::endl;
+	for (auto & result : results) {
+
+		if (result.isConcordant() && result.isMapped()) {
+			outFile << result.region_.genBedRecordCore().toDelimStr() << std::endl;
+		} else {
+			if (!result.isMapped()) {
+				if (!result.extAln_.IsMapped()) {
+					std::cerr << "Result for " << result.mipName_ << " mapped to "
+							<< result.genomeName_ << " extension arm didn't map "
+							<< std::endl;
+				}
+				if (!result.ligAln_.IsMapped()) {
+					std::cerr << "Result for " << result.mipName_ << " mapped to "
+							<< result.genomeName_ << " ligation arm didn't map" << std::endl;
+				}
+			} else if (!result.isConcordant()) {
+				std::cerr << "Result for " << result.mipName_ << " mapped to "
+						<< result.genomeName_ << " had discordant arms" << std::endl;
+			}
+		}
+
 	}
 	return 0;
 }
@@ -718,9 +660,9 @@ int mipsterSimRunner::simMips(const bib::progutils::CmdArgs & inputCommands) {
 	for (auto & lib : libraryAbundances) {
 		lib.second.setTemplateAmount(startingTemplate);
 	}
-	std::string pcrSimsDir = bib::files::makeDir(setUp.pars_.directoryName_, bib::files::MkdirPar("pcrSims"));
-	std::string sequenceSimsDir = bib::files::makeDir(setUp.pars_.directoryName_, bib::files::MkdirPar("sequenceSims"));
-	std::string idFilesDir = bib::files::makeDir(setUp.pars_.directoryName_, bib::files::MkdirPar("id_files"));
+	bfs::path pcrSimsDir = bib::files::makeDir(setUp.pars_.directoryName_, bib::files::MkdirPar("pcrSims"));
+	bfs::path sequenceSimsDir = bib::files::makeDir(setUp.pars_.directoryName_, bib::files::MkdirPar("sequenceSims"));
+	bfs::path idFilesDir = bib::files::makeDir(setUp.pars_.directoryName_, bib::files::MkdirPar("id_files"));
 	bfs::copy(mipFile, bib::files::make_path(idFilesDir, bfs::path(mipFile).filename().string()));
 	MipsSamplesNames names(mCol.getMipFamsForRegions(regions), getVectorOfMapKeys(libraryAbundances));
 	std::ofstream sampleNamesFile;
@@ -732,23 +674,22 @@ int mipsterSimRunner::simMips(const bib::progutils::CmdArgs & inputCommands) {
 	for (const auto & lib : libraryAbundances) {
 
 		sim::simMipLib(lib.second, mCol, regions, refDir,
-				pcrSimsDir, captureEfficiency, intErrorRate,
+				pcrSimsDir.string(), captureEfficiency, intErrorRate,
 				finalReadAmount, pcrRounds, initialPcrRounds, numThreads,
 				setUp.pars_.verbose_);
 
 		//sim 454
 		if (sim454) {
 			std::string simCmd454 = "454sim -d $(echo $(dirname $(which 454sim))/gen) "
-					+ pcrSimsDir + lib.second.libName_ + ".fasta -o " + sequenceSimsDir
-					+ lib.second.libName_ + ".sff";
+					+ bib::files::make_path(pcrSimsDir, lib.second.libName_).string() + ".fasta -o " + bib::files::make_path(sequenceSimsDir, lib.second.libName_).string() + ".sff";
 			auto simOutPut454 = bib::sys::run(VecStr{simCmd454});
 			jsonLog[lib.first]["454SimLog"] = simOutPut454.toJson();
 		}
 		//sim illumina
 		uint32_t illuminaAttempts = 10; //art fails for no reason sometimes
 		std::string simCmdIllumina = "art_illumina -amp -p -na -i "
-				+ pcrSimsDir + lib.second.libName_ + ".fasta -l " + estd::to_string(pairedEndReadLength) + " -f 1 -o "
-				+ sequenceSimsDir + lib.second.libName_ + "_R";
+				+ bib::files::make_path(pcrSimsDir, lib.second.libName_).string()+ ".fasta -l " + estd::to_string(pairedEndReadLength) + " -f 1 -o "
+				+ bib::files::make_path(sequenceSimsDir , lib.second.libName_).string() + "_R";
 		auto simOutPutIllumina = bib::sys::run(VecStr{simCmdIllumina});
 		jsonLog[lib.first]["454SimLog"] = simOutPutIllumina.toJson();
 		uint32_t numberOfAttempts = 1;
@@ -759,12 +700,12 @@ int mipsterSimRunner::simMips(const bib::progutils::CmdArgs & inputCommands) {
 			jsonLog[lib.first]["illumina_sim_log"]["attempt-" + estd::to_string(numberOfAttempts)] = simOutPutIllumina.toJson();
 		}
 		//rename with proper fastq endings
-		bfs::rename(sequenceSimsDir + lib.second.libName_ + "_R1.fq", sequenceSimsDir + lib.second.libName_ + "_R1.fastq");
-		bfs::rename(sequenceSimsDir + lib.second.libName_ + "_R2.fq", sequenceSimsDir + lib.second.libName_ + "_R2.fastq");
+		bfs::rename(bib::files::make_path(sequenceSimsDir,  lib.second.libName_ ).string()+ "_R1.fq", bib::files::make_path(sequenceSimsDir , lib.second.libName_).string() + "_R1.fastq");
+		bfs::rename(bib::files::make_path(sequenceSimsDir, lib.second.libName_).string() + "_R2.fq", bib::files::make_path(sequenceSimsDir , lib.second.libName_ ).string()+ "_R2.fastq");
 		//gzip files
 		std::stringstream gzipCmd;
-		gzipCmd << "gzip " << sequenceSimsDir + lib.second.libName_ + "_R1.fastq"
-				<< "&& gzip " << sequenceSimsDir + lib.second.libName_ + "_R2.fastq";
+		gzipCmd << "gzip " << bib::files::make_path(sequenceSimsDir , lib.second.libName_).string() + "_R1.fastq"
+				<< "&& gzip " << bib::files::make_path(sequenceSimsDir,  lib.second.libName_ ).string()+ "_R2.fastq";
 		auto gzipRunOuput = bib::sys::run({gzipCmd.str()});
 		jsonLog[lib.first]["illumina_sim_log"]["gzip"] = gzipRunOuput.toJson();
 	}
