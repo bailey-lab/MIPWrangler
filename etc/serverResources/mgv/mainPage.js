@@ -17,7 +17,7 @@ $(document).ready(function() {
 		var mouseLeaveC = "#FFF";
 		var addTo = "#mipsLinks";
 		createLinksTable(addTo, linkPre, names["mips"], cols, mouseOverC, mouseLeaveC);
-
+		d34.select("#mipsLinks").select("table").style("overflow", "scroll")
 	}).catch(logRequestError).then(function(){
 		//done loading 
 		removeAllDivGifLoading();

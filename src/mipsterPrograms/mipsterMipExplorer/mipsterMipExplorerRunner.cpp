@@ -164,12 +164,11 @@ public:
 		return resource;
 	}
 
-	std::shared_ptr<restbed::Resource> showMipSeqs(){
+	std::shared_ptr<restbed::Resource> showMipSeqs() {
 		auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 		auto resource = std::make_shared<restbed::Resource>();
-		auto path =  UrlPathFactory::createUrl( { { rootName_ },{"showMipSeqs"}, {"mip", UrlPathFactory::pat_wordNumsDash_} });
-		std::cout << path << std::endl;
-		resource->set_path(UrlPathFactory::createUrl( { { rootName_ },{"showMipSeqs"} ,{"mip", UrlPathFactory::pat_wordNumsDash_} }));
+		resource->set_path(UrlPathFactory::createUrl( { { rootName_ }, {
+				"showMipSeqs" }, { "mip", UrlPathFactory::pat_wordNumsDash_ } }));
 		resource->set_method_handler("GET",
 				std::function<void(std::shared_ptr<restbed::Session>)>(
 						[this](std::shared_ptr<restbed::Session> session) {
