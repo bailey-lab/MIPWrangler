@@ -70,7 +70,7 @@ table getSampleStats(const std::string & dirName, bool verbose){
 					}
 					auto processedInfo = processMipExtractInfoFile(info);
 					finalInfo.content_.emplace_back(
-							catenateVectors(
+							concatVecs(
 									toVecStr(sName, total, assembled, discarded, unassembled),
 									processedInfo));
 				}else{
@@ -121,7 +121,7 @@ table getSampleStats(const std::string & dirName, bool verbose, const VecStr & s
 					}
 					auto processedInfo = processMipExtractInfoFile(info);
 					finalInfo.content_.emplace_back(
-							catenateVectors(
+							concatVecs(
 									toVecStr(sName, total, assembled, discarded, unassembled),
 									processedInfo));
 				}else{

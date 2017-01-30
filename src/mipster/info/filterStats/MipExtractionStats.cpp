@@ -63,21 +63,21 @@ std::vector<VecStr> MipExtractionStats::outputContents(const MipCollection & mip
 		total.failedMinLen_ += stats_[k].failedMinLen_;
 		total.containsNs_ += stats_[k].containsNs_;
 		ret.emplace_back(
-				catenateVectors(VecStr {sampName_, k, mips.getFamilyForTarget(k) },
+				concatVecs(VecStr {sampName_, k, mips.getFamilyForTarget(k) },
 						stats_[k].toVecStr()));
 	}
 	uint32_t grandTotal = total.getTotal() + totalUnmatched_
 			+ smallFragmentCount_ + indeterminate_;
-	ret.emplace_back(catenateVectors(VecStr { sampName_,"indeterminate", "indeterminate" }, VecStr {
+	ret.emplace_back(concatVecs(VecStr { sampName_,"indeterminate", "indeterminate" }, VecStr {
 			getPercentageString(indeterminate_, grandTotal), "0", "0", "0", "0", "0" }));
-	ret.emplace_back(catenateVectors(VecStr { sampName_,"unmatched", "unmatched" }, VecStr {
+	ret.emplace_back(concatVecs(VecStr { sampName_,"unmatched", "unmatched" }, VecStr {
 			getPercentageString(totalUnmatched_, grandTotal), "0", "0", "0", "0", "0" }));
 	ret.emplace_back(
-			catenateVectors(VecStr { sampName_,"smallFragment", "smallFragment" }, VecStr {
+			concatVecs(VecStr { sampName_,"smallFragment", "smallFragment" }, VecStr {
 					getPercentageString(smallFragmentCount_, grandTotal), "0", "0", "0", "0",
 					"0" }));
 	ret.emplace_back(
-			catenateVectors(VecStr { sampName_,"total", "total" },
+			concatVecs(VecStr { sampName_,"total", "total" },
 					toVecStr(grandTotal, getPercentageString(total.good_, grandTotal),
 							getPercentageString(total.failedLig_, grandTotal),
 							getPercentageString(total.failedMinLen_, grandTotal),

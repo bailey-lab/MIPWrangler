@@ -15,6 +15,7 @@ class mipsterMipExplorerRunner : public bib::progutils::programRunner {
  public:
   mipsterMipExplorerRunner();
   
+  static int setUpViewMipsOnGenome(const bib::progutils::CmdArgs & inputCommands);
   static int viewMipsOnGenome(const bib::progutils::CmdArgs & inputCommands);
 
 };

@@ -467,7 +467,7 @@ int mipsterAnalysisRunner::runGzExtractStitch(const bib::progutils::CmdArgs & in
 	openTextFile(pearExtractSamplesFile,OutOptions(bib::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/samplesStitched.tab.txt")));
 	std::ofstream samplesMissingFile;
 	openTextFile(samplesMissingFile,OutOptions(bib::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/samplesMissing.tab.txt")));
-	auto allFoundSamps = catenateVectors(samplesExtracted, samplesEmpty);
+	auto allFoundSamps = concatVecs(samplesExtracted, samplesEmpty);
 	bib::sort(allFoundSamps);
 	bib::sort(samplesEmpty);
 	bib::sort(samplesExtracted);

@@ -18,17 +18,22 @@ public:
 
 	bfs::path mainDir_;
 
-	bfs::path genomeDir_;
-	bfs::path infoDir_;
-	bfs::path mapDir_;
-	bfs::path bedsDir_;
-	bfs::path armsDir_;
+	bfs::path genomeDir_;/**< directory with genome files*/
+	bfs::path infoDir_;  /**< directory with info files, specifically the mip arms file*/
+	bfs::path armsDir_;  /**< directory with fasta files of the just the arms of the mips*/
+	bfs::path mapDir_;   /**< directory with the bowtie2 hit results of the arm seqeuences to genomes*/
+	bfs::path bedsDir_;  /**< directory with the bowtie2 hits converted to bed files*/
+	bfs::path fastaDir_;  /**< directory with the fasta files of bed file regions extract from the genomes and collapse to similar sequences*/
+
 	bfs::path logDir_;
 
 	bfs::path mipArmsFnp_;
 	std::unique_ptr<MipCollection> mipArms_;
 
 	uint32_t numThreads_ = 1;
+private:
+	std::string primaryGenome_ = "";
+public:
 
 	class Genome {
 	public:
@@ -60,6 +65,18 @@ public:
 	void mapArmsToGenomes();
 
 	void genBeds();
+
+	void genFastas();
+
+	void setPrimaryGenome(const std::string & genome);
+
+
+	bfs::path pathToMipFasta(const std::string & mipName)const;
+
+	VecStr getMips() const;
+	VecStr getGenomes() const;
+
+	std::vector<GenomeMip> genGenomeMipPairs()const;
 
 };
 

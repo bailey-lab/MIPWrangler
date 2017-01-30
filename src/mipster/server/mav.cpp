@@ -121,10 +121,10 @@ mav::mav(const Json::Value & config) :
 
 
 VecStr mav::requiredOptions() const {
-	return catenateVectors(super::requiredOptions(), VecStr { "masterDir",
-			"samplesExtracted", "masterDir", "mipsSamplesFile", "mipArmsFileName",
+	return concatVecs(super::requiredOptions(), VecStr { "masterDir",
+			"samplesExtracted", "mipsSamplesFile", "mipArmsFileName",
 			"seqFileSuffix", "samplesExtracted", "mipFamsPopClustered",
-			"mipFamsSampsPopClustered" });
+			"mipFamsSampsPopClustered" , "resources"});
 }
 
 void mav::mainPageHandler(std::shared_ptr<restbed::Session> session){
