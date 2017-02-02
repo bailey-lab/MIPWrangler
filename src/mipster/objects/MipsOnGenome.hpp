@@ -35,6 +35,8 @@ private:
 	std::string primaryGenome_ = "";
 public:
 
+	std::string getPrimaryGenome();
+
 	class Genome {
 	public:
 		Genome(const bfs::path & fnp);
@@ -44,6 +46,8 @@ public:
 		void createTwoBit();
 
 		void buildBowtie2Index() const;
+
+		Json::Value chromosomeLengths() const;
 	};
 
 	std::unordered_map<std::string, std::unique_ptr<Genome>> genomes_;

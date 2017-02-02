@@ -45,17 +45,18 @@ void MipsOnGenome::checkInputThrow()const{
 MipsOnGenome::Genome::Genome(const bfs::path & fnp) :
 		fnp_(fnp) {
 	checkExistenceThrow(fnp_, __PRETTY_FUNCTION__);
+	fnpTwoBit_ = fnp_;
+	fnpTwoBit_.replace_extension(".2bit");
 }
 void MipsOnGenome::Genome::createTwoBit() {
-	auto twoBitFnp = fnp_;
-	twoBitFnp.replace_extension(".2bit");
+
 	TwoBit::faToTwoBitPars pars;
 	pars.inputFilename = fnp_.string();
-	pars.outFilename = twoBitFnp.string();
+	pars.outFilename = fnpTwoBit_.string();
 	bool buildTwoBit = false;
-	if(!bfs::exists(twoBitFnp)){
+	if(!bfs::exists(fnpTwoBit_)){
 		buildTwoBit = true;
-	}else if(bib::files::firstFileIsOlder(twoBitFnp, fnp_) ){
+	}else if(bib::files::firstFileIsOlder(fnpTwoBit_, fnp_) ){
 		buildTwoBit = true;
 		pars.overWrite = true;
 	}
@@ -64,6 +65,28 @@ void MipsOnGenome::Genome::createTwoBit() {
 	}
 	fnpTwoBit_ = pars.outFilename;
 }
+
+
+Json::Value MipsOnGenome::Genome::chromosomeLengths() const{
+	Json::Value ret;
+
+	TwoBit::TwoBitFile genFile(fnpTwoBit_);
+	auto lens = genFile.getSeqLens();
+	auto lenKeys = bib::getVecOfMapKeys(lens);
+	bib::sort(lenKeys);
+	for(const auto & lenKey : lenKeys	){
+		Json::Value lenObj;
+		lenObj["name"] = lenKey;
+		lenObj["len"] = lens[lenKey];
+		ret.append(lenObj);
+	}
+	return ret;
+}
+
+std::string MipsOnGenome::getPrimaryGenome(){
+	return primaryGenome_;
+}
+
 void MipsOnGenome::Genome::buildBowtie2Index() const {
 	std::string indexCmd = "bowtie2-build {GENOMEPREFIX}.fasta {GENOMEPREFIX}";
 	auto genomePrefix = bib::files::removeExtension(fnp_.string());
