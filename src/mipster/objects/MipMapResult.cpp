@@ -9,7 +9,6 @@
 
 
 #include "MipMapResult.hpp"
-#include "mipster/objects/MetaDataInName.hpp"
 #include <elucidator/BamToolsUtils.h>
 
 
