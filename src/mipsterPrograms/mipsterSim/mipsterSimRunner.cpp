@@ -85,7 +85,8 @@ int mipsterSimRunner::testMipExtract(const bib::progutils::CmdArgs & inputComman
 			for(const auto & genome : genomes){
 				std::string outStub = bib::files::make_path(setUp.pars_.directoryName_, genome + "_" + mipTar).string();
 				std::stringstream bowtie2Cmd;
-				bowtie2Cmd << " bowtie2  -p 1 -D 20 -R 3 -N 1 -L 18 -i S,1,0.5 --gbar 1 -k 500 --end-to-end "
+				//bowtie2Cmd << " bowtie2  -p 1 -D 20 -R 3 -N 1 -L 18 -i S,1,0.5 --gbar 1 -k 500 --end-to-end "
+				bowtie2Cmd << " bowtie2  -p 1 -D 20 -R 3 -N 1 -L 18 -i S,1,0.5 --gbar 1 --end-to-end "
 						<< "-x " << bib::files::make_path(genomeDirectory, genome)
 						<< " -f -1 " << bib::files::join(setUp.pars_.directoryName_,mipTar)  << "_ext-arm.fasta"
 						<< " -2 " << bib::files::join(setUp.pars_.directoryName_,mipTar) << "_lig-arm.fasta"
