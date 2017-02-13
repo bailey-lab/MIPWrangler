@@ -63,12 +63,17 @@ void mav::getOneMipAllSampsDataPostHandler(std::shared_ptr<restbed::Session> ses
 			auto trimedTab = search->second.get().extractByComp("s_sName",
 					containsSampName);
 			trimedTab.sortTable("s_sName", "c_clusterID", false);
+			//,,,
+			ret = tableToJsonByRow(trimedTab, "s_Sample", VecStr { "s_Sample",
+					"h_popUID", "c_readCnt", "c_barcodeCnt" });
+			/*
 			ret = tableToJsonByRow(trimedTab, "s_Sample", VecStr { "s_Sample",
 					"p_sampleTotal", "p_barcodeTotal", "p_finalHaplotypeNumber",
 					"h_popUID", "h_sampleCnt", "h_sampleFrac", "h_medianBarcodeFrac",
 					"h_barcodeCnt", "h_barcodeFrac", "s_sName", "s_usedTotalClusterCnt",
 					"s_usedTotalBarcodeCnt", "c_clusterID", "c_name", "c_readCnt",
 					"c_readFrac", "c_barcodeCnt", "c_barcodeFrac" });
+			*/
 			auto popUIDs = trimedTab.getColumn("h_popUID");
 			removeDuplicates(popUIDs);
 			bib::sort(popUIDs);

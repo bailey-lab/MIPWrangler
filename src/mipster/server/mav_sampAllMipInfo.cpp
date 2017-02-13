@@ -77,6 +77,9 @@ void mav::getOneSampAllMipDataPostHandler(
 			//std::cout << "size: " << trimedTab.content_.size() << std::endl;
 			//trimedTab.outPutContentOrganized(std::cout);
 			trimedTab.sortTable("p_geneName", "p_targetName", "c_clusterID", false);
+			ret = tableToJsonByRow(trimedTab, "p_targetName", VecStr { "p_targetName",
+					"h_popUID", "c_readCnt", "c_barcodeCnt" });
+			/*
 			ret = tableToJsonByRow(trimedTab, "p_targetName", VecStr {
 					"p_geneName", "p_targetName", "p_sampleTotal", "p_totalInputClusters",
 					"p_readTotal", "p_barcodeTotal", "p_finalHaplotypeNumber", "h_popUID",
@@ -85,6 +88,7 @@ void mav::getOneSampAllMipDataPostHandler(
 					"s_usedTotalBarcodeCnt", "s_inputTotalReadCnt",
 					"s_inputTotalBarcodeCnt", "c_clusterID", "c_name", "c_readCnt",
 					"c_readFrac", "c_barcodeCnt", "c_barcodeFrac" });
+			*/
 			std::unordered_map<std::string, uint32_t> mipClusIdCounts;
 			for (const auto & m : trimedTab.getColumn("c_clusterID")) {
 				++mipClusIdCounts[m];
