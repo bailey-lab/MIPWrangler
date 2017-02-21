@@ -43,6 +43,9 @@ public:
 	bool hasSample(const std::string & samp) const;
 	bool hasMip(const std::string & mip) const;
 	std::vector<MipFamSamp> createAllPairings() const;
+
+	std::set<std::string> getSetSampNames() const;
+
 };
 
 void printMipSampVec(const std::vector<MipFamSamp> & mipSamps,

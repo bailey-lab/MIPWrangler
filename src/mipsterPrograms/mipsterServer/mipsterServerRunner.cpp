@@ -40,6 +40,7 @@ int mipsterServerRunner::mipAnalysisServerSetUp(const bib::progutils::CmdArgs & 
 	mipMaster.loadMipsSampsInfo(pars.allowableErrors);
 	mipMaster.setServerName(name);
 	mipMaster.setRawDataSuffix(pars.seqFileSuffix);
+
 	auto warnings = mipMaster.checkDirStruct();
 	if(!warnings.empty()){
 		std::stringstream ss;

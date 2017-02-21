@@ -54,9 +54,9 @@ $(document).ready(function(){
 				var sampMenu = new njhCheckboxMenuOrganized("#sampNameMenu", allMipNames["mipFamilies"], updateChartOnClick);
 				getJSON("/" + rName + "/mipOverlapGraphData/" + regionName + "/" + sampName).then(function(response) {
 				  var mOverLapDrawer = new MipOverlapper("#mipOverlapGraphChart", response, $(window).width() -200);
-				  		$(window).bind("resize", function(){
-							mOverLapDrawer.updateSize();
-						});
+		  		$(window).bind("resize", function(){
+						mOverLapDrawer.updateSize();
+					});
 				}).catch(logRequestError).then(function(){
 					//done loading sample table
 				});

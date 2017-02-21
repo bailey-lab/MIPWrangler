@@ -121,6 +121,11 @@ std::vector<MipFamSamp> MipsSamplesNames::createAllPairings()const{
 	return allPairings;
 }
 
+
+std::set<std::string> MipsSamplesNames::getSetSampNames() const {
+	return std::set<std::string> { samples_.begin(), samples_.end() };
+}
+
 bool MipsSamplesNames::hasSample(const std::string & samp) const {
 	return bib::in(samp, samples_);
 }

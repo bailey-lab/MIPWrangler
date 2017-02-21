@@ -208,8 +208,6 @@ void mipsterAnalysisSetUp::setUpMipPopulationClustering(
   setOption(pars.keepChimeras, "-keepChimeras", "KeepChimeras");
   setOption(pars_.chiOpts_.parentFreqs_, "-parfreqs", "ParentFrequence_multiplier_cutoff");
 
-	setOption(pars.groupingsFile, "--groupingsFile",
-			"A file to sort samples into different groups and add meta data to sample output");
 
   pars_.ioOptions_.lowerCaseBases_ = "upper";
   pars_.directoryName_ = "analysis";
@@ -270,9 +268,6 @@ void mipsterAnalysisSetUp::setUpMipPopulationClusteringMultiple(
   setOption(pars.keepChimeras, "-keepChimeras", "KeepChimeras");
   setOption(pars_.chiOpts_.parentFreqs_, "-parfreqs", "ParentFrequence_multiplier_cutoff");
 
-
-	setOption(pars.groupingsFile, "--groupingsFile",
-			"A file to sort samples into different groups and add meta data to sample output");
 
 
   pars_.ioOptions_.lowerCaseBases_ = "upper";

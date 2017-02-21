@@ -38,6 +38,9 @@ int mipsterAnalysisRunner::runGzExtractStitch(const bib::progutils::CmdArgs & in
 	mipMaster.setMipArmFnp(pars.mipArmsFileName);
 	mipMaster.setMipsSampsNamesFnp(pars.mipsSamplesFile);
 	mipMaster.loadMipsSampsInfo(pars.allowableErrors);
+	if("" != pars.sampleMetaFnp){
+		mipMaster.setMetaData(pars.sampleMetaFnp);
+	}
 	mipMaster.createDirStructSkeleton();
 	auto warnings = mipMaster.checkDirStruct();
 	if(!warnings.empty()){
@@ -490,6 +493,13 @@ int mipsterAnalysisRunner::runGzExtractStitch(const bib::progutils::CmdArgs & in
 	goodSamples.write(allMipsSamplesFile);
 	bfs::copy(pars.mipsSamplesFile,bib::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "original_allMipsSamplesNames.tab.txt"));
 	mipMaster.createPopClusMipDirs(pars.numThreads);
+
+	if (nullptr != mipMaster.meta_) {
+		bfs::copy_file(mipMaster.meta_->groupingsFile_,
+				bib::files::make_path(mipMaster.directoryMaster_.masterDir_,
+						"resources", "samplesMeta.tab.txt"));
+	}
+
 	return 0;
 }
 

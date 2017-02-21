@@ -25,6 +25,7 @@ mav::mav(const Json::Value & config) :
 	masterDir_ = config["masterDir"].asString();
 	mipArmsFileName_ = config["mipArmsFileName"].asString();
 	mipsSamplesFile_ = config["mipsSamplesFile"].asString();
+
 	std::string seqFileSuffix = config["seqFileSuffix"].asString();
 	mipMaster_ = std::make_shared<SetUpMaster>(masterDir_.string());
 	mipMaster_->setMipArmFnp(mipArmsFileName_.string());
@@ -32,6 +33,9 @@ mav::mav(const Json::Value & config) :
 	mipMaster_->loadMipsSampsInfo(2);
 	mipMaster_->setRawDataSuffix(seqFileSuffix);
 	mipMaster_->setServerName(rootName_.substr(1));
+	if(config.isMember("sampleMetaFnp") && "" != config["sampleMetaFnp"].asString()){
+		mipMaster_->setMetaData(config["sampleMetaFnp"].asString());
+	}
 
 	bib::stopWatch watch;
 	watch.setLapName("Extraction Info");
@@ -293,6 +297,9 @@ int mavRunner(const bib::progutils::CmdArgs & inputCommands){
 	mipMaster.loadMipsSampsInfo(mipCorepars.allowableErrors);
 	mipMaster.setServerName(seqServerCorePars.name_);
 	mipMaster.setRawDataSuffix(mipCorepars.seqFileSuffix);
+	if("" != mipCorepars.sampleMetaFnp){
+		mipMaster.setMetaData(mipCorepars.sampleMetaFnp);
+	}
 	auto warnings = mipMaster.checkDirStruct();
 	if(!warnings.empty()){
 		std::stringstream ss;

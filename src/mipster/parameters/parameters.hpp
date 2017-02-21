@@ -15,6 +15,7 @@ struct mipCorePars{
 
 	bfs::path masterDir = "";
 	bfs::path mipsSamplesFile = "";
+	bfs::path sampleMetaFnp = "";
 	uint32_t allowableErrors = 0;
 	uint32_t wiggleRoom = 0;
 
@@ -30,6 +31,8 @@ struct mipCorePars{
 	void processDefaults(seqSetUp & setUp);
 
 	void addCorePathsToConfig(Json::Value & config);
+
+	void copyCore(const  mipCorePars & otherPars);
 
 };
 
@@ -67,15 +70,7 @@ struct mipIllumArmExtractionParsMultiple : public mipIllumArmExtractionPars {
 		ret.fileOpenLimit_ = fileOpenLimit_;
 		ret.sampleName = newSampleName;
 
-		ret.wiggleRoom = wiggleRoom;
-		ret.allowableErrors = allowableErrors;
-		ret.masterDir = masterDir;
-		ret.mipsSamplesFile = mipsSamplesFile;
-		ret.mipArmsFileName = mipArmsFileName;
-		ret.numThreads = numThreads;
-		ret.logFilename =logFilename;
-		ret.overWriteLog = overWriteLog;
-		ret.overWriteDirs = overWriteDirs;
+		ret.copyCore(*this);
 		return ret;
 	}
 };
@@ -104,16 +99,7 @@ struct mipBarcodeCorrectionParsMultiple : public mipBarcodeCorrectionPars  {
 		ret.writeExtra = writeExtra;
 		ret.sampleName = newSampleName;
 
-		ret.allowableErrors = allowableErrors;
-		ret.wiggleRoom = wiggleRoom;
-
-		ret.masterDir = masterDir;
-		ret.mipsSamplesFile = mipsSamplesFile;
-		ret.mipArmsFileName = mipArmsFileName;
-		ret.numThreads = numThreads;
-		ret.logFilename =logFilename;
-		ret.overWriteLog = overWriteLog;
-		ret.overWriteDirs = overWriteDirs;
+		ret.copyCore(*this);
 		return ret;
 	}
 };
@@ -136,14 +122,7 @@ struct mipClusteringParsMultiple : mipClusteringPars{
 		ret.iterMap = iterMap;
 		ret.sampleName = newSampleName;
 
-		ret.allowableErrors = allowableErrors;
-		ret.masterDir = masterDir;
-		ret.mipsSamplesFile = mipsSamplesFile;
-		ret.mipArmsFileName = mipArmsFileName;
-		ret.numThreads = numThreads;
-		ret.logFilename =logFilename;
-		ret.overWriteLog = overWriteLog;
-		ret.overWriteDirs = overWriteDirs;
+		ret.copyCore(*this);
 		return ret;
 	}
 };
@@ -164,7 +143,6 @@ struct mipPopulationClusteringPars : mipCorePars{
 	comparison previousPopErrors;
 	std::string seqFileSuffix = "_clustered.fastq";
 	std::string mipName = "";
-	bfs::path groupingsFile = "";
 
 };
 
@@ -181,8 +159,7 @@ struct mipPopulationClusteringParsMultiple : public mipPopulationClusteringPars{
 		ret.popIteratorMap = popIteratorMap;
 		ret.iteratorMap = iteratorMap;
 		ret.previousPopErrors = previousPopErrors;
-		ret.seqFileSuffix = seqFileSuffix;
-		ret.groupingsFile = groupingsFile;
+
 		ret.previousPopDir = previousPopDir;
 
 
@@ -192,14 +169,7 @@ struct mipPopulationClusteringParsMultiple : public mipPopulationClusteringPars{
 			ret.previousPopFilename = refPopFile.string();
 		}
 
-		ret.allowableErrors = allowableErrors;
-		ret.masterDir = masterDir;
-		ret.mipsSamplesFile = mipsSamplesFile;
-		ret.mipArmsFileName = mipArmsFileName;
-		ret.numThreads = numThreads;
-		ret.logFilename = logFilename;
-		ret.overWriteLog = overWriteLog;
-		ret.overWriteDirs = overWriteDirs;
+		ret.copyCore(*this);
 		return ret;
 	}
 
@@ -216,18 +186,9 @@ struct mipCorrectForContamWithSameBarcodesPars : public mipCorePars{
 struct mipCorrectForContamWithSameBarcodesParsMultiple : public mipCorrectForContamWithSameBarcodesPars{
 	mipCorrectForContamWithSameBarcodesPars createForMip(const std::string & newMipName)const{
 		mipCorrectForContamWithSameBarcodesPars ret;
-		ret.seqFileSuffix = seqFileSuffix;
-		ret.wiggleRoom = wiggleRoom;
 		ret.mipName = newMipName;
 		ret.readCutOff = readCutOff;
-		ret.allowableErrors = allowableErrors;
-		ret.masterDir = masterDir;
-		ret.mipsSamplesFile = mipsSamplesFile;
-		ret.mipArmsFileName = mipArmsFileName;
-		ret.numThreads = numThreads;
-		ret.logFilename = logFilename;
-		ret.overWriteLog = overWriteLog;
-		ret.overWriteDirs = overWriteDirs;
+		ret.copyCore(*this);
 		return ret;
 	}
 

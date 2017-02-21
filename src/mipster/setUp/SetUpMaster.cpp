@@ -65,6 +65,26 @@ void SetUpMaster::setMipArmFnp(const bfs::path & mipArmFnp) {
 	mipArmFnp_ = mipArmFnp;
 }
 
+void SetUpMaster::setMetaData(const bfs::path & metaFnp) {
+	if (nullptr == names_) {
+		std::stringstream ss;
+		ss << "Error in " << __PRETTY_FUNCTION__ << " names_ "
+				<< " need to be loaded first" << std::endl;
+		throw std::runtime_error { ss.str() };
+	}
+	if (!bfs::exists(metaFnp)) {
+		std::stringstream ss;
+		ss << "Error in " << __PRETTY_FUNCTION__ << " "
+				<< bib::bashCT::boldRed(metaFnp.string()) << " doesn't exist"
+				<< std::endl;
+		throw std::runtime_error { ss.str() };
+	}
+
+	meta_ = std::make_unique<MultipleGroupMetaData>(
+			bib::files::normalize(metaFnp), names_->getSetSampNames());
+
+}
+
 void SetUpMaster::setMipsSampsNamesFnp(const bfs::path & mipsSampsNamesFnp){
 	if(!bfs::exists(mipsSampsNamesFnp)){
 		std::stringstream ss;
@@ -192,6 +212,12 @@ void SetUpMaster::createDirStructSkeleton(const bfs::path & mipSampleFile,
 		names_ = std::make_shared<MipsSamplesNames>(mipsSampsNamesFnp_);
 		createPopClusMipDirs(1);
 		createTopSampleDirs();
+
+		if (nullptr != meta_) {
+			bfs::copy_file(meta_->groupingsFile_,
+					bib::files::make_path(directoryMaster_.masterDir_, "resources",
+							"samplesMeta.tab.txt"));
+		}
 	}
 }
 

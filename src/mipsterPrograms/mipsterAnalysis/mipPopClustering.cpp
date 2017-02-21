@@ -75,8 +75,8 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 			PopNamesInfo(pars.mipName, foundSamples),
 			pars.cutOff);
 
-	if("" != pars.groupingsFile){
-		sampColl.addGroupMetaData(pars.groupingsFile);
+	if("" != pars.sampleMetaFnp){
+		sampColl.addGroupMetaData(pars.sampleMetaFnp);
 	}
 	std::vector<sampleCluster> allSamples;
 	//

@@ -30,12 +30,15 @@ public:
 	std::shared_ptr<MipCollection> mips_;
 	std::shared_ptr<MipsSamplesNames> names_;
 
+	std::unique_ptr<MultipleGroupMetaData> meta_;
+
 	void setServerName(const std::string & mipServerName);
 	bfs::path getMipSerDir() const;
 
 	void setMipArmFnp(const bfs::path & mipArmFnp);
 	void setMipsSampsNamesFnp(const bfs::path & mipsSampsNamesFnp);
 	void setRawDataSuffix(const std::string & rawDataSuffix);
+	void setMetaData(const bfs::path & metaFnp);
 
 	void loadMipsSampsInfo(uint32_t allowableArmErrors);
 
