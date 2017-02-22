@@ -22,6 +22,7 @@ MipsOnGenome::MipsOnGenome(const bfs::path & mainDir, uint32_t numThreads) :
 	fastaDir_ = bib::files::makeDirP(mainDir, bib::files::MkdirPar("fastas"));
 	armsDir_ = bib::files::makeDirP(mainDir, bib::files::MkdirPar("arms"));
 	logDir_ = bib::files::makeDirP(mainDir, bib::files::MkdirPar("logs"));
+	tablesDir_ = bib::files::makeDirP(mainDir, bib::files::MkdirPar("tables"));
 	checkInputThrow();
 	requireExternalProgramThrow("bowtie2");
 }
