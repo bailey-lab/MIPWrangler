@@ -15,8 +15,9 @@ mipsterUtilsRunner::mipsterUtilsRunner()
 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 addFunc("processProcessedMips", processProcessedMips, false),
 																		 addFunc("scanForContam", scanForContam, false),
 																		 addFunc("processMipOverlapGraph", processMipOverlapGraph, false),
-																		 addFunc("processMipOverlapGraphSingle", processMipOverlapGraphSingle, false)
-},
+																		 addFunc("processMipOverlapGraphSingle", processMipOverlapGraphSingle, false),
+																		 addFunc("rearmTargetsAndCombine", rearmTargetsAndCombine, false)
+},//
                     "mipsterUtils") {}
 
 
@@ -401,6 +402,91 @@ int mipsterUtilsRunner::alignTargets(
 	}
 	return 0;
 }
+
+int mipsterUtilsRunner::rearmTargetsAndCombine(
+		const bib::progutils::CmdArgs & inputCommands) {
+	bfs::path inputDir = "";
+	bfs::path outputDir = "";
+	mipCorePars corePars;
+	bool overWriteDir = false;
+	mipsterUtilsSetUp setUp(inputCommands);
+	setUp.setOption(corePars.mipArmsFileName, "--mipArmsFilename",
+				"Name of the mip arms file", true);
+	setUp.processVerbose();
+	setUp.processDebug();
+	setUp.setOption(inputDir, "--inputDir", "Input Directory", true);
+	setUp.setOption(outputDir, "--outputDir", "Output Directory", true);
+	setUp.setOption(overWriteDir, "--overWriteDir",
+			"Over write output directory if it already exists");
+	setUp.finishSetUp(std::cout);
+	if (!bfs::exists(inputDir)) {
+		std::stringstream ss;
+		ss << __PRETTY_FUNCTION__ << ", error, input directory "
+				<< bib::bashCT::boldRed(inputDir.string()) << " doesn't exist" << "\n";
+		throw std::runtime_error { ss.str() };
+	}
+	if (bfs::exists(outputDir) && !overWriteDir) {
+		std::stringstream ss;
+		ss << __PRETTY_FUNCTION__ << ", error, output directory "
+				<< bib::bashCT::boldRed(outputDir.string())
+				<< " already exists, use --overWriteDir to over write " << "\n";
+		throw std::runtime_error { ss.str() };
+	}
+
+	MipCollection mips(corePars.mipArmsFileName, corePars.allowableErrors);
+
+	bib::files::MkdirPar outputPars(outputDir);
+	outputPars.overWriteDir_ = true;
+	bib::files::makeDir(outputPars);
+	setUp.startARunLog(bib::appendAsNeededRet(outputDir.string(), "/"));
+
+	auto files = bib::files::gatherFiles(inputDir, ".fasta", false);
+	if(setUp.pars_.debug_){
+		printVector(files, "\n");
+	}
+
+	std::unordered_map<std::string, std::vector<bfs::path>> inputByRegion;
+
+	for(const auto & f : files){
+		inputByRegion[f.filename().string().substr(0, f.filename().string().find("_"))].emplace_back(f);
+	}
+
+	uint64_t maxLen = 0;
+	//region, genome, subRegion
+	std::unordered_map<std::string,std::unordered_map<std::string, std::map<std::string, std::string>>> seqsByGenomeAndRegion;
+	for(const auto & reg : inputByRegion){
+		for(const auto & f : reg.second){
+			SeqInput reader(SeqIOOptions::genFastaIn(f));
+			auto seqs = reader.readAllReads<seqInfo>();
+			for(auto & seq : seqs){
+				seq.prepend(mips.mips_[bfs::basename(f)].extentionArmObj_.seqBase_.seq_);
+				seq.append(mips.mips_[bfs::basename(f)].ligationArmObj_.seqBase_.seq_);
+				auto genomes = tokenizeString(seq.name_, "-");
+				readVec::getMaxLength(seq, maxLen);
+				for(const auto & genome : genomes){
+					seqsByGenomeAndRegion[reg.first][genome][bfs::basename(f)] = seq.seq_;
+				}
+			}
+		}
+	}
+	std::unordered_map<std::string, std::vector<seqInfo>> seqsByGenome;
+	for(const auto & region : seqsByGenomeAndRegion){
+		for(const auto & genome : region.second){
+			for(const auto & subReg : genome.second){
+				seqsByGenome[genome.first].emplace_back(seqInfo(subReg.first, subReg.second));
+			}
+		}
+	}
+
+	for(auto & genome : seqsByGenome){
+		MipNameSorter::sort(genome.second);
+		SeqOutput::write(genome.second, SeqIOOptions::genFastaOut(bib::files::make_path(outputDir, genome.first)));
+	}
+
+
+	return 0;
+}
+
 
 
 

@@ -24,8 +24,11 @@ mipsterMipExplorerRunner::mipsterMipExplorerRunner() :
 int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
 		const bib::progutils::CmdArgs & inputCommands) {
 	bfs::path mainDir = "";
+	std::string primaryGenome = "";
+
 	uint32_t numThreads = 1;
 	mipsterMipExplorerSetUp setUp(inputCommands);
+	setUp.setOption(primaryGenome, "--primaryGenome", "The primary genome", true);
 	setUp.setOption(numThreads, "--numThreads", "Number of Threads");
 	setUp.setOption(mainDir, "--masterDir", "The master directory", true);
 	setUp.finishSetUp(std::cout);
@@ -34,15 +37,16 @@ int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
 
 	mips.loadInArms();
 	mips.loadInGenomes();
-
+	if ("" != primaryGenome) {
+		mips.setPrimaryGenome(primaryGenome);
+	}
 	mips.setUpGenomes();
 	mips.createArmFiles();
 	mips.mapArmsToGenomes();
 	mips.genBeds();
 	mips.genFastas();
 
-
-
+	mips.genTables();
 	return 0;
 }
 
@@ -93,7 +97,7 @@ int mipsterMipExplorerRunner::viewMipsOnGenome(
 	auto settings = std::make_shared<restbed::Settings>();
 	settings->set_port(seqServerCorePars.port_);
 	settings->set_default_header("Connection", "close");
-
+	settings->set_worker_limit(4);
 	restbed::Service service;
 	service.set_error_handler(mgv::mgvErrorHandler);
 	for(const auto & resource : resources){

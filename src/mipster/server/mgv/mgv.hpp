@@ -21,6 +21,8 @@ class mgv: public bibseq::SeqApp {
 	bfs::path serverResourceDir_;
 	std::unique_ptr<MipsOnGenome> mipsInfo_;
 
+	std::unique_ptr<TableCache> allTarInfo_;
+
 public:
 
 	mgv(const Json::Value & config);
@@ -40,7 +42,20 @@ public:
 	void getGenomeLensPostHandler(std::shared_ptr<restbed::Session> session,
 			const restbed::Bytes & body);
 
+	void getMipRegionInfoForGenomeHandler(
+			std::shared_ptr<restbed::Session> session);
+	void getMipRegionInfoForGenomePostHandler(
+			std::shared_ptr<restbed::Session> session, const restbed::Bytes & body);
 
+
+	void getMipTarInfoForGenomeHandler(
+			std::shared_ptr<restbed::Session> session);
+	void getMipTarInfoForGenomePostHandler(
+			std::shared_ptr<restbed::Session> session, const restbed::Bytes & body);
+
+
+
+	void getMipGenomeLocsHandler(std::shared_ptr<restbed::Session> session);
 
 	//page handlers
 	void mainPageHandler(std::shared_ptr<restbed::Session> session);
@@ -48,9 +63,14 @@ public:
 	void showRegionInfoHandler(std::shared_ptr<restbed::Session> session);
 
 	//getting general info
+	//void (std::shared_ptr<restbed::Session> session);
+	std::shared_ptr<restbed::Resource> getMipGenomeLocs();
 	std::shared_ptr<restbed::Resource> getMipsForRegion();
 	std::shared_ptr<restbed::Resource> getAllNames();
 	std::shared_ptr<restbed::Resource> getGenomeLens();
+
+	std::shared_ptr<restbed::Resource> getMipRegionInfoForGenome();
+	std::shared_ptr<restbed::Resource> getMipTarInfoForGenome();
 
 	//get mip seqs
 	std::shared_ptr<restbed::Resource> getMipSeqs();

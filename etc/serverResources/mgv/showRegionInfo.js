@@ -25,6 +25,13 @@ $(document).ready(function() {
 			var mouseLeaveC = "#FFF";
 			var addTo = "#mipsLinks";
 			createLinksTable(addTo, linkPre, mipNames["mips"], cols, mouseOverC, mouseLeaveC);		
+			addH1 ("#mainContent", "General Infoformation Per Target");
+			addDiv("#mainContent", "tarInfoTab");
+			postJSON("/" + rName + "/getMipTarInfoForGenome", {"genome":names["primaryGenome"], "mipTars": mipNames["mips"]}).then(function (tarInfo) {
+				var tarsTable =  new njhTable("#tarInfoTab", tarInfo, names["primaryGenome"] + "_" + mipRregionName + "_tarInfos", false);	
+			}).catch(logRequestError).then(function(){
+				//done loading names
+			});
 		}).catch(logRequestError).then(function(){
 			//done loading names
 		});

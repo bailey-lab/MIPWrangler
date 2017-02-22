@@ -150,13 +150,13 @@ void mav::getAllNamesHandler(std::shared_ptr<restbed::Session> session){
 	bib::sort(samps);
 	ret["samples"] = bib::json::toJson(samps);
 	auto groupings = mipMaster_->getMipGroupings();
-	bib::sort(groupings);
+	//bib::sort(groupings);
 	ret["mipRegions"] = bib::json::toJson(groupings);
 	auto famlies = mipMaster_->getAllMipFamilies();
-	bib::sort(famlies);
+	//bib::sort(famlies);
 	ret["mipFamilies"] = bib::json::toJson(famlies);
 	auto targets = mipMaster_->getAllMipTargets();
-	bib::sort(targets);
+	//bib::sort(targets);
 	ret["mipTargets"] = bib::json::toJson(targets);
 
 	auto body = bib::json::writeAsOneLine(ret);

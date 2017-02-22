@@ -14,16 +14,15 @@ class MipsOnGenome {
 public:
 	MipsOnGenome(const bfs::path & mainDir, uint32_t numThreads);
 
-
-
 	bfs::path mainDir_;
 
 	bfs::path genomeDir_;/**< directory with genome files*/
-	bfs::path infoDir_;  /**< directory with info files, specifically the mip arms file*/
-	bfs::path armsDir_;  /**< directory with fasta files of the just the arms of the mips*/
-	bfs::path mapDir_;   /**< directory with the bowtie2 hit results of the arm seqeuences to genomes*/
-	bfs::path bedsDir_;  /**< directory with the bowtie2 hits converted to bed files*/
-	bfs::path fastaDir_;  /**< directory with the fasta files of bed file regions extract from the genomes and collapse to similar sequences*/
+	bfs::path infoDir_; /**< directory with info files, specifically the mip arms file*/
+	bfs::path armsDir_; /**< directory with fasta files of the just the arms of the mips*/
+	bfs::path mapDir_; /**< directory with the bowtie2 hit results of the arm seqeuences to genomes*/
+	bfs::path bedsDir_; /**< directory with the bowtie2 hits converted to bed files*/
+	bfs::path fastaDir_; /**< directory with the fasta files of bed file regions extract from the genomes and collapse to similar sequences*/
+	bfs::path tablesDir_; /**< directory to keep some summary tables*/
 
 	bfs::path logDir_;
 
@@ -72,15 +71,27 @@ public:
 
 	void genFastas();
 
+	void genTables() const;
+
 	void setPrimaryGenome(const std::string & genome);
 
-
-	bfs::path pathToMipFasta(const std::string & mipName)const;
+	bfs::path pathToMipFasta(const std::string & mipName) const;
+	bfs::path pathToMipBed(const std::string & mipName,
+			const std::string & genomeName) const;
+	bfs::path pathToAllInfoPrimaryGenome() const;
 
 	VecStr getMips() const;
 	VecStr getGenomes() const;
 
-	std::vector<GenomeMip> genGenomeMipPairs()const;
+	std::vector<GenomeMip> genGenomeMipPairs() const;
+
+	table getGenomeLocsForMipTar(const std::string & tar) const;
+	table getGenomeLocsForAllMipTars() const;
+	table getGenomeLocsForGenome(const std::string & genome) const;
+
+	table getMipRegionStatsForGenome(const std::string & genome) const;
+
+	table getMipTarStatsForGenome(const std::string & genome, const VecStr & mipTars) const;
 
 };
 

@@ -6,6 +6,7 @@
  */
 
 #include "MipCollection.hpp"
+#include "mipster/mipUtils.h"
 
 namespace bibseq {
 
@@ -33,6 +34,7 @@ VecStr MipCollection::getMipsForFamily(const VecStr & families) const{
 	for(const auto family : families){
 		addOtherVec(ret, getMipsForFamily(family));
 	}
+	MipNameSorter::sort(ret);
 	return ret;
 }
 
@@ -43,7 +45,9 @@ VecStr MipCollection::getMipFamsForRegion(const std::string & region) const{
 			retSet.insert(m.second.familyName_);
 		}
 	}
-	return VecStr(retSet.begin(), retSet.end());
+	VecStr ret(retSet.begin(), retSet.end());
+	MipNameSorter::sort(ret);
+	return ret;
 }
 
 
@@ -54,6 +58,7 @@ VecStr MipCollection::getMipTarsForRegion(const std::string & region) const{
 			ret.emplace_back(m.first);
 		}
 	}
+	MipNameSorter::sort(ret);
 	return ret;
 }
 
@@ -63,6 +68,7 @@ VecStr MipCollection::getMipTarsForRegions(const VecStr & regions) const{
 	for(const auto & region : regions){
 		addOtherVec(ret, getMipTarsForRegion(region));
 	}
+	MipNameSorter::sort(ret);
 	return ret;
 }
 
@@ -71,6 +77,13 @@ VecStr MipCollection::getMipFamsForRegions(const VecStr & regions) const{
 	for(const auto & region : regions){
 		addOtherVec(ret, getMipFamsForRegion(region));
 	}
+	MipNameSorter::sort(ret);
+	return ret;
+}
+
+VecStr MipCollection::getMipTars() const{
+	auto ret = getVectorOfMapKeys(mips_);
+	MipNameSorter::sort(ret);
 	return ret;
 }
 
@@ -79,7 +92,9 @@ VecStr MipCollection::getMipRegions() const {
 	for (const auto & m : mips_) {
 		locSet.insert(m.second.locGrouping_);
 	}
-	return VecStr { locSet.begin(), locSet.end() };
+	VecStr ret { locSet.begin(), locSet.end() };
+	MipNameSorter::sortByRegion(ret);
+	return ret;
 }
 
 VecStr MipCollection::getMipRegionsForFams(const VecStr & mipFams) const{
@@ -89,7 +104,9 @@ VecStr MipCollection::getMipRegionsForFams(const VecStr & mipFams) const{
 			locSet.insert(m.second.locGrouping_);
 		}
 	}
-	return VecStr { locSet.begin(), locSet.end() };
+	VecStr ret{ locSet.begin(), locSet.end() };
+	MipNameSorter::sortByRegion(ret);
+	return ret;
 }
 
 
@@ -149,6 +166,7 @@ VecStr MipCollection::getMipsForFamily(const std::string & family)const{
 	if(search != mipNamesForFamily_.end()){
 		ret = search->second;
 	}
+	MipNameSorter::sort(ret);
 	return ret;
 }
 

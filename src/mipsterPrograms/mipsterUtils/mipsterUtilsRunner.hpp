@@ -24,5 +24,8 @@ class mipsterUtilsRunner : public bib::progutils::programRunner {
 	static int processMipOverlapGraph(const bib::progutils::CmdArgs & inputCommands);
 	static int processMipOverlapGraphSingle(const bib::progutils::CmdArgs & inputCommands);
 
+
+	static int rearmTargetsAndCombine(const bib::progutils::CmdArgs & inputCommands);
+
 };
 } // namespace bibseq

@@ -232,4 +232,22 @@ void Mip::writeOutArms(const OutOptions & opts) const{
 	SeqOutput::write(std::vector<seqInfo>{ligArm}, ligOpts);
 }
 
+
+uint32_t Mip::getMipNumFromName(const std::string & name)  {
+	std::regex namePat { "(.*)mip([0-9]+)$" };
+
+	std::smatch match;
+	uint32_t mipNumber = std::numeric_limits<uint32_t>::max();
+	if (std::regex_match(name, match, namePat)) {
+		mipNumber = bib::lexical_cast<uint32_t>(match[2]);
+	} else {
+		std::stringstream ss;
+		ss << __PRETTY_FUNCTION__
+				<< ", error in processing name, didn't match expected pattern = "
+				<< "(.*)mip([0-9]+)$" << "\n";
+		throw std::runtime_error { ss.str() };
+	}
+	return mipNumber;
+}
+
 } /* namespace bibseq */

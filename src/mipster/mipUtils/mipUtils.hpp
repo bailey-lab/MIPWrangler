@@ -8,18 +8,12 @@
 
 
 #include "mipster/common.h"
+#include "mipster/mipUtils/MipNameSorter.hpp"
 
 namespace bibseq {
 
 
-class MipNameSorter{
-public:
 
-	static void sort(VecStr & names);
-
-	static void sort(VecStr & names, const std::regex & namePat);
-
-};
 
 }  // namespace bibseq
 

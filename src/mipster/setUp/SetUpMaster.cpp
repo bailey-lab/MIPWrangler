@@ -7,6 +7,7 @@
 
 
 #include "SetUpMaster.hpp"
+#include "mipster/mipUtils.h"
 
 namespace bibseq {
 
@@ -477,6 +478,7 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithClustered(uint32_t numThreads)c
 	}
 	return pairs;
 }
+
 std::vector<MipFamSamp> SetUpMaster::getMipFamsWithPopClustered(uint32_t numThreads) const{
 	if(!names_){
 		std::stringstream ss;
@@ -656,6 +658,7 @@ VecStr SetUpMaster::getAllMipTargets() const {
 	for (const auto & mip : names_->mips_) {
 		addOtherVec(ret, mips_->getMipsForFamily(mip));
 	}
+	MipNameSorter::sort(ret);
 	return ret;
 }
 
@@ -667,7 +670,9 @@ VecStr SetUpMaster::getAllMipFamilies() const{
 				<< std::endl;
 		throw std::runtime_error { ss.str() };
 	}
-	return names_->mips_;
+	auto ret = names_->mips_;
+	MipNameSorter::sort(ret);
+	return ret;
 }
 
 VecStr SetUpMaster::getMipGroupings() const {
@@ -682,7 +687,9 @@ VecStr SetUpMaster::getMipGroupings() const {
 	for(const auto & mip : names_->mips_){
 		groupings.emplace(getGroupForMipFam(mip));
 	}
-	return VecStr{groupings.begin(), groupings.end()};
+	auto ret = VecStr{groupings.begin(), groupings.end()};
+	MipNameSorter::sort(ret, MipNameSorter::regionNamePat);
+	return ret;
 }
 
 VecStr SetUpMaster::getMipFamiliesForMipGroup(const std::string & groupName) const{
@@ -700,6 +707,7 @@ VecStr SetUpMaster::getMipFamiliesForMipGroup(const std::string & groupName) con
 			mipFamilies.emplace_back(mipFam);
 		}
 	}
+	MipNameSorter::sort(mipFamilies);
 	return mipFamilies;
 }
 

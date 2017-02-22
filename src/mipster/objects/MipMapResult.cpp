@@ -62,7 +62,16 @@ std::vector<MipMapResult> getMipMapResults(const bfs::path & fnp){
 		if(!bAln.IsPrimaryAlignment()){
 			continue;
 		}
+
+		if(std::abs(bAln.InsertSize) > 1000){
+			//skipp really large insert sizes;
+			continue;
+		}
 		if (bAln.IsPaired()) {
+			if(bAln.RefID != bAln.MateRefID){
+				//discordant mapping, continue;
+				continue;
+			}
 			if (bAln.MatePosition == bAln.Position) {
 				if (!alnCache.has(bAln.Name)) {
 					//if mapped to the same place and the mate is yet to be encountered
@@ -78,7 +87,8 @@ std::vector<MipMapResult> getMipMapResults(const bfs::path & fnp){
 
 					//do orphaned operation
 					std::stringstream ss;
-					ss << __PRETTY_FUNCTION__ << ": Error, all input should be paired " << std::endl;
+					ss << __PRETTY_FUNCTION__ << ": Error, all input should be paired" << "\n";
+					ss << "From: " << fnp << "\n";
 					throw std::runtime_error{ss.str()};
 				} else {
 					auto search = alnCache.get(bAln.Name);
@@ -113,7 +123,8 @@ std::vector<MipMapResult> getMipMapResults(const bfs::path & fnp){
 			//unpaired read
 			//do unpaired read operation
 			std::stringstream ss;
-			ss << __PRETTY_FUNCTION__ << ": Error, all input should be paired " << std::endl;
+			ss << __PRETTY_FUNCTION__ << ": Error, all input should be paired " << "\n";
+			ss << "From: " << fnp << "\n";
 			throw std::runtime_error{ss.str()};
 		}
 	}

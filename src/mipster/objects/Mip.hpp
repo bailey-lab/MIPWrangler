@@ -68,6 +68,9 @@ public:
 
 	void writeOutArms(const OutOptions & opts) const;
 
+
+	static uint32_t getMipNumFromName(const std::string & name);
+
 };
 
 } /* namespace bibseq */

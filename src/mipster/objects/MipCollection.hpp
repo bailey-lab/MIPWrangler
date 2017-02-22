@@ -40,6 +40,7 @@ public:
 	VecStr getMipFamsForRegion(const std::string & region) const;
 	VecStr getMipFamsForRegions(const VecStr & regions) const;
 	VecStr getMipRegions() const;
+	VecStr getMipTars() const;
 	VecStr getMipRegionsForFams(const VecStr & mipFams) const;
 
 	std::string getFamilyForTarget(const std::string & mipTarget) const;
