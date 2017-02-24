@@ -190,10 +190,11 @@ void mipsterAnalysisSetUp::setUpMipPopulationClustering(
 			"skipOnLetterCounterDifference");
 	setOption(pars_.colOpts_.skipOpts_.fractionDifferenceCutOff_, "-skipCutOff",
 			"fractionDifferenceCutOff");
-	setOption(pars.previousPopDir, "-refDir", "Directory with possible reference sequence to rename popUIDs to");
+	setOption(pars.previousPopDir, "--refDir", "Directory with possible reference sequence to rename popUIDs to");
 	auto refPopFile = bib::files::make_path(pars.previousPopDir, pars.mipName + ".fasta");
 	if(bfs::exists(refPopFile)){
 		pars.previousPopFilename = refPopFile.string();
+		pars.refIoOptions = SeqIOOptions::genFastaIn(refPopFile);
 	}
 
 	processComparison(pars.previousPopErrors, "previousPop");

@@ -140,6 +140,7 @@ struct mipPopulationClusteringPars : mipCorePars{
 	CollapseIterations iteratorMap;
 	bfs::path previousPopFilename = "";
 	bfs::path previousPopDir = "";
+	SeqIOOptions refIoOptions;
 	comparison previousPopErrors;
 	std::string seqFileSuffix = "_clustered.fastq";
 	std::string mipName = "";
@@ -167,8 +168,8 @@ struct mipPopulationClusteringParsMultiple : public mipPopulationClusteringPars{
 		auto refPopFile = bib::files::make_path(ret.previousPopDir, ret.mipName + ".fasta");
 		if(bfs::exists(refPopFile)){
 			ret.previousPopFilename = refPopFile.string();
+			ret.refIoOptions = SeqIOOptions::genFastaIn(refPopFile);
 		}
-
 		ret.copyCore(*this);
 		return ret;
 	}

@@ -51,10 +51,10 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		return;
 	}
 	// reading expected sequences to compare to
-	bool checkingExpected = seqPars.refIoOptions_.firstName_ != "";
+	bool checkingExpected = pars.refIoOptions.firstName_ != "";
 	std::vector<readObject> expectedSeqs;
 	if (checkingExpected) {
-		expectedSeqs = SeqInput::getReferenceSeq(seqPars.refIoOptions_, maxSize);
+		expectedSeqs = SeqInput::getReferenceSeq(pars.refIoOptions, maxSize);
 	}
 	// create aligner class object
 	// Hard-coded parameters for alignment parameters follow follow:
@@ -103,8 +103,11 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 					sampColl.sampleCollapses_[samp]->input_.info_.infos_.size(), false);
 		}
 		if (!expectedSeqs.empty()) {
+			bool oldWeighHomopolymers = alignerObj.weighHomopolymers_;
+			alignerObj.weighHomopolymers_ = false;
 			sampColl.sampleCollapses_[samp]->collapsed_.checkAgainstExpected(
 					expectedSeqs, alignerObj, false);
+			alignerObj.weighHomopolymers_ = oldWeighHomopolymers;
 		}
 
 		for(auto & clus : sampColl.sampleCollapses_[samp]->collapsed_.clusters_){
