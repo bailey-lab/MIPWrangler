@@ -109,6 +109,12 @@ class mav: public bibseq::SeqApp {
 			const restbed::Bytes & body);
 	void getMipOneSampFinalSeqsHandler(std::shared_ptr<restbed::Session> session);
 	void getOneMipOneSampsDataHandler(std::shared_ptr<restbed::Session> session);
+
+
+	//rawInfo
+	void getRawInfoHandler(std::shared_ptr<restbed::Session> session);
+
+
 public:
 
 	mav(const Json::Value & config);
@@ -162,54 +168,8 @@ public:
 	std::shared_ptr<restbed::Resource> getMipOneSampFinalSeqs();
 	std::shared_ptr<restbed::Resource> getOneMipOneSampsData();
 
-	/*
-	void mainPage();
-	//all names
-
-
-	//extraction info
-	void showInitialReadStats();
-	void getInitialReadStats();
-
-	void showInitialReadStatsPerSample(std::string sampName);
-	void getInitialReadStatsPerSample(std::string sampName);
-
-	void showInitialReadStatsPerMipTar(std::string mipTar);
-	void getInitialReadStatsPerMipTar(std::string mipTar);
-
-	void extractedMipsForSample(std::string sampName);
-	void samplesForExtractedMip(std::string mipTar);
-
-	//samp pop info all mips
-	void showOneSampAllMipData(std::string sampName);
-	void getOneSampAllMipData(std::string sampName);
-	void mipFamNamesForSamp(std::string sampName);
-
-	//gene overview
-	void showGeneInfo(std::string geneName);
-	void mipFamNamesForGene(std::string geneName);
-	void sampNamesForGene(std::string geneName);
-	void mipOverlapGraphData(std::string geneName, std::string sampName);
-
-	//one mip fam
-	void showMipInfo(std::string mipName);
-	void getGeneNameForMipName(std::string mipName);
-	void getSampNamesForMipName(std::string mipName);
-
-	//one mip all samps pop info
-	void showOneMipAllSampsData(std::string mipName);
-	void getOneMipAllSampsData(std::string mipName);
-	void getOneMipAllSampsPopData(std::string mipName);
-	void getMipPopSeqs(std::string mipName);
-
-	void showOneMipOneSampsData(std::string mipName, std::string sampName);
-	void getOneMipOneSampsData(std::string mipName, std::string sampName);
-	void getOneMipOneSampsPopData(std::string mipName, std::string sampName);
-	void getMipOneSampOriginalSeqs(std::string mipName, std::string sampName);
-	void getMipOneSampFinalSeqs(std::string mipName, std::string sampName);
-
-	void showGeneInfoForSampData(std::string geneName, std::string sampName);
-	*/
+	//raw info
+	std::shared_ptr<restbed::Resource> getRawInfo();
 };
 
 

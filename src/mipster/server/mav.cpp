@@ -165,6 +165,31 @@ void mav::getAllNamesHandler(std::shared_ptr<restbed::Session> session){
 	session->close(restbed::OK, body, headers);
 }
 
+void mav::getRawInfoHandler(std::shared_ptr<restbed::Session> session){
+	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
+	auto request = session->get_request();
+	auto rawInfoGzFnp =  bib::files::make_path(
+			mipMaster_->getMipSerDir().string() + "popClusInfo/allInfo.tab.txt.gz");
+	std::string body;
+	std::ifstream in(rawInfoGzFnp.string(), std::ios::binary | std::ios::in);
+	if (!in.is_open()) {
+		std::cerr << "Error in opening: " << rawInfoGzFnp << std::endl;
+	}else{
+		in.seekg(0, std::ios::end);
+		body.resize(in.tellg());
+		in.seekg(0, std::ios::beg);
+		in.read(&body[0], body.size());
+		in.close();
+	}
+	std::multimap<std::string, std::string> header{ {
+		"Content-Type", "application/gzip"}, {"Content-Length",
+		estd::to_string(body.size())}};
+	session->close(restbed::OK, body, header);
+}
+
+
+
+
 void mav::redirect(std::shared_ptr<restbed::Session> session,
 		std::string errorMessage) {
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
@@ -228,6 +253,10 @@ std::vector<std::shared_ptr<restbed::Resource>> mav::getAllResources() {
 	ret.emplace_back(getMipOneSampOriginalSeqs());
 	ret.emplace_back(getMipOneSampFinalSeqs());
 	ret.emplace_back(getOneMipOneSampsData());
+
+	//raw info
+	ret.emplace_back(getRawInfo());
+
 	return ret;
 }
 
@@ -255,6 +284,22 @@ std::shared_ptr<restbed::Resource> mav::getAllNames(){
 					}));
 	return resource;
 }
+
+std::shared_ptr<restbed::Resource> mav::getRawInfo(){
+	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
+	auto resource = std::make_shared<restbed::Resource>();
+	resource->set_path(
+			UrlPathFactory::createUrl( { { rootName_ }, { "getRawInfo" }}));
+	resource->set_method_handler("GET",
+			std::function<void(std::shared_ptr<restbed::Session>)>(
+					[this](std::shared_ptr<restbed::Session> session) {
+		getRawInfoHandler(session);
+					}));
+	return resource;
+}
+
+
+
 
 
 

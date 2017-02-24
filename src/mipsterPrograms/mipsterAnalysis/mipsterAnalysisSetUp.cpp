@@ -183,7 +183,7 @@ void mipsterAnalysisSetUp::setUpMipClusteringMultiple(mipClusteringParsMultiple 
 void mipsterAnalysisSetUp::setUpMipPopulationClustering(
 		mipPopulationClusteringPars & pars) {
 	processDefaults(pars);
-  setOption(pars.parameters, "-par", "ParametersFileName");
+  setOption(pars.parameters, "--par", "ParametersFileName");
   setOption(pars.mipName, "--mipName", "Mip Name", true);
 	setOption(pars.seqFileSuffix, "--seqFileSuffix", "The ending of the sequence append to sample name");
 	setOption(pars_.colOpts_.skipOpts_.skipOnLetterCounterDifference_, "-skip",
@@ -202,7 +202,7 @@ void mipsterAnalysisSetUp::setUpMipPopulationClustering(
 
 
   setOption(pars.fracCutoff, "-fraccutoff", "PopulationClusteringFractionCutoff");
-  pars.differentPar = setOption(pars.parametersPopulation, "-poppar",
+  pars.differentPar = setOption(pars.parametersPopulation, "--popPar",
       "ParametersForPopulationCollapse");
   setOption(pars_.chiOpts_.checkChimeras_, "-markChimeras", "MarkChimeras");
   setOption(pars.keepChimeras, "-keepChimeras", "KeepChimeras");

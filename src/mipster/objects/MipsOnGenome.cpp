@@ -331,15 +331,37 @@ table MipsOnGenome::getGenomeLocsForMipTar(const std::string & tar) const{
 		ss << "Options are " << bib::conToStr(mipArms_->getMipTars(), ", ") << "\n";
 		throw std::runtime_error{ss.str()};
 	}
-	table locs(VecStr{"genome","chrom","start", "stop", "strand", "length"});
+	SeqInput seqReader(SeqIOOptions::genFastaIn(pathToMipFasta(tar)));
+	auto seqs = seqReader.readAllReadsPtrs<readObject>();
+	std::unordered_map<std::string, std::shared_ptr<readObject>> seqsByName;
+	for (const auto & seq : seqs) {
+		auto toks = tokenizeString(seq->seqBase_.name_, "-");
+		for (const auto & tok : toks) {
+			seqsByName[tok] = seq;
+		}
+	}
+	table locs(VecStr{"genome","chrom","start", "stop", "strand", "length",  "GCContent", "longestHomopolymer" });
 	for(const auto & genome : genomes_){
 		auto bedFnp = bib::files::make_path(pathToMipBed(tar, genome.first));
 		if(bfs::exists(bedFnp)){
 			BedRecordCore bedCore;
 			BioDataFileIO<BedRecordCore> bedReader((IoOptions(InOptions(bedFnp))));
 			bedReader.openIn();
+			uint32_t longestHomopolymer = 0;
+			double gcContent = 0;
+			if (bib::in(genome.first, seqsByName)) {
+				seqsByName[genome.first]->setLetterCount();
+				seqsByName[genome.first]->counter_.resetAlphabet(true);
+				seqsByName[genome.first]->counter_.setFractions();
+				seqsByName[genome.first]->counter_.calcGcContent();
+				gcContent = seqsByName[genome.first]->counter_.gcContent_;
+				seqsByName[genome.first]->createCondensedSeq();
+				longestHomopolymer = vectorMaximum(
+						seqsByName[genome.first]->condensedSeqCount);
+			}
 			while(bedReader.readNextRecord(bedCore)){
-				locs.addRow(genome.first, bedCore.chrom_, bedCore.chromStart_, bedCore.chromEnd_, bedCore.strand_,bedCore.chromEnd_- bedCore.chromStart_);
+				locs.addRow(genome.first, bedCore.chrom_, bedCore.chromStart_, bedCore.chromEnd_, bedCore.strand_,bedCore.length(),
+						gcContent, longestHomopolymer);
 			}
 		}
 	}
@@ -348,18 +370,40 @@ table MipsOnGenome::getGenomeLocsForMipTar(const std::string & tar) const{
 
 table MipsOnGenome::getGenomeLocsForAllMipTars() const {
 	table locs(VecStr { "genome", "target", "chrom", "start", "stop", "strand",
-			"length" });
+			"length", "GCContent", "longestHomopolymer" });
 	for (const auto & tar : getMips()) {
+		SeqInput seqReader(SeqIOOptions::genFastaIn(pathToMipFasta(tar)));
+		auto seqs = seqReader.readAllReadsPtrs<readObject>();
+		std::unordered_map<std::string, std::shared_ptr<readObject>> seqsByName;
+		for (const auto & seq : seqs) {
+			auto toks = tokenizeString(seq->seqBase_.name_, "-");
+			for (const auto & tok : toks) {
+				seqsByName[tok] = seq;
+			}
+		}
 		for(const auto & genome : getGenomes()){
 			auto bedFnp = bib::files::make_path(bedsDir_, genome + "_" + tar + ".bed");
 			if (bfs::exists(bedFnp)) {
 				BedRecordCore bedCore;
 				BioDataFileIO<BedRecordCore> bedReader((IoOptions(InOptions(bedFnp))));
 				bedReader.openIn();
+				uint32_t longestHomopolymer = 0;
+				double gcContent = 0;
+				if (bib::in(genome, seqsByName)) {
+					seqsByName[genome]->setLetterCount();
+					seqsByName[genome]->counter_.resetAlphabet(true);
+					seqsByName[genome]->counter_.setFractions();
+					seqsByName[genome]->counter_.calcGcContent();
+					gcContent = seqsByName[genome]->counter_.gcContent_;
+					seqsByName[genome]->createCondensedSeq();
+					longestHomopolymer = vectorMaximum(
+							seqsByName[genome]->condensedSeqCount);
+				}
 				while (bedReader.readNextRecord(bedCore)) {
 					locs.addRow(genome, tar, bedCore.chrom_, bedCore.chromStart_,
 							bedCore.chromEnd_, bedCore.strand_,
-							bedCore.chromEnd_ - bedCore.chromStart_);
+							bedCore.length(),
+							gcContent, longestHomopolymer);
 				}
 			}
 		}
@@ -375,19 +419,39 @@ table MipsOnGenome::getGenomeLocsForGenome(const std::string & genome) const {
 		ss << "Options are " << bib::conToStr(getGenomes(), ", ") << "\n";
 		throw std::runtime_error { ss.str() };
 	}
-	table locs(VecStr { "genome", "region",  "target", "chrom", "start", "end", "strand",
-			"length" });
+	table locs(VecStr { "genome", "region", "target", "chrom", "start", "end",
+			"strand", "length", "GCContent", "longestHomopolymer" });
 	for (const auto & tar : getMips()) {
 		auto bedFnp = bib::files::make_path(bedsDir_, genome + "_" + tar + ".bed");
 		if (bfs::exists(bedFnp)) {
+			SeqInput seqReader(SeqIOOptions::genFastaIn(pathToMipFasta(tar)));
+			auto seqs = seqReader.readAllReadsPtrs<readObject>();
+			std::unordered_map<std::string, std::shared_ptr<readObject>> seqsByName;
+			for (const auto & seq : seqs) {
+				auto toks = tokenizeString(seq->seqBase_.name_, "-");
+				for (const auto & tok : toks) {
+					seqsByName[tok] = seq;
+				}
+			}
 			BedRecordCore bedCore;
 			BioDataFileIO<BedRecordCore> bedReader((IoOptions(InOptions(bedFnp))));
 			bedReader.openIn();
+			uint32_t longestHomopolymer = 0;
+			double gcContent = 0;
+			if (bib::in(genome, seqsByName)) {
+				seqsByName[genome]->setLetterCount();
+				seqsByName[genome]->counter_.resetAlphabet(true);
+				seqsByName[genome]->counter_.setFractions();
+				seqsByName[genome]->counter_.calcGcContent();
+				gcContent = seqsByName[genome]->counter_.gcContent_;
+				seqsByName[genome]->createCondensedSeq();
+				longestHomopolymer = vectorMaximum(
+						seqsByName[genome]->condensedSeqCount);
+			}
 			while (bedReader.readNextRecord(bedCore)) {
-				locs.addRow(genome,mipArms_->mips_.at(tar).locGrouping_,
-						tar, bedCore.chrom_, bedCore.chromStart_,
-						bedCore.chromEnd_, bedCore.strand_,
-						bedCore.chromEnd_ - bedCore.chromStart_);
+				locs.addRow(genome, mipArms_->mips_.at(tar).locGrouping_, tar,
+						bedCore.chrom_, bedCore.chromStart_, bedCore.chromEnd_,
+						bedCore.strand_, bedCore.length(), gcContent, longestHomopolymer);
 			}
 		}
 	}
@@ -420,7 +484,7 @@ table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
 		const VecStr & mipTars) const{
 	table ret(VecStr { "region", "target", "genome", "chrom", "start", "end", "strand",
 			"length", "containsTandemRepeat", "PossibleLengthVariation", "variantNum",
-			"totalVariantsPossible", "variantRatio" });
+			"totalVariantsPossible", "variantRatio", "GCContent", "longestHomopolymer" });
 	for (const auto & mipTar : mipTars) {
 		auto bedFnp = bib::files::make_path(pathToMipBed(mipTar, genome));
 		if(!bfs::exists(bedFnp)){
@@ -433,6 +497,7 @@ table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
 		bool containsTandems = false;
 		bool lengthVariation = false;
 		std::vector<uint32_t> readLens;
+		readObject refSeq;
 		seqInfo seq;
 		SeqInput reader(seqsOpts);
 		reader.openIn();
@@ -448,6 +513,9 @@ table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
 			auto toks = tokenizeString(seq.name_, "-");
 			totalHapsPossible+= toks.size();
 			++hapNum;
+			if(bib::containsSubString(seq.name_, genome)){
+				refSeq = readObject(seq);
+			}
 		}
 		auto minLen = vectorMinimum(readLens);
 		auto maxLen = vectorMaximum(readLens);
@@ -458,6 +526,17 @@ table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
 		BioDataFileIO<BedRecordCore> bedReader((IoOptions(InOptions(bedFnp))));
 		bedReader.openIn();
 		bedReader.readNextRecord(bedCore);
+		double gcContent = 0;
+		uint32_t longestHomopolymer = 0;
+		if("" != refSeq.seqBase_.name_){
+			refSeq.setLetterCount();
+			refSeq.counter_.resetAlphabet(true);
+			refSeq.counter_.setFractions();
+			refSeq.counter_.calcGcContent();
+			gcContent = refSeq.counter_.gcContent_;
+			refSeq.createCondensedSeq();
+			longestHomopolymer = vectorMaximum(refSeq.condensedSeqCount);
+		}
 		ret.addRow(mipArms_->mips_[mipTar].locGrouping_,
 							mipTar, genome,
 							bedCore.chrom_, bedCore.chromStart_, bedCore.chromEnd_,
@@ -465,7 +544,8 @@ table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
 							containsTandems ? "yes": "no",
 							lengthVariation ? "yes": "no",
 							hapNum, totalHapsPossible,
-							static_cast<double>(hapNum)/totalHapsPossible);
+							static_cast<double>(hapNum)/totalHapsPossible,
+							gcContent, longestHomopolymer);
 	}
 	return ret;
 }

@@ -864,25 +864,42 @@ void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 			popClusInfofilepaths.emplace_back(
 					pathMipPopClusSampInfo(mipFam));
 		}
+		auto allPopInfoFile = bib::files::make_path(
+						getMipSerDir().string() + "popClusInfo/allInfo.tab.txt");
 		TableIOOpts allPopInfoOpts(InOptions(), "\t",
-				OutOptions(bfs::path(
-						getMipSerDir().string() + "popClusInfo/allInfo.tab.txt")),
+				OutOptions(allPopInfoFile),
 				"\t", true);
 		allPopInfoOpts.out_.overWriteFile_ = true;
 		MasterTableStaticCache allPopInfo(allPopInfoOpts, popClusInfofilepaths);
-		auto bySample = allPopInfo.get().splitTableOnColumn("s_Sample");
-		for (auto & samp : bySample) {
-			if(bib::in(samp.first, names_->samples_)){
-				TableIOOpts sampOpts(
-						OutOptions(bib::files::make_path(
-								getMipSerDir(), "popClusInfo/" ,samp.first
-										+ ".tab.txt")), "\t", true);
-				sampOpts.out_.overWriteFile_ = true;
-				samp.second.sortTable("p_geneName", "p_targetName", "c_clusterID", false);
-				samp.second.outPutContents(sampOpts);
+		allPopInfo.writeTab();
+		allPopInfo.writeTabGz();
+		bool needsUpdate = false;
+		for (const auto & samp : names_->samples_) {
+			auto sampPopInfoFnp = bib::files::make_path(getMipSerDir(),
+					"popClusInfo/", samp + ".tab.txt");
+			if (!bfs::exists(sampPopInfoFnp)
+					|| bib::files::firstFileIsOlder(sampPopInfoFnp, allPopInfoFile)) {
+				needsUpdate = true;
+				break;
 			}
 		}
-		allPopInfo.writeTab();
+		if(needsUpdate){
+			auto bySample = allPopInfo.get().splitTableOnColumn("s_Sample");
+			for (auto & samp : bySample) {
+				if (bib::in(samp.first, names_->samples_)) {
+					auto sampPopInfoFnp = bib::files::make_path(getMipSerDir(),
+							"popClusInfo/", samp.first + ".tab.txt");
+					if (!bfs::exists(sampPopInfoFnp)
+							|| bib::files::firstFileIsOlder(sampPopInfoFnp, allPopInfoFile)) {
+						TableIOOpts sampOpts(OutOptions(sampPopInfoFnp), "\t", true);
+						sampOpts.out_.overWriteFile_ = true;
+						samp.second.sortTable("p_geneName", "p_targetName", "c_clusterID",
+								false);
+						samp.second.outPutContents(sampOpts);
+					}
+				}
+			}
+		}
 	}
 }
 

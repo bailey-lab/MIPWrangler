@@ -8,11 +8,19 @@ $(document).ready(function() {
 		addMainDiv("body", true);
 		setHeadTitle("Mips!");
 		$("#jumboTitle").html("Mips");
+		addPanelWithDiv(".container.theme-showcase","rawDataPan", "Download Raw Data");
 		addPanelWithDiv(".container.theme-showcase","regionLinks", "Mip Regions");
 		addPanelWithDiv(".container.theme-showcase","sampLinks", "Samples");
 		addPanelWithDiv(".container.theme-showcase","sampStatsLinks", "Initial Read Extraction Amounts Per Sample", "panel-info");
-		addPanelWithDiv(".container.theme-showcase","mipStatsLinks", "Initial Read Extraction Amounts Per Mip Target", "panel-info");
+		addPanelWithDiv(".container.theme-showcase","mipStatsLinks",  "Initial Read Extraction Amounts Per Mip Target", "panel-info");
 		
+		d34.select("#rawDataPan")
+			.append("a")
+				.attr("class", "btn btn-info")
+				.attr("role", "button")
+				.attr("href", rName + "/getRawInfo")
+				.attr("download", "allInfo.tab.txt.gz")
+				.text("Download")
 		var cols = 10;
 		var linkPre = "/" + rName + "/showRegionInfo/";
 		var mouseOverC = "#999";
