@@ -584,7 +584,12 @@ void MipsOnGenome::genBeds() {
 				ss << "Failed to find " << outCheck << " for " << pair.mip_ << " to "
 						<< pair.genome_ << std::endl;
 			}else{
-				auto results = getMipMapResults(outCheck);
+				uint32_t insertSizeCutoff = 1000;
+				//temporary fix
+				if(bib::containsSubString(pair.mip_, "full")){
+					insertSizeCutoff = 2500;
+				}
+				auto results = getMipMapResults(outCheck, insertSizeCutoff);
 				if(results.empty()){
 					ss << "Failed to get results from " << outCheck << " for " << pair.mip_ << " to "
 							<< pair.genome_ << std::endl;

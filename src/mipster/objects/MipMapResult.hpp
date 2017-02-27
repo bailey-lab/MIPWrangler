@@ -39,7 +39,7 @@ public:
  * @param fnp the sorted bam file
  * @return mip map results
  */
-std::vector<MipMapResult> getMipMapResults(const bfs::path & fnp);
+std::vector<MipMapResult> getMipMapResults(const bfs::path & fnp, uint32_t insertSizeCutOff = 1000);
 
 }  // namespace bibseq
 

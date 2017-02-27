@@ -42,7 +42,7 @@ void MipMapResult::setRegion(const BamTools::RefVector & refData) {
 	region_.end_ = std::max(extAln_.GetEndPosition(), ligAln_.GetEndPosition());
 }
 
-std::vector<MipMapResult> getMipMapResults(const bfs::path & fnp){
+std::vector<MipMapResult> getMipMapResults(const bfs::path & fnp, uint32_t insertSizeCutOff){
 	if(bfs::exists(fnp)){
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__ << ", error " << fnp << " doesn't exist" << "\n";
@@ -63,7 +63,7 @@ std::vector<MipMapResult> getMipMapResults(const bfs::path & fnp){
 			continue;
 		}
 
-		if(std::abs(bAln.InsertSize) > 1000){
+		if(std::abs(bAln.InsertSize) > insertSizeCutOff){
 			//skipp really large insert sizes;
 			continue;
 		}
