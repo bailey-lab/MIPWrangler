@@ -11,8 +11,7 @@
 
 namespace bibseq {
 
-
-const std::regex MipNameSorter::mipNamePat{"(.*)mip([0-9]+)$"};
+const std::regex MipNameSorter::mipNamePat{"(.*)mip([0-9]+)[_]*.*$"};
 const std::regex MipNameSorter::regionNamePat{R"(^([A-Za-z]+)(\d+)(.*))"};
 
 

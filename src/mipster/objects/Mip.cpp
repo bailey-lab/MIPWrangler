@@ -27,34 +27,18 @@ Mip::Mip(uint32_t extMbLen, uint32_t ligMbLen, const std::string & ligationArm,
 				ligationArm_), extentionArmMotObj_(extentionArm_) {
 	//check for names
 
-	std::regex namePat{".*mip([0-9]+)$"};
+	std::regex namePat{".*_mip([0-9]+)[_]*.*$"};
+	//std::regex namePat{".*mip([0-9]+)[_.*]*$"};
 	std::smatch match;
 
-	if(!std::regex_match(name_, match, namePat)){
-		std::cerr << "Error in name format for target name " << name_ << ", must end with _mip[0-9]" << std::endl;;
-	}
 	bool error = false;
-	std::stringstream errorOutput;
-	if(!std::regex_match(familyName_, match, namePat)){
-		error = true;
-		errorOutput << "Error in name format for family name " << familyName_ << ", must end with _mip[0-9]" << "\n";
-	}
-
-	if(error){
-		std::stringstream ss;
-		ss << __PRETTY_FUNCTION__ << ", errors found in constructing mip" << "\n";
-		ss << errorOutput.str();
-		throw std::runtime_error{ss.str()};
-	}
-
-/* in an ideal world
- * 	bool error = false;
 	std::stringstream errorOutput;
 	if(!std::regex_match(name_, match, namePat)){
 		error = true;
 		errorOutput << "Error in name format for target name " << name_ << ", must end with _mip[0-9]" << "\n";
 	}
-	if(!std::regex_match(familyName_, match, namePat)){
+	std::smatch familyMatch;
+	if(!std::regex_match(familyName_, familyMatch, namePat)){
 		error = true;
 		errorOutput << "Error in name format for family name " << familyName_ << ", must end with _mip[0-9]" << "\n";
 	}
@@ -64,7 +48,6 @@ Mip::Mip(uint32_t extMbLen, uint32_t ligMbLen, const std::string & ligationArm,
 		ss << errorOutput.str();
 		throw std::runtime_error{ss.str()};
 	}
- */
 
 }
 
