@@ -29,7 +29,26 @@ Mip::Mip(uint32_t extMbLen, uint32_t ligMbLen, const std::string & ligationArm,
 
 	std::regex namePat{".*mip([0-9]+)$"};
 	std::smatch match;
+
+	if(!std::regex_match(name_, match, namePat)){
+		std::cerr << "Error in name format for target name " << name_ << ", must end with _mip[0-9]" << std::endl;;
+	}
 	bool error = false;
+	std::stringstream errorOutput;
+	if(!std::regex_match(familyName_, match, namePat)){
+		error = true;
+		errorOutput << "Error in name format for family name " << familyName_ << ", must end with _mip[0-9]" << "\n";
+	}
+
+	if(error){
+		std::stringstream ss;
+		ss << __PRETTY_FUNCTION__ << ", errors found in constructing mip" << "\n";
+		ss << errorOutput.str();
+		throw std::runtime_error{ss.str()};
+	}
+
+/* in an ideal world
+ * 	bool error = false;
 	std::stringstream errorOutput;
 	if(!std::regex_match(name_, match, namePat)){
 		error = true;
@@ -45,6 +64,7 @@ Mip::Mip(uint32_t extMbLen, uint32_t ligMbLen, const std::string & ligationArm,
 		ss << errorOutput.str();
 		throw std::runtime_error{ss.str()};
 	}
+ */
 
 }
 
