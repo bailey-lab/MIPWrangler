@@ -135,7 +135,7 @@ int mipsterUtilsRunner::processMipOverlapGraph(
 					lociInfoFile << "L" << mipSubRegion.first + 1 << " A" << alleleNum + 1
 							<< " " << roundDecPlaces(seq->frac_, 3) << std::endl;
 					lociAlleNameKeyFile << seq->name_ << "\t" << "L"
-							<< mipSubRegion.first + 1 << " A" << alleleNum + 1 << std::endl;
+							<< mipSubRegion.first + 1 << ".A" << alleleNum + 1 << std::endl;
 				}
 			}
 			alignerObj.processAlnInfoOutput(setUp.pars_.alnInfoDirName_,
