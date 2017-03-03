@@ -92,7 +92,7 @@ int mipsterUtilsRunner::processMipOverlapGraph(
 			std::ofstream lociInfoFile;
 			openTextFile(possibleHapsFile,bib::files::join(sampDirPath.string(), "possibleHapsFile"),".txt",false, true );
 			openTextFile(lociInfoFile,bib::files::join(sampDirPath.string(), "lociInfoFile"),".txt",false, true );
-			OutOptions lociAlleNameKeyOpts(bib::files::make_path(sampDirPath, "nameKey"));
+			OutOptions lociAlleNameKeyOpts(bib::files::make_path(sampDirPath, "nameKey.tab.txt"));
 			std::ofstream lociAlleNameKeyFile;
 			lociAlleNameKeyOpts.openFile(lociAlleNameKeyFile);
 			lociAlleNameKeyFile << "seqName\tLociName" << std::endl;
@@ -135,8 +135,7 @@ int mipsterUtilsRunner::processMipOverlapGraph(
 					lociInfoFile << "L" << mipSubRegion.first + 1 << " A" << alleleNum + 1
 							<< " " << roundDecPlaces(seq->frac_, 3) << std::endl;
 					lociAlleNameKeyFile << seq->name_ << "\t" << "L"
-							<< mipSubRegion.first + 1 << " " << mipSubRegion.second.size()
-							<< std::endl;
+							<< mipSubRegion.first + 1 << " A" << alleleNum + 1 << std::endl;
 				}
 			}
 			alignerObj.processAlnInfoOutput(setUp.pars_.alnInfoDirName_,
