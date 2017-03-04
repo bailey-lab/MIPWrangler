@@ -28,6 +28,9 @@ public:
 
 	GenomicRegion region_;
 
+	GenomicRegion extArmRegion_;
+	GenomicRegion ligArmRegion_;
+
 	bool isMapped() const;
 	bool isConcordant() const;
 	void setRegion(const BamTools::RefVector & refData);

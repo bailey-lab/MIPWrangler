@@ -35,11 +35,24 @@ void MipMapResult::setRegion(const BamTools::RefVector & refData) {
 	MetaDataInName meta;
 	meta.addMeta("genome", genomeName_, false);
 	meta.addMeta("mipTar", mipName_, false);
+	//full region
 	region_.uid_ = meta.createMetaName();
 	region_.chrom_ = refData[extAln_.RefID].RefName;
 	region_.reverseSrand_ = extAln_.IsReverseStrand();
 	region_.start_ = std::min(extAln_.Position, ligAln_.Position);
 	region_.end_ = std::max(extAln_.GetEndPosition(), ligAln_.GetEndPosition());
+	//extension arm
+	extArmRegion_.uid_ = meta.createMetaName() + "-ext";
+	extArmRegion_.chrom_ = refData[extAln_.RefID].RefName;
+	extArmRegion_.reverseSrand_ = extAln_.IsReverseStrand();
+	extArmRegion_.start_ = extAln_.Position;
+	extArmRegion_.end_ = extAln_.GetEndPosition();
+	//ligation arm
+	ligArmRegion_.uid_ = meta.createMetaName() + "-lig";
+	ligArmRegion_.chrom_ = refData[extAln_.RefID].RefName;
+	ligArmRegion_.reverseSrand_ = extAln_.IsReverseStrand();
+	ligArmRegion_.start_ = ligAln_.Position;
+	ligArmRegion_.end_ = ligAln_.GetEndPosition();
 }
 
 std::vector<MipMapResult> getMipMapResults(const bfs::path & fnp, uint32_t insertSizeCutOff){

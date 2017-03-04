@@ -228,6 +228,8 @@ void MipsOnGenome::genFastas() {
 			bool succes = false;
 			auto outOpts = SeqIOOptions::genFastaOut(bib::files::make_path(fastaDir_, mipName));
 			outOpts.out_.overWriteFile_ = true;
+			auto trimmedOutOpts = SeqIOOptions::genFastaOut(bib::files::make_path(fastaDir_, "trimmed_" + mipName));
+			trimmedOutOpts.out_.overWriteFile_ = true;
 			std::unordered_map<std::string, std::shared_ptr<InOptions>> bedOpts;
 			bool needsUpdate = false;
 			for(const auto & genome : genomes){
@@ -249,9 +251,12 @@ void MipsOnGenome::genFastas() {
 					ss << outOpts.out_.outName() << " already up to date";
 				}else{
 					std::vector<seqInfo> seqs;
+					std::vector<seqInfo> trimmedSeqs;
 					for(const auto & bedOpt : bedOpts){
 						std::string genome = bedOpt.first;
-						auto regions = gatherRegions(bedOpt.second->inFilename_.string(), "", false);
+						auto regions =    gatherRegions(bedOpt.second->inFilename_.string(), "", false);
+						auto extRegions = gatherRegions(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-ext.bed"), "", false);
+						auto ligRegions = gatherRegions(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-lig.bed"), "", false);
 						if(regions.empty()){
 							succes = false;
 							ss << "Error in parsing " << bedOpt.second->inFilename_ << "\n";
@@ -264,40 +269,51 @@ void MipsOnGenome::genFastas() {
 							if(regions.front().reverseSrand_){
 								seq = seqUtil::reverseComplement(seq, "DNA");
 							}
+							seqInfo trimmedSeq(genome, seq);
+							readVecTrimmer::trimOffForwardBases(trimmedSeq, extRegions.front().getLen());
+							readVecTrimmer::trimOffEndBases(trimmedSeq, ligRegions.front().getLen());
 							seqs.emplace_back(seqInfo(genome, seq));
+							trimmedSeqs.emplace_back(trimmedSeq);
 						}
 					}
 					if(seqs.empty()){
 						succes = false;
 						ss << "Failed to extract any sequences from bed files " << "\n";
 					}else{
-						std::vector<seqInfo> outputSeqs;
-						for(const auto & seq : seqs){
-							if(outputSeqs.empty()){
-								outputSeqs.emplace_back(seq);
-							}else{
-								bool foundSame = false;
-								for( auto & outSeq : outputSeqs){
-									if(seq.seq_ == outSeq.seq_ ){
-										outSeq.name_ += "-" + seq.name_;
-										foundSame = true;
-										break;
+						auto collapseSimSeqs = [](std::vector<seqInfo> & seqs){
+							std::vector<seqInfo> outputSeqs;
+							for(const auto & seq : seqs){
+								if(outputSeqs.empty()){
+									outputSeqs.emplace_back(seq);
+								}else{
+									bool foundSame = false;
+									for( auto & outSeq : outputSeqs){
+										if(seq.seq_ == outSeq.seq_ ){
+											outSeq.name_ += "-" + seq.name_;
+											foundSame = true;
+											break;
+										}
+									}
+									if(!foundSame){
+										outputSeqs.emplace_back(seq);
 									}
 								}
-								if(!foundSame){
-									outputSeqs.emplace_back(seq);
+							}
+							for(auto & outSeq : outputSeqs){
+								if(std::string::npos != outSeq.name_.find('-')){
+									auto gs = bib::tokenizeString(outSeq.name_, "-");
+									bib::sort(gs);
+									outSeq.name_ = bib::conToStr(gs, "-");
 								}
 							}
-						}
-						for(auto & outSeq : outputSeqs){
-							if(std::string::npos != outSeq.name_.find('-')){
-								auto gs = bib::tokenizeString(outSeq.name_, "-");
-								bib::sort(gs);
-								outSeq.name_ = bib::conToStr(gs, "-");
-							}
-						}
+							return outputSeqs;
+						};
+
 						succes = true;
+						auto outputSeqs = collapseSimSeqs(seqs);
 						SeqOutput::write(outputSeqs, outOpts);
+						auto trimedOutputSeqs = collapseSimSeqs(trimmedSeqs);
+						SeqOutput::write(trimedOutputSeqs, trimmedOutOpts);
 					}
 				}
 			}
@@ -603,10 +619,23 @@ void MipsOnGenome::genBeds() {
 						ss << bedOpts.outName() << " already up to date" << "\n";
 					}else{
 						if (results.front().isConcordant() && results.front().isMapped()) {
+							OutOptions bedExtOpts(bib::files::make_path(bedsDir_, pair.genome_ + "_" + pair.mip_ + "-ext.bed"));
+							OutOptions bedLigOpts(bib::files::make_path(bedsDir_, pair.genome_ + "_" + pair.mip_ + "-lig.bed"));
+							//full region
 							std::ofstream outFile;
 							bedOpts.overWriteFile_ = true;
-													openTextFile(outFile, bedOpts);
+							bedOpts.openFile(outFile);
 							outFile << results.front().region_.genBedRecordCore().toDelimStr() << std::endl;
+							//ext
+							std::ofstream outExtFile;
+							bedExtOpts.overWriteFile_ = true;
+							bedExtOpts.openFile(outExtFile);
+							outExtFile << results.front().extArmRegion_.genBedRecordCore().toDelimStr() << std::endl;
+							//lig
+							std::ofstream outLigFile;
+							bedLigOpts.overWriteFile_ = true;
+							bedLigOpts.openFile(outLigFile);
+							outLigFile << results.front().ligArmRegion_.genBedRecordCore().toDelimStr() << std::endl;
 							succes =  true;
 						} else {
 							if (!results.front().isMapped()) {
