@@ -223,16 +223,15 @@ void genClusInfoWithBars::setFracInfo(const genInfoWithBars & totalInfo){
 
 std::string genClusInfoWithBars::getInfoHeader(const std::string & delim,
 		bool checkingExpected) {
+	VecStr headers { "c_clusterID", "c_name", "c_readCnt", "c_readFrac",
+			"c_barcodeCnt", "c_barcodeFrac", "c_seq", "c_qual", "c_length" };
 	if (checkingExpected) {
-		return vectorToString(VecStr { "c_clusterID", "c_name", "c_readCnt",
-				"c_readFrac", "c_barcodeCnt", "c_barcodeFrac", "c_seq", "c_qual",
-				"c_bestExpected" }, delim);
-	} else {
-		return vectorToString(VecStr { "c_clusterID", "c_name", "c_readCnt",
-				"c_readFrac", "c_barcodeCnt", "c_barcodeFrac", "c_seq", "c_qual" },
-				delim);
+		headers.emplace_back("c_bestExpected");
 	}
+	return vectorToString(headers, delim);
 }
+
+
 
 std::string genClusInfoWithBars::getInfo(const std::string & delim, bool header,
 		bool checkingExpected) const {
@@ -243,13 +242,13 @@ std::string genClusInfoWithBars::getInfo(const std::string & delim, bool header,
 			return vectorToString(
 					toVecStr(clusterID_, seqBase_.name_, readCnt_, readFrac_, barcodeCnt_,
 							barcodeFrac_, seqBase_.seq_,
-							seqBase_.getFastqQualString(SangerQualOffset),
+							seqBase_.getFastqQualString(SangerQualOffset), len(seqBase_),
 							expectsStr_), delim);
 		} else {
 			return vectorToString(
 					toVecStr(clusterID_, seqBase_.name_, readCnt_, readFrac_, barcodeCnt_,
 							barcodeFrac_, seqBase_.seq_,
-							seqBase_.getFastqQualString(SangerQualOffset)),
+							seqBase_.getFastqQualString(SangerQualOffset), len(seqBase_)),
 					delim);
 		}
 	}

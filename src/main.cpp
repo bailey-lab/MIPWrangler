@@ -16,7 +16,9 @@ mipsterRunner::mipsterRunner() :
 					addRing<mipsterUtilsRunner>(),
 					addRing<mipsterSetUpRunner>(),
 				  addRing<mipsterSimRunner>(),
-					addRing<mipsterMipExplorerRunner>()}, { }, "mipster") {
+					addRing<mipsterMipExplorerRunner>(),
+					addRing<mipsterMipTesterRunner>()}, { }, "MIPWrangler",
+					"1", "0", "0-dev") {
 }
 } // namespace bibseq
 

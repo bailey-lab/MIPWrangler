@@ -69,6 +69,7 @@ public:
 	std::vector<MipFamSamp> getPairsWithExtracted(uint32_t numThreads) const;
 	std::vector<MipFamSamp> getPairsWithBarCor(uint32_t numThreads) const;
 	std::vector<MipFamSamp> getPairsWithClustered(uint32_t numThreads) const;
+	std::vector<MipFamSamp> getPairsWithPopClustered(uint32_t numThreads) const;
 	std::vector<MipFamSamp> getMipFamsWithPopClustered(uint32_t numThreads) const;
 
 	VecStr getMipGroupings() const;

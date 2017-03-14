@@ -97,6 +97,12 @@ VecStr MipCollection::getMipRegions() const {
 	return ret;
 }
 
+VecStr MipCollection::getMipFamilies() const {
+	VecStr ret = mipFamilies_;
+	MipNameSorter::sortByRegion(ret);
+	return ret;
+}
+
 VecStr MipCollection::getMipRegionsForFams(const VecStr & mipFams) const{
 	std::set<std::string> locSet;
 	for (const auto & m : mips_) {
@@ -133,6 +139,9 @@ MipCollection::MipCollection(const bfs::path & mipArmIdFile,
 	}
 
 	for (const auto & row : mipInfo.content_) {
+		if(std::all_of(row.begin(), row.end(), [](const std::string & col){ return "" == col;})){
+			continue;
+		}
 		auto currentMipName = row[mipInfo.getColPos("mip_id")];
 		if(bib::in(currentMipName, mips_)){
 			std::stringstream ss;

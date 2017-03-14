@@ -92,7 +92,7 @@ std::string MipsOnGenome::getPrimaryGenome(){
 }
 
 void MipsOnGenome::Genome::buildBowtie2Index() const {
-	std::string indexCmd = "bowtie2-build {GENOMEPREFIX}.fasta {GENOMEPREFIX}";
+	std::string indexCmd = "bowtie2-build -q {GENOMEPREFIX}.fasta {GENOMEPREFIX}";
 	auto genomePrefix = bib::files::removeExtension(fnp_.string());
 	indexCmd = bib::replaceString(indexCmd, "{GENOMEPREFIX}", genomePrefix);
 	bool buildIndex = false;
@@ -604,6 +604,10 @@ void MipsOnGenome::genBeds() {
 				//temporary fix
 				if(bib::containsSubString(pair.mip_, "full")){
 					insertSizeCutoff = 2500;
+				}
+				//temporary fix
+				if(bib::containsSubString(pair.mip_, "lsa") && bib::containsSubString(pair.mip_, "full")){
+					insertSizeCutoff = 5000;
 				}
 				auto results = getMipMapResults(outCheck, insertSizeCutoff);
 				if(results.empty()){

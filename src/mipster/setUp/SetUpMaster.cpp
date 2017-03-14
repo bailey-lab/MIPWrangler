@@ -479,6 +479,52 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithClustered(uint32_t numThreads)c
 	return pairs;
 }
 
+std::vector<MipFamSamp> SetUpMaster::getPairsWithPopClustered(uint32_t numThreads) const{
+	if(!names_){
+		std::stringstream ss;
+		ss << "Error in " << __PRETTY_FUNCTION__
+				<< " attempting to use member names_ when it isn't a valid pointer"
+				<< std::endl;
+		throw std::runtime_error{ss.str()};
+	}
+	if(!mips_){
+		std::stringstream ss;
+		ss << "Error in " << __PRETTY_FUNCTION__
+				<< " attempting to use member mips_ when it isn't a valid pointer"
+				<< std::endl;
+		throw std::runtime_error{ss.str()};
+	}
+	bib::concurrent::LockableQueue<std::string> sampQueue(names_->samples_);
+	std::vector<MipFamSamp> pairs;
+
+	std::mutex pairsMut;
+	auto checkSample = [&pairsMut,&pairs,this](bib::concurrent::LockableQueue<std::string>& sampQueue,
+			const SetUpMaster & mipMaster){
+		std::string samp = "";
+		std::vector<MipFamSamp> currentPairs;
+		while(sampQueue.getVal(samp)){
+			for(const auto & mipFam : mipMaster.names_->mips_){
+				MipFamSamp pair(mipFam, samp);
+				if (bfs::exists(pathPopClusFinalHaplo(pair))) {
+					currentPairs.emplace_back(pair);
+				}
+			}
+		}
+		{
+			std::lock_guard<std::mutex> lock(pairsMut);
+			addOtherVec(pairs, currentPairs);
+		}
+	};
+	std::vector<std::thread> threads;
+	for(uint32_t threadNum = 0; threadNum < numThreads; ++threadNum){
+		threads.emplace_back(std::thread(checkSample, std::ref(sampQueue), std::cref(*this)));
+	}
+	for(auto & t : threads){
+		t.join();
+	}
+	return pairs;
+}
+
 std::vector<MipFamSamp> SetUpMaster::getMipFamsWithPopClustered(uint32_t numThreads) const{
 	if(!names_){
 		std::stringstream ss;

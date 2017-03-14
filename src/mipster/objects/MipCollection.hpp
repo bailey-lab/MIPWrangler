@@ -30,8 +30,6 @@ public:
 	std::unordered_map<std::string, VecStr> mipNamesForFamily_; /**< Map to hold mip target names for mip family*/
 	VecStr mipFamilies_; /**< All mip family names*/
 
-
-
 	VecStr getMipsForFamily(const std::string & family) const;
 	VecStr getMipsForFamily(const VecStr & families) const;
 
@@ -40,6 +38,7 @@ public:
 	VecStr getMipFamsForRegion(const std::string & region) const;
 	VecStr getMipFamsForRegions(const VecStr & regions) const;
 	VecStr getMipRegions() const;
+	VecStr getMipFamilies() const;
 	VecStr getMipTars() const;
 	VecStr getMipRegionsForFams(const VecStr & mipFams) const;
 
