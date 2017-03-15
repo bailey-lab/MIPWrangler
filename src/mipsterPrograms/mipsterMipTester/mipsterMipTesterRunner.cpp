@@ -156,6 +156,9 @@ int mipsterMipTesterRunner::testingVariationCalling(
 	std::unordered_map<std::string, uint32_t> missingRegionsCounts;
 
 	for (const auto & samp : bySample) {
+		if(setUp.pars_.verbose_){
+			std::cout << "Sample: " << samp.first << std::endl;
+		}
 		BamTools::BamAlignment bAln;
 		BamTools::BamReader bReader;
 		bReader.Open(
@@ -164,6 +167,9 @@ int mipsterMipTesterRunner::testingVariationCalling(
 		checkBamOpenThrow(bReader);
 		auto refData = bReader.GetReferenceData();
 		while(bReader.GetNextAlignment(bAln)){
+			if(setUp.pars_.debug_){
+				std::cout << "\t" << bAln.Name << std::endl;
+			}
 			MetaDataInName meta(bAln.Name);
 			auto chromName = refData[bAln.RefID].RefName;
 			std::vector<GenomicRegion> regionsContained;
