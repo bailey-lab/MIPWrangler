@@ -199,6 +199,12 @@ int mipsterMipTesterRunner::testingVariationCalling(
 				}
 				std::cout << std::endl;
 			}
+			if(setUp.pars_.debug_){
+				std::cout << "\tdone: " << bAln.Name << std::endl;
+			}
+		}
+		if(setUp.pars_.verbose_){
+			std::cout << "Done Sample: " << samp.first << std::endl;
 		}
 	}
 
