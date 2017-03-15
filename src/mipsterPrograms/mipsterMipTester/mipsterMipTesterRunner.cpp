@@ -170,6 +170,12 @@ int mipsterMipTesterRunner::testingVariationCalling(
 			if(setUp.pars_.debug_){
 				std::cout << "\t" << bAln.Name << std::endl;
 			}
+			if(!bAln.IsMapped()){
+				if(setUp.pars_.debug_){
+					std::cout << "\t" << bAln.Name << " didn't map, next"<< std::endl;
+				}
+				continue;
+			}
 			MetaDataInName meta(bAln.Name);
 			auto chromName = refData[bAln.RefID].RefName;
 			std::vector<GenomicRegion> regionsContained;
