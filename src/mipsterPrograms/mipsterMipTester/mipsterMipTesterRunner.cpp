@@ -35,7 +35,15 @@ bib::sys::RunOutput bowtie2Align(const bfs::path & input,
 	return ret;
 }
 
-
+template<typename T>
+std::unordered_map<std::string, std::vector<T>> splitSeqsByMetaField(const std::vector<T> & seqs, const std::string & field){
+	std::unordered_map<std::string, std::vector<T>> ret;
+	for(const auto & seq : seqs){
+		MetaDataInName meta(getSeqBase(seq).name_);
+		ret[meta.getMeta(field)].emplace_back(seq);
+	}
+	return ret;
+}
 
 int mipsterMipTesterRunner::testingVariationCalling(
 		const bib::progutils::CmdArgs & inputCommands) {
@@ -63,6 +71,7 @@ int mipsterMipTesterRunner::testingVariationCalling(
 	mipMaster.setMipArmFnp(pars.mipArmsFileName);
 	mipMaster.setMipsSampsNamesFnp(pars.mipsSamplesFile);
 	mipMaster.loadMipsSampsInfo(pars.allowableErrors);
+	mipMaster.setMetaData(pars.sampleMetaFnp);
 	auto warnings = mipMaster.checkDirStruct();
 	if(!warnings.empty()){
 		std::stringstream ss;
@@ -125,6 +134,12 @@ int mipsterMipTesterRunner::testingVariationCalling(
 						SeqInput reader(opts);
 						reader.openIn();
 						while(reader.readNextRead(seq)) {
+							MetaDataInName meta(seq.name_);
+							auto mipTar = mipMaster.mips_->getMipsForFamily(meta.getMeta("mipFam")).front();
+							//seq.prepend(bib::strToLowerRet(mipMaster.mips_->mips_[mipTar].extentionArm_));
+							//seq.append(bib::strToLowerRet(mipMaster.mips_->mips_[mipTar].ligationArm_));
+							seq.prepend(bib::strToLowerRet(mipMaster.mips_->mips_[mipTar].extentionArm_));
+							seq.append(bib::strToLowerRet(mipMaster.mips_->mips_[mipTar].ligationArm_));
 							writer.write(seq);
 						}
 					}
@@ -153,9 +168,15 @@ int mipsterMipTesterRunner::testingVariationCalling(
 		regionsByChrom[reg.chrom_].emplace_back(reg);
 	}
 
+	//TwoBit::TwoBitFile gReader(genomePrefix.string() + ".2bit");
+	aligner alignerObj(600, setUp.pars_.gapInfo_, setUp.pars_.scoring_, false);
 	std::unordered_map<std::string, uint32_t> missingRegionsCounts;
-
+	uint32_t unmapped = 0;
 	for (const auto & samp : bySample) {
+		auto extractOpts = SeqIOOptions::genFastqOut(bib::files::make_path(setUp.pars_.directoryName_, samp.first,
+						samp.first + "_extracted"));
+		SeqOutput writer(extractOpts);
+		writer.openOut();
 		if(setUp.pars_.verbose_){
 			std::cout << "Sample: " << samp.first << std::endl;
 		}
@@ -171,6 +192,7 @@ int mipsterMipTesterRunner::testingVariationCalling(
 				std::cout << "\t" << bAln.Name << std::endl;
 			}
 			if(!bAln.IsMapped()){
+				++unmapped;
 				if(setUp.pars_.debug_){
 					std::cout << "\t" << bAln.Name << " didn't map, next"<< std::endl;
 				}
@@ -181,8 +203,7 @@ int mipsterMipTesterRunner::testingVariationCalling(
 			std::vector<GenomicRegion> regionsContained;
 			if(bib::in(chromName, regionsByChrom)){
 				for(const auto & reg : regionsByChrom.at(chromName)){
-
-					if(reg.start_ + 30 >= bAln.Position && reg.end_ -30 <= bAln.GetEndPosition()){
+					if(reg.start_ >= bAln.Position && reg.end_ <= bAln.GetEndPosition()){
 						regionsContained.emplace_back(reg);
 					}
 					/*
@@ -195,15 +216,43 @@ int mipsterMipTesterRunner::testingVariationCalling(
 			if (regionsContained.empty()) {
 				++missingRegionsCounts[meta.getMeta("mipFam")];
 				//std::cout << meta.getMeta("mipFam") << " contains no regions" << std::endl;
+			}else{
+				auto alnInfos = bamAlnToAlnInfoLocal(bAln);
+				auto query = seqInfo(bAln.Name, bAln.QueryBases, bAln.Qualities,
+						SangerQualOffset);
+				//get the sequence for the reference at this alignment location
+				std::string refSeq = std::string(alnInfos.begin()->second.localASize_, 'X');
+				auto ref = seqInfo("ref", refSeq);
+				//convert bam alignment to bibseq::seqInfo object
+				alignerObj.alignObjectA_ = baseReadObject(ref);
+				alignerObj.alignObjectB_ = baseReadObject(query);
+				//set the alignment info and and rearrange the sequences so they can be profiled with gaps
+				alignerObj.parts_.lHolder_ = alnInfos.begin()->second;
+				alignerObj.rearrangeObjsLocal(alignerObj.alignObjectA_,
+						alignerObj.alignObjectB_);
+				for(const auto & region : regionsContained){
+					auto start = region.start_ - bAln.Position;
+					auto stop = region.end_ - bAln.Position;
+					auto metaCopy = meta;
+					metaCopy.addMeta("region", region.uid_, true);
+					auto extractStart = alignerObj.getAlignPosForSeqAPos(start);
+					auto extractStop = alignerObj.getAlignPosForSeqAPos(stop);
+					auto extract = alignerObj.alignObjectB_.seqBase_.getSubRead(extractStart, extractStop - extractStart);
+					extract.removeGaps();
+					metaCopy.resetMetaInName(extract.name_);
+					writer.write(extract);
+				}
 			}
 			if (regionsContained.size() > 1) {
-				std::cout << meta.getMeta("mipFam")
-						<< " contains more than 1 region has " << regionsContained.size();
-				std::cout << '\t';
-				for (const auto & reg : regionsContained) {
-					std::cout << reg.uid_ << ", ";
+				if(setUp.pars_.debug_){
+					std::cout << meta.getMeta("mipFam")
+							<< " contains more than 1 region has " << regionsContained.size();
+					std::cout << '\t';
+					for (const auto & reg : regionsContained) {
+						std::cout << reg.uid_ << ", ";
+					}
+					std::cout << std::endl;
 				}
-				std::cout << std::endl;
 			}
 			if(setUp.pars_.debug_){
 				std::cout << "\tdone: " << bAln.Name << std::endl;
@@ -216,8 +265,70 @@ int mipsterMipTesterRunner::testingVariationCalling(
 
 	table outTab(missingRegionsCounts, {"family", "count"});
 	outTab.sortTable("family", false);
-	outTab.outPutContents(std::cout, "\t");
-
+	if(setUp.pars_.debug_){
+		outTab.outPutContents(std::cout, "\t");
+		std::cout << "unmapped: " << unmapped << std::endl;
+	}
+	table finalResults(concatVecs(VecStr{"sample", "region","popUID", "length", "count", "fraction"}, getVectorOfMapKeys(mipMaster.meta_->groupData_)));
+	auto samplesKeys = getVectorOfMapKeys(bySample);
+	bib::sort(samplesKeys);
+	struct NameBarNum{
+		std::string name_ = "";
+		uint32_t barNum_ = 0;
+	};
+	for (const auto & sampKey : samplesKeys) {
+		auto extractInOpts = SeqIOOptions::genFastqIn(bib::files::make_path(setUp.pars_.directoryName_, sampKey,
+				sampKey + "_extracted.fastq"));
+		SeqInput reader(extractInOpts);
+		auto allSeqs = reader.readAllReadsPtrs<seqInfo>();
+		auto splitByRegions = splitSeqsByMetaField(allSeqs, "region");
+		auto regionKeys = getVectorOfMapKeys(splitByRegions);
+		MipNameSorter::sortByRegion(regionKeys);
+		for(const auto & regionKey : regionKeys){
+			const auto & region = splitByRegions.at(regionKey);
+			auto splitByFam = splitSeqsByMetaField(region, "mipFam");
+			if(splitByFam.size() > 0){
+				uint32_t bestCount = 0;
+				std::string bestFamily = "";
+				for(const auto & fam : splitByFam){
+					uint32_t totalBarcodeCnt = 0;
+					for(const auto & seq : fam.second){
+						totalBarcodeCnt += getBarcodeCntFromMipName(seq->name_);
+					}
+					if(totalBarcodeCnt > bestCount){
+						bestCount = totalBarcodeCnt;
+						bestFamily = fam.first;
+					}
+				}
+				double totalBarcodeCnt = 0;
+				for(const auto & seq : splitByFam.at(bestFamily)){
+					totalBarcodeCnt += getBarcodeCntFromMipName(seq->name_);
+				}
+				std::unordered_map<uint32_t, NameBarNum> byLength;
+				for(const auto & seq : splitByFam.at(bestFamily)){
+					auto barNum = getBarcodeCntFromMipName(seq->name_);
+					MetaDataInName meta(seq->name_);
+					if(byLength.end() == byLength.find(len(*seq))){
+						byLength[len(*seq)] = NameBarNum{meta.getMeta("h_popUID"), barNum};
+					}else{
+						byLength[len(*seq)].barNum_ += barNum;
+					}
+				}
+				for(const auto & microLen : byLength){
+					auto info = toVecStr(sampKey, regionKey, microLen.second.name_, microLen.first, microLen.second.barNum_, microLen.second.barNum_/totalBarcodeCnt);
+					for(const auto & gData : mipMaster.meta_->groupData_){
+						info.emplace_back(gData.second->getGroupForSample(sampKey));
+					}
+					finalResults.addRow(info);
+				}
+			}else{
+				std::stringstream ss;
+				ss << __FILE__ << " " << __LINE__ << " " << __PRETTY_FUNCTION__ << " error, shouldn't be happening splitByFam " << " for " << sampKey << " is empty" << "\n";
+				throw std::runtime_error{ss.str()};
+			}
+		}
+	}
+	finalResults.outPutContents(TableIOOpts::genTabFileOut(bib::files::make_path(setUp.pars_.directoryName_, "regionLengthInfos.tab.txt")));
 	return 0;
 
 }
