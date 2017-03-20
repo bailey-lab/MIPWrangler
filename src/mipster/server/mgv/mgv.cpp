@@ -19,7 +19,13 @@ mgv::mgv(const Json::Value & config) :
 	serverResourceDir_ = bib::appendAsNeededRet(config["resources"].asString(),
 			"/");
 	mipsInfo_ = std::make_unique<MipsOnGenome>(mainDir_,
-			config["numThreads"].asUInt());
+			config["inputDir"].asString(), config["numThreads"].asUInt());
+	if (config.isMember("selectedGenomes")) {
+		auto selectedGenomes = bib::json::jsonArrayToSet<std::string>(
+				config["selectedGenomes"],
+				[](const Json::Value & val) {return val.asString();});
+		mipsInfo_->setSelectedGenomes(selectedGenomes);
+	}
 	mipsInfo_->loadInArms();
 	mipsInfo_->loadInGenomes();
 	if (config.isMember("primaryGenome")) {

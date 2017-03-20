@@ -15,7 +15,7 @@ class mipsterMipTesterRunner : public bib::progutils::programRunner {
  public:
   mipsterMipTesterRunner();
   
-  static int testingVariationCalling(const bib::progutils::CmdArgs & inputCommands);
+  static int callMircosateliteSizes(const bib::progutils::CmdArgs & inputCommands);
 
 };
 } // namespace bibseq

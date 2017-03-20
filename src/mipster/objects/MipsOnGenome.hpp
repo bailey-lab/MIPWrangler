@@ -12,9 +12,10 @@ namespace bibseq {
 
 class MipsOnGenome {
 public:
-	MipsOnGenome(const bfs::path & mainDir, uint32_t numThreads);
+	MipsOnGenome(const bfs::path & mainDir, const bfs::path & mainInputDir, uint32_t numThreads);
 
 	bfs::path mainDir_;
+	bfs::path mainInputDir_;
 
 	bfs::path genomeDir_;/**< directory with genome files*/
 	bfs::path infoDir_; /**< directory with info files, specifically the mip arms file*/
@@ -30,11 +31,15 @@ public:
 	std::unique_ptr<MipCollection> mipArms_;
 
 	uint32_t numThreads_ = 1;
+
+
 private:
 	std::string primaryGenome_ = "";
+	std::set<std::string> selectedGenomes_;
 public:
 
 	std::string getPrimaryGenome();
+
 
 	class Genome {
 	public:
@@ -74,6 +79,9 @@ public:
 	void genTables() const;
 
 	void setPrimaryGenome(const std::string & genome);
+
+	void setSelectedGenomes(const std::set<std::string> & genomes);
+	void setSelectedGenomes(const VecStr & genomes);
 
 	bfs::path pathToMipFasta(const std::string & mipName) const;
 	bfs::path pathToMipBed(const std::string & mipName,

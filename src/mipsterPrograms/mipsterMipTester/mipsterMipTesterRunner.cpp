@@ -16,24 +16,14 @@ namespace bibseq {
 mipsterMipTesterRunner::mipsterMipTesterRunner() :
 		bib::progutils::programRunner(
 				{
-					addFunc("testingVariationCalling", testingVariationCalling, false)
+					addFunc("callMircosateliteSizes", callMircosateliteSizes, false)
 				},
 				"mipsterMipTester") {
 }//
 
 
 
-bib::sys::RunOutput bowtie2Align(const bfs::path & input,
-		const bfs::path & genomePrefix, const bfs::path & output) {
-	std::stringstream templateCmd;
-	bfs::path outputFnp = bib::appendAsNeededRet(output.string(), ".sorted.bam");
-	templateCmd << "bowtie2 -U " << input << " -x " << genomePrefix << " "
-			<< "| samtools view - -b " << "| samtools sort - -o " << outputFnp << " "
-			<< "&& samtools index " << outputFnp;
-	auto ret = bib::sys::run( { templateCmd.str() });
-	BioCmdsUtils::checkRunOutThrow(ret, __PRETTY_FUNCTION__);
-	return ret;
-}
+
 
 template<typename T>
 std::unordered_map<std::string, std::vector<T>> splitSeqsByMetaField(const std::vector<T> & seqs, const std::string & field){
@@ -45,7 +35,7 @@ std::unordered_map<std::string, std::vector<T>> splitSeqsByMetaField(const std::
 	return ret;
 }
 
-int mipsterMipTesterRunner::testingVariationCalling(
+int mipsterMipTesterRunner::callMircosateliteSizes(
 		const bib::progutils::CmdArgs & inputCommands) {
 	mipCorePars pars;
 	bfs::path genomeFnp = "";
@@ -120,7 +110,7 @@ int mipsterMipTesterRunner::testingVariationCalling(
 	std::mutex outputsMut;
 	bib::concurrent::LockableQueue<std::string> sampQueue(getVectorOfMapKeys(bySample));
 	auto alignSamp =
-			[&sampQueue,&bySample,&setUp,&outputsMut,&outputs,&genomePrefix,&mipMaster]() {
+			[&sampQueue,&bySample,&setUp,&outputsMut,&outputs,&genomeFnp,&mipMaster,&cmdRunner]() {
 				std::string samp = "";
 				while(sampQueue.getVal(samp)) {
 					auto sampDir = bib::files::makeDir(setUp.pars_.directoryName_, bib::files::MkdirPar(samp));
@@ -144,9 +134,11 @@ int mipsterMipTesterRunner::testingVariationCalling(
 						}
 					}
 					writer.closeOut();
-					auto runOutput = bowtie2Align(outOpts.out_.outName(),
-							genomePrefix,
-							bib::files::make_path(sampDir, samp + ".sorted.bam"));
+					auto opts = SeqIOOptions::genFastaIn(outOpts.out_.outName());
+					opts.out_.outFilename_ = bib::files::make_path(sampDir, samp + ".sorted.bam");
+					opts.out_.outExtention_ = ".sorted.bam";
+					auto runOutput = cmdRunner.bowtie2Align(opts,
+							genomeFnp);
 					{
 						std::lock_guard<std::mutex> lock(outputsMut);
 						outputs.emplace(samp, runOutput);

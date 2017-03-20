@@ -12,11 +12,14 @@
 #include <TwoBit.h>
 
 namespace bibseq {
-MipsOnGenome::MipsOnGenome(const bfs::path & mainDir, uint32_t numThreads) :
-		mainDir_(mainDir), numThreads_(numThreads) {
-	genomeDir_ = bib::files::make_path(mainDir, "genomes");
-	infoDir_ = bib::files::make_path(mainDir, "info");
-	mipArmsFnp_ = bib::files::make_path(mainDir, "info", "mip_arms.tab.txt");
+MipsOnGenome::MipsOnGenome(const bfs::path & mainDir,
+		const bfs::path & mainInputDir, uint32_t numThreads) :
+		mainDir_(mainDir),mainInputDir_(mainInputDir), numThreads_(numThreads) {
+	genomeDir_ = bib::files::make_path(mainInputDir_, "genomes");
+	infoDir_ = bib::files::make_path(mainInputDir_, "info");
+	mipArmsFnp_ = bib::files::make_path(infoDir_, "mip_arms.tab.txt");
+	bib::files::makeDirP(bib::files::MkdirPar { mainDir });
+
 	mapDir_ = bib::files::makeDirP(mainDir, bib::files::MkdirPar("mapped"));
 	bedsDir_ = bib::files::makeDirP(mainDir, bib::files::MkdirPar("beds"));
 	fastaDir_ = bib::files::makeDirP(mainDir, bib::files::MkdirPar("fastas"));
@@ -26,26 +29,30 @@ MipsOnGenome::MipsOnGenome(const bfs::path & mainDir, uint32_t numThreads) :
 	checkInputThrow();
 	requireExternalProgramThrow("bowtie2");
 }
-void MipsOnGenome::checkInputThrow()const{
+
+void MipsOnGenome::checkInputThrow() const {
 	std::stringstream ss;
 	bool failed = false;
-	auto checkForPath = [&failed,&ss](const bfs::path & fnp ){
-		if(!bfs::exists(fnp)){
+	auto checkForPath = [&failed,&ss](const bfs::path & fnp ) {
+		if(!bfs::exists(fnp)) {
 			failed = true;
 			ss << bib::bashCT::boldRed(fnp.string())<< " needs to exist "<< "\n";
 		}
 	};
 	checkForPath(mainDir_);
+	checkForPath(mainInputDir_);
 	checkForPath(genomeDir_);
 	checkForPath(infoDir_);
 	checkForPath(mipArmsFnp_);
-	if(failed){
+	if (failed) {
 		std::stringstream outSS;
-		outSS << __PRETTY_FUNCTION__ << ", error in checking directory set up" << "\n";
+		outSS << __PRETTY_FUNCTION__ << ", error in checking directory set up"
+				<< "\n";
 		outSS << ss.str();
-		throw std::runtime_error{outSS.str()};
+		throw std::runtime_error { outSS.str() };
 	}
 }
+
 MipsOnGenome::Genome::Genome(const bfs::path & fnp) :
 		fnp_(fnp) {
 	checkExistenceThrow(fnp_, __PRETTY_FUNCTION__);
@@ -121,7 +128,9 @@ void MipsOnGenome::loadInGenomes(){
 		throw std::runtime_error{ss.str()};
 	}
 	for(const auto & f : fastaFiles){
-		genomes_[bib::files::removeExtension(f.filename().string())] = std::make_unique<Genome>(f);
+		if(selectedGenomes_.empty() || bib::in(bfs::basename(f), selectedGenomes_)){
+			genomes_[bib::files::removeExtension(f.filename().string())] = std::make_unique<Genome>(f);
+		}
 	}
 }
 void MipsOnGenome::setUpGenomes(){
@@ -689,6 +698,14 @@ void MipsOnGenome::setPrimaryGenome(const std::string & genome){
 		throw std::runtime_error{ss.str()};
 	}
 	primaryGenome_ = genome;
+}
+
+void MipsOnGenome::setSelectedGenomes(const std::set<std::string> & genomes) {
+	selectedGenomes_ = genomes;
+}
+
+void MipsOnGenome::setSelectedGenomes(const VecStr & genomes) {
+	setSelectedGenomes(std::set<std::string> { genomes.begin(), genomes.end() });
 }
 
 
