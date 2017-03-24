@@ -25,15 +25,7 @@ mipsterMipTesterRunner::mipsterMipTesterRunner() :
 
 
 
-template<typename T>
-std::unordered_map<std::string, std::vector<T>> splitSeqsByMetaField(const std::vector<T> & seqs, const std::string & field){
-	std::unordered_map<std::string, std::vector<T>> ret;
-	for(const auto & seq : seqs){
-		MetaDataInName meta(getSeqBase(seq).name_);
-		ret[meta.getMeta(field)].emplace_back(seq);
-	}
-	return ret;
-}
+
 
 int mipsterMipTesterRunner::callMircosateliteSizes(
 		const bib::progutils::CmdArgs & inputCommands) {
