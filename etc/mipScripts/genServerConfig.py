@@ -3,29 +3,13 @@ import shutil, os, argparse, sys, stat
 
 
 class MipServerConfCreator:
-    def __init__(self, outfileFnp, mode = ""):
-        append = False;
-        overWrite = False;
-        if mode == "append":
-            append = True;
-        if mode == "overWrite":
-            overWrite = True;
-            
+    def __init__(self, outfileFnp):
         self.outfileFnp_ = outfileFnp
         if not self.outfileFnp_.endswith(".conf"):
-            self.outfileFnp_ = self.outfileFnp_ + ".conf"
-        if os.path.exists(self.outfileFnp_) and not overWrite and not append:
-            raise Exception("Error, " + args.outfile + " already exits, use --overWrite to overWrite it")
-        if os.path.exists(self.outfileFnp_) and overWrite:
-            os.remove(outfileFnp)
-        
+            self.outfileFnp_ = self.outfileFnp_ + ".conf"        
         self.portsTaken_ = []
         self.namesTaken_ = []
-        openMode = 'w';
-        if append:
-            openMode = 'a'
-
-        if os.path.exists(self.outfileFnp_) and append:
+        if os.path.exists(self.outfileFnp_):
             with open(self.outfileFnp_, 'r') as serverConfFile:
                 for line in serverConfFile:
                     toks = line.strip().split()
@@ -66,13 +50,61 @@ class MipServerConfCreator:
             self.addServer("mip" + str(serverNumber), serverBase + serverNumber);
 
     
-        
+    def removePort(self, portNumber):
+        tempFnp = "/tmp/temp_" + os.path.basename(self.outfileFnp_)
+        if os.path.exists(self.outfileFnp_):
+            foundPort = False;
+            with open(self.outfileFnp_, 'r') as serverConfFile:
+                with open(tempFnp, "w") as tempFile:
+                    for line in serverConfFile:
+                        toks = line.strip().split()
+                        if len(toks) == 3:
+                            name = toks[1][1:];
+                            colonPos = toks[2].find("127.0.0.1:")
+                            slashPos = toks[2].find("/", colonPos)
+                            if -1 != colonPos and -1 != slashPos:
+                                port = int(toks[2][(colonPos + len("127.0.0.1:")):slashPos])
+                                if port == portNumber:
+                                    foundPort = True
+                                    continue
+                                else:
+                                    tempFile.write(line)
+            if foundPort:
+                shutil.copy(tempFnp, self.outfileFnp_)
+            else:
+                sys.stderr.write("Didn't find port number: " + str(portNumber) + " in " + self.outfileFnp_  + " nothing done\n")
+    def removeName(self, rmName):
+        tempFnp = "/tmp/temp_" + os.path.basename(self.outfileFnp_)
+        if os.path.exists(self.outfileFnp_):
+            foundPort = False;
+            with open(self.outfileFnp_, 'r') as serverConfFile:
+                with open(tempFnp, "w") as tempFile:
+                    for line in serverConfFile:
+                        toks = line.strip().split()
+                        if len(toks) == 3:
+                            name = toks[1][1:];
+                            colonPos = toks[2].find("127.0.0.1:")
+                            slashPos = toks[2].find("/", colonPos)
+                            if -1 != colonPos and -1 != slashPos:
+                                port = int(toks[2][(colonPos + len("127.0.0.1:")):slashPos])
+                                if name == rmName:
+                                    foundPort = True
+                                    continue
+                                else:
+                                    tempFile.write(line)
+            if foundPort:
+                shutil.copy(tempFnp, self.outfileFnp_)
+            else:
+                sys.stderr.write("Didn't find name: " + str(rmName) + " in " + self.outfileFnp_  + " nothing done\n")
+                                      
 
 
 
 def parse_args_genServerProxyPassConfig():
     
     parser = argparse.ArgumentParser()
+    parser.add_argument('--removePort',type=int)
+    parser.add_argument('--removeName',type=str)
     parser.add_argument('--port',      type=int)
     parser.add_argument('--name',      type=str)
     parser.add_argument('--start',     type=int, default = 0)
@@ -87,12 +119,31 @@ def parse_args_genServerProxyPassConfig():
 
 def genServerProxyPassConfig():
     args = parse_args_genServerProxyPassConfig()
+    if args.removePort:
+        creator = MipServerConfCreator(args.outfile)
+        creator.removePort(args.removePort)
+        sys.exit(0)
+    if args.removeName:
+        creator = MipServerConfCreator(args.outfile)
+        creator.removeName(args.removeName)
+        sys.exit(0)
     mode = "write"
     if args.append:
         mode = "append"
     if args.overWrite:
         mode = "overWrite"
-    creator = MipServerConfCreator(args.outfile, mode)
+    append = False;
+    overWrite = False;
+    if mode == "append":
+        append = True;
+    if mode == "overWrite":
+        overWrite = True;
+    if os.path.exists(args.outfile) and not overWrite and not append:
+        raise Exception("Error, " + args.outfile + " already exits, use --overWrite to overWrite it or --append to add to it")
+    if os.path.exists(args.outfile) and overWrite:
+        os.remove(args.outfile)
+    
+    creator = MipServerConfCreator(args.outfile)
     if args.port and args.name:
         creator.addServer(args.name, args.port)
     else:
