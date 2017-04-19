@@ -99,25 +99,8 @@ std::string MipsOnGenome::getPrimaryGenome(){
 }
 
 void MipsOnGenome::Genome::buildBowtie2Index() const {
-	std::string indexCmd = "bowtie2-build -q {GENOMEPREFIX}.fasta {GENOMEPREFIX}";
-	auto genomePrefix = bib::files::removeExtension(fnp_.string());
-	indexCmd = bib::replaceString(indexCmd, "{GENOMEPREFIX}", genomePrefix);
-	bool buildIndex = false;
-	auto testPath = genomePrefix + ".1.bt2";
-	if (!bfs::exists(testPath)
-			|| bib::files::firstFileIsOlder(testPath, fnp_)) {
-		buildIndex = true;
-	}
-	if (buildIndex) {
-		auto runOutput = bib::sys::run( { indexCmd });
-		if (!runOutput.success_) {
-			std::stringstream ss;
-			ss << __PRETTY_FUNCTION__ << " failed to build index for " << fnp_
-					<< "\n";
-			ss << runOutput.toJson() << "\n";
-			throw std::runtime_error { ss.str() };
-		}
-	}
+	BioCmdsUtils bioRunner;
+	bioRunner.RunBowtie2Index(fnp_);
 }
 void MipsOnGenome::loadInGenomes(){
 	auto fastaFiles = bib::files::gatherFiles(genomeDir_, ".fasta", false);
@@ -139,6 +122,7 @@ void MipsOnGenome::setUpGenomes(){
 		gen.second->buildBowtie2Index();
 	}
 }
+
 void MipsOnGenome::loadInArms(){
 	mipArms_ = std::make_unique<MipCollection>(mipArmsFnp_, 6);
 }
@@ -612,12 +596,17 @@ void MipsOnGenome::genBeds() {
 				uint32_t insertSizeCutoff = 1000;
 				//temporary fix
 				if(bib::containsSubString(pair.mip_, "full")){
-					insertSizeCutoff = 2500;
+					insertSizeCutoff = 10000;
 				}
 				//temporary fix
-				if(bib::containsSubString(pair.mip_, "lsa") && bib::containsSubString(pair.mip_, "full")){
-					insertSizeCutoff = 5000;
+				if(bib::containsSubString(pair.mip_, "eba175_S0_Sub0_mip0-30")){
+					insertSizeCutoff = 10000;
 				}
+				//temporary fix
+//				if(bib::containsSubString(pair.mip_, "lsa") && bib::containsSubString(pair.mip_, "full")){
+//					insertSizeCutoff = 5000;
+//				}
+
 				auto results = getMipMapResults(outCheck, insertSizeCutoff);
 				if(results.empty()){
 					ss << "Failed to get results from " << outCheck << " for " << pair.mip_ << " to "
