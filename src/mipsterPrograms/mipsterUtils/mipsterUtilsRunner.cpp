@@ -7,7 +7,9 @@
 
     
 #include "mipsterUtilsRunner.hpp"
-    
+#include <unordered_map>
+
+
 namespace bibseq {
 
 mipsterUtilsRunner::mipsterUtilsRunner()
@@ -343,8 +345,8 @@ int mipsterUtilsRunner::processProcessedMips(
 			std::cout << "\t" << "ReverseStrand: "
 					<< bib::colorBool(targetReads.reverseStrand_) << std::endl;
 			VecStr subReadsNames;
-			for (const auto & read : targetReads.reads_) {
-				subReadsNames.emplace_back(read->seqBase_.name_);
+			for (const auto & mRead : targetReads.reads_) {
+				subReadsNames.emplace_back(mRead->seqBase_.name_);
 			}
 			printVector(subReadsNames, ", ");
 			std::cout << std::endl;
