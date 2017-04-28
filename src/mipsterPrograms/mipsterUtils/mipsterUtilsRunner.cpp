@@ -7,7 +7,8 @@
 
     
 #include "mipsterUtilsRunner.hpp"
-    
+#include <unordered_map>
+
 namespace bibseq {
 
 mipsterUtilsRunner::mipsterUtilsRunner()
@@ -512,9 +513,12 @@ int mipsterUtilsRunner::createLigArmFastas(
 	MipCollection mips(corePars.mipArmsFileName, corePars.allowableErrors);
 
 	for(const auto & m : mips.mips_){
-		SeqIOOptions::genFastaOut("");
+		auto ligOpts = SeqIOOptions::genFastaOut(m.first + "-lig");
+		ligOpts.out_.overWriteFile_ = overWrite;
+		auto ligArmObj = m.second.ligationArmObj_.seqBase_;
+		ligArmObj.reverseComplementRead(false, true);
+		SeqOutput::write(std::vector<seqInfo>{ligArmObj}, ligOpts);
 	}
-
 	return 0;
 }
 
@@ -535,9 +539,11 @@ int mipsterUtilsRunner::createExtArmFastas(
 	MipCollection mips(corePars.mipArmsFileName, corePars.allowableErrors);
 
 	for(const auto & m : mips.mips_){
-		SeqIOOptions::genFastaOut("");
+		auto extOpts = SeqIOOptions::genFastaOut(m.first + "-ext");
+		extOpts.out_.overWriteFile_ = overWrite;
+		auto extArmObj = m.second.extentionArmObj_.seqBase_;
+		SeqOutput::write(std::vector<seqInfo>{extArmObj}, extOpts);
 	}
-
 	return 0;
 }
 

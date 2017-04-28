@@ -70,6 +70,8 @@ public:
 		std::string uid(const std::string & sep = "_") const;
 	};
 
+	void setMipArmsFnp(const bfs::path & mipArmsFnp);
+
 	void mapArmsToGenomes();
 
 	void genBeds();

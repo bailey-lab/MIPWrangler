@@ -27,16 +27,21 @@ int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
 	bfs::path inputDir = "";
 	std::string primaryGenome = "";
 	std::string selectGenomes = "";
+	bfs::path mipArmsFnp = "";
 	uint32_t numThreads = 1;
 	mipsterMipExplorerSetUp setUp(inputCommands);
 	setUp.setOption(primaryGenome, "--primaryGenome", "The primary genome", true);
 	setUp.setOption(numThreads, "--numThreads", "Number of Threads");
+	setUp.setOption(mipArmsFnp, "--mipArmsFnp", "Mip Arms Fnp");
 	setUp.setOption(mainDir, "--masterDir", "The master output directory", true);
 	setUp.setOption(inputDir, "--inputDir", "The master input directory, with arm sequences and genomes", true);
 	setUp.setOption(selectGenomes, "--selectGenomes", "Extract info from only these genomes, default is all genomes found");
 	setUp.finishSetUp(std::cout);
 
 	MipsOnGenome mips(mainDir, inputDir, numThreads);
+	if("" != mipArmsFnp){
+		mips.setMipArmsFnp(mipArmsFnp);
+	}
 	if("" != selectGenomes){
 		auto genomes = tokenizeString(selectGenomes, ",");
 		genomes.emplace_back(primaryGenome);
