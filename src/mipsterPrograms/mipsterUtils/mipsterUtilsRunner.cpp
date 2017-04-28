@@ -16,8 +16,10 @@ mipsterUtilsRunner::mipsterUtilsRunner()
 																		 addFunc("scanForContam", scanForContam, false),
 																		 addFunc("processMipOverlapGraph", processMipOverlapGraph, false),
 																		 addFunc("processMipOverlapGraphSingle", processMipOverlapGraphSingle, false),
-																		 addFunc("rearmTargetsAndCombine", rearmTargetsAndCombine, false)
-},//
+																		 addFunc("rearmTargetsAndCombine", rearmTargetsAndCombine, false),
+																		 addFunc("createExtArmFastas", createExtArmFastas, false),
+																		 addFunc("createLigArmFastas", createLigArmFastas, false)
+},
                     "mipsterUtils") {}
 
 
@@ -492,6 +494,54 @@ int mipsterUtilsRunner::rearmTargetsAndCombine(
 	return 0;
 }
 
+
+int mipsterUtilsRunner::createLigArmFastas(
+		const bib::progutils::CmdArgs & inputCommands) {
+	mipCorePars corePars;
+	bool overWrite = false;
+	mipsterUtilsSetUp setUp(inputCommands);
+	setUp.processVerbose();
+	setUp.processDebug();
+	setUp.setOption(overWrite, "--overWrite", "Over write files");
+	setUp.setOption(corePars.mipArmsFileName, "--mipArmsFilename",
+				"Name of the mip arms file", true);
+
+	setUp.finishSetUp(std::cout);
+
+
+	MipCollection mips(corePars.mipArmsFileName, corePars.allowableErrors);
+
+	for(const auto & m : mips.mips_){
+		SeqIOOptions::genFastaOut("");
+	}
+
+	return 0;
+}
+
+int mipsterUtilsRunner::createExtArmFastas(
+		const bib::progutils::CmdArgs & inputCommands) {
+	mipCorePars corePars;
+	bool overWrite = false;
+	mipsterUtilsSetUp setUp(inputCommands);
+	setUp.processVerbose();
+	setUp.processDebug();
+	setUp.setOption(overWrite, "--overWrite", "Over write files");
+	setUp.setOption(corePars.mipArmsFileName, "--mipArmsFilename",
+				"Name of the mip arms file", true);
+
+	setUp.finishSetUp(std::cout);
+
+
+	MipCollection mips(corePars.mipArmsFileName, corePars.allowableErrors);
+
+	for(const auto & m : mips.mips_){
+		SeqIOOptions::genFastaOut("");
+	}
+
+	return 0;
+}
+
+//
 
 
 

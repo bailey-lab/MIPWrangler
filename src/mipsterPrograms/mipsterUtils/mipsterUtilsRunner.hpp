@@ -27,5 +27,8 @@ class mipsterUtilsRunner : public bib::progutils::programRunner {
 
 	static int rearmTargetsAndCombine(const bib::progutils::CmdArgs & inputCommands);
 
+	static int createExtArmFastas(const bib::progutils::CmdArgs & inputCommands);
+	static int createLigArmFastas(const bib::progutils::CmdArgs & inputCommands);
+
 };
 } // namespace bibseq
