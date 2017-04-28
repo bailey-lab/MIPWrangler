@@ -136,6 +136,14 @@ void MipsOnGenome::createArmFiles(){
 std::string MipsOnGenome::GenomeMip::uid(const std::string & sep) const {
 	return genome_ + sep + mip_;
 }
+
+
+void MipsOnGenome::setMipArmsFnp(const bfs::path & mipArmsFnp){
+	bib::files::checkExistenceThrow(mipArmsFnp, __PRETTY_FUNCTION__);
+	mipArmsFnp_ = mipArmsFnp;
+}
+
+
 void MipsOnGenome::mapArmsToGenomes() {
 	std::vector<GenomeMip> pairs;
 	for (const auto & gen : genomes_) {
