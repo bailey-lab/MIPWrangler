@@ -26,6 +26,9 @@ mgv::mgv(const Json::Value & config) :
 				[](const Json::Value & val) {return val.asString();});
 		mipsInfo_->setSelectedGenomes(selectedGenomes);
 	}
+	if("" != config["mipArmsFnp"].asString()){
+		mipsInfo_->mipArmsFnp_ = config["mipArmsFnp"].asString();
+	}
 	mipsInfo_->loadInArms();
 	mipsInfo_->loadInGenomes();
 	if (config.isMember("primaryGenome")) {

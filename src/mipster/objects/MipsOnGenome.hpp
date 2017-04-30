@@ -73,12 +73,17 @@ public:
 	void setMipArmsFnp(const bfs::path & mipArmsFnp);
 
 	void mapArmsToGenomes();
+	void mapArmsToGenomesSeparately();
+
 
 	void genBeds();
+	void genBedsFromSeparately(const comparison & allowableError);
 
 	void genFastas();
+	void genFastasFromSeparately();
 
 	void genTables() const;
+	void genTablesFromSeparately() const;
 
 	void setPrimaryGenome(const std::string & genome);
 
