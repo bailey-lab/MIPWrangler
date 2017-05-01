@@ -83,7 +83,7 @@ public:
 	void genFastasFromSeparately();
 
 	void genTables() const;
-	void genTablesFromSeparately() const;
+
 
 	void setPrimaryGenome(const std::string & genome);
 
@@ -94,6 +94,8 @@ public:
 	bfs::path pathToMipBed(const std::string & mipName,
 			const std::string & genomeName) const;
 	bfs::path pathToAllInfoPrimaryGenome() const;
+	bfs::path pathToAllInfoAllGenomes() const;
+
 
 	VecStr getMips() const;
 	VecStr getGenomes() const;
@@ -106,7 +108,8 @@ public:
 
 	table getMipRegionStatsForGenome(const std::string & genome) const;
 
-	table getMipTarStatsForGenome(const std::string & genome, const VecStr & mipTars) const;
+	table getMipTarStatsForGenome(const std::string & genome, const VecStr & mipTars, bool allRecords = false) const;
+	table getMipTarStatsForGenomes(const VecStr & genomes, const VecStr & mipTars, bool allRecords = false) const;
 
 };
 

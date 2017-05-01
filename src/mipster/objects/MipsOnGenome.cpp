@@ -235,10 +235,14 @@ void MipsOnGenome::mapArmsToGenomesSeparately() {
 			bool succes = false;
 			std::string outStub = bib::files::make_path(mapDir_,
 					pair.uid()).string();
-			std::string outCheck = outStub + ".sorted.bam";
-			if (!bfs::exists(outCheck)
-					|| bib::files::firstFileIsOlder(outCheck, genomes_.at(pair.genome_)->fnp_)
-					|| bib::files::firstFileIsOlder(outCheck, mipArms_->mipArmIdFnp_)) {
+			std::string outCheckExt = outStub + "_ext.sorted.bam";
+			std::string outCheckLig = outStub + "_lig.sorted.bam";
+			if (!  bfs::exists(outCheckExt)
+					|| bib::files::firstFileIsOlder(outCheckExt, genomes_.at(pair.genome_)->fnp_)
+					|| bib::files::firstFileIsOlder(outCheckExt, mipArms_->mipArmIdFnp_) ||
+					!  bfs::exists(outCheckLig)
+					|| bib::files::firstFileIsOlder(outCheckLig, genomes_.at(pair.genome_)->fnp_)
+					|| bib::files::firstFileIsOlder(outCheckLig, mipArms_->mipArmIdFnp_)) {
 				std::stringstream bowtie2CmdExt;
 				bowtie2CmdExt
 						<< " bowtie2 -D 20 -R 3 -N 1 -L 15 -i S,1,0.5 -a --end-to-end "
@@ -268,7 +272,7 @@ void MipsOnGenome::mapArmsToGenomesSeparately() {
 				}
 			}else{
 				succes = true;
-				ss << outCheck << " is up to date";
+				ss << outCheckExt << " and " <<  outCheckLig << " is up to date";
 			}
 			{
 				std::lock_guard<std::mutex> lock(logMut);
@@ -712,41 +716,32 @@ table MipsOnGenome::getMipRegionStatsForGenome(
 	return ret;
 }
 
-table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
-		const VecStr & mipTars) const{
-	table ret(VecStr { "region", "target", "genome", "chrom", "start", "end", "strand",
+table MipsOnGenome::getMipTarStatsForGenomes(const VecStr & genomes,
+		const VecStr & mipTars, bool allRecords) const{
+	table ret(VecStr { "region", "target", "genome", "extractionNumber", "chrom", "start", "end", "strand",
 			"length", "containsTandemRepeat", "PossibleLengthVariation", "variantNum",
 			"totalVariantsPossible", "variantRatio", "GCContent", "longestHomopolymer" });
 	for (const auto & mipTar : mipTars) {
-		auto bedFnp = bib::files::make_path(pathToMipBed(mipTar, genome));
-		if(!bfs::exists(bedFnp)){
+		auto seqsOpts = SeqIOOptions::genFastaIn(pathToMipFasta(mipTar));
+		if(!seqsOpts.inExists()){
 			continue;
 		}
-		//std::cout << mipTar << std::endl;
-		auto seqsOpts = SeqIOOptions::genFastaIn(pathToMipFasta(mipTar));
+		seqInfo seq;
 		uint32_t totalHapsPossible = 0;
 		uint32_t hapNum = 0;
-		bool containsTandems = false;
 		bool lengthVariation = false;
 		std::vector<uint32_t> readLens;
-		readObject refSeq;
-		seqInfo seq;
 		SeqInput reader(seqsOpts);
 		reader.openIn();
+		std::unordered_map<std::string, std::shared_ptr<readObject>> readsByAllNames;
 		while(reader.readNextRead(seq)){
-			auto tandems = aligner::findTandemRepeatsInSequence(seq.seq_, 2, -2, -7, 20);
-			for(const auto & tandem : tandems){
-				if(tandem.numberOfRepeats_ > 2){
-					containsTandems = true;
-					break;
-				}
-			}
 			readLens.emplace_back(len(seq));
 			auto toks = tokenizeString(seq.name_, "-");
 			totalHapsPossible+= toks.size();
 			++hapNum;
-			if(seq.name_ == genome){
-				refSeq = readObject(seq);
+			for(const auto & tok : toks){
+				auto outSeq = std::make_shared<readObject>(seq);
+				readsByAllNames[tok] = outSeq;
 			}
 		}
 		auto minLen = vectorMinimum(readLens);
@@ -754,33 +749,177 @@ table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
 		if(maxLen - minLen > 4){
 			lengthVariation = true;
 		}
-		BedRecordCore bedCore;
-		BioDataFileIO<BedRecordCore> bedReader((IoOptions(InOptions(bedFnp))));
-		bedReader.openIn();
-		bedReader.readNextRecord(bedCore);
-		double gcContent = 0;
-		uint32_t longestHomopolymer = 0;
-		if("" != refSeq.seqBase_.name_){
-			refSeq.setLetterCount();
-			refSeq.counter_.resetAlphabet(true);
-			refSeq.counter_.setFractions();
-			refSeq.counter_.calcGcContent();
-			gcContent = refSeq.counter_.gcContent_;
-			refSeq.createCondensedSeq();
-			longestHomopolymer = vectorMaximum(refSeq.condensedSeqCount);
+		for(const auto & genome : genomes){
+			auto bedFnp = bib::files::make_path(pathToMipBed(mipTar, genome));
+			if(!bfs::exists(bedFnp)){
+				continue;
+			}
+			//std::cout << mipTar << std::endl;
+
+			BedRecordCore bedCore;
+			BioDataFileIO<BedRecordCore> bedReader((IoOptions(InOptions(bedFnp))));
+			bedReader.openIn();
+			while(bedReader.readNextRecord(bedCore)){
+				MetaDataInName meta(bedCore.name_);
+				auto extractionNumber = meta.getMeta("extractionNumber");
+				if("0" != extractionNumber && !allRecords){
+					break;
+				}
+				auto genomeName = genome;
+				if("0" != extractionNumber){
+					genomeName = genome + "." + extractionNumber;
+				}
+				bool containsTandems = false;
+				auto search = readsByAllNames.find(genomeName);
+				std::shared_ptr<readObject> refSeq;
+				if(search == readsByAllNames.end()){
+					std::stringstream ss;
+					ss << __PRETTY_FUNCTION__ << ", error couldn't seq for " << genomeName << "\n";
+					throw std::runtime_error{ss.str()};
+				}else{
+					refSeq = search->second;
+				}
+				double gcContent = 0;
+				uint32_t longestHomopolymer = 0;
+				if("" != refSeq->seqBase_.name_){
+					refSeq->setLetterCount();
+					refSeq->counter_.resetAlphabet(true);
+					refSeq->counter_.setFractions();
+					refSeq->counter_.calcGcContent();
+					gcContent = refSeq->counter_.gcContent_;
+					refSeq->createCondensedSeq();
+					longestHomopolymer = vectorMaximum(refSeq->condensedSeqCount);
+					auto tandems = aligner::findTandemRepeatsInSequence(refSeq->seqBase_.seq_, 2, -2, -7, 20);
+					for(const auto & tandem : tandems){
+						if(tandem.numberOfRepeats_ > 2){
+							containsTandems = true;
+							break;
+						}
+					}
+				}
+				ret.addRow(mipArms_->mips_[mipTar].locGrouping_,
+									mipTar, genome, extractionNumber,
+									bedCore.chrom_, bedCore.chromStart_, bedCore.chromEnd_,
+									bedCore.strand_, bedCore.length(),
+									containsTandems ? "yes": "no",
+									lengthVariation ? "yes": "no",
+									hapNum, totalHapsPossible,
+									static_cast<double>(hapNum)/totalHapsPossible,
+									gcContent, longestHomopolymer);
+			}
 		}
-		ret.addRow(mipArms_->mips_[mipTar].locGrouping_,
-							mipTar, genome,
-							bedCore.chrom_, bedCore.chromStart_, bedCore.chromEnd_,
-							bedCore.strand_, bedCore.length(),
-							containsTandems ? "yes": "no",
-							lengthVariation ? "yes": "no",
-							hapNum, totalHapsPossible,
-							static_cast<double>(hapNum)/totalHapsPossible,
-							gcContent, longestHomopolymer);
 	}
 	return ret;
 }
+
+table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
+		const VecStr & mipTars, bool allRecords) const{
+	table ret(VecStr { "region", "target", "genome", "extractionNumber", "chrom", "start", "end",
+			"strand", "length", "containsTandemRepeat", "PossibleLengthVariation",
+			"variantNum", "totalVariantsPossible", "variantRatio", "GCContent",
+			"longestHomopolymer" });
+	for (const auto & mipTar : mipTars) {
+		auto seqsOpts = SeqIOOptions::genFastaIn(pathToMipFasta(mipTar));
+		if(!seqsOpts.inExists()){
+			continue;
+		}
+		seqInfo seq;
+		uint32_t totalHapsPossible = 0;
+		uint32_t hapNum = 0;
+		bool lengthVariation = false;
+		std::vector<uint32_t> readLens;
+		SeqInput reader(seqsOpts);
+		reader.openIn();
+		std::unordered_map<std::string, std::shared_ptr<readObject>> readsByAllNames;
+		while (reader.readNextRead(seq)) {
+			readLens.emplace_back(len(seq));
+			auto toks = tokenizeString(seq.name_, "-");
+			totalHapsPossible += toks.size();
+			++hapNum;
+			for (const auto & tok : toks) {
+				auto outSeq = std::make_shared<readObject>(seq);
+				readsByAllNames[tok] = outSeq;
+			}
+		}
+		auto minLen = vectorMinimum(readLens);
+		auto maxLen = vectorMaximum(readLens);
+		if (maxLen - minLen > 4) {
+			lengthVariation = true;
+		}
+		auto bedFnp = bib::files::make_path(pathToMipBed(mipTar, genome));
+		if (!bfs::exists(bedFnp)) {
+			continue;
+		}
+		//std::cout << mipTar << std::endl;
+
+		BedRecordCore bedCore;
+		BioDataFileIO<BedRecordCore> bedReader((IoOptions(InOptions(bedFnp))));
+		bedReader.openIn();
+		while (bedReader.readNextRecord(bedCore)) {
+			MetaDataInName meta(bedCore.name_);
+			auto extractionNumber = meta.getMeta("extractionNumber");
+			if ("0" != extractionNumber && !allRecords) {
+				break;
+			}
+			auto genomeName = genome;
+			if ("0" != extractionNumber) {
+				genomeName = genome + "." + extractionNumber;
+			}
+			bool containsTandems = false;
+			auto search = readsByAllNames.find(genomeName);
+			std::shared_ptr<readObject> refSeq;
+			if (search == readsByAllNames.end()) {
+				std::stringstream ss;
+				ss << __PRETTY_FUNCTION__ << ", error couldn't seq for " << genomeName
+						<< "\n";
+				throw std::runtime_error { ss.str() };
+			} else {
+				refSeq = search->second;
+			}
+			double gcContent = 0;
+			uint32_t longestHomopolymer = 0;
+			if ("" != refSeq->seqBase_.name_) {
+				refSeq->setLetterCount();
+				refSeq->counter_.resetAlphabet(true);
+				refSeq->counter_.setFractions();
+				refSeq->counter_.calcGcContent();
+				gcContent = refSeq->counter_.gcContent_;
+				refSeq->createCondensedSeq();
+				longestHomopolymer = vectorMaximum(refSeq->condensedSeqCount);
+				auto tandems = aligner::findTandemRepeatsInSequence(
+						refSeq->seqBase_.seq_, 2, -2, -7, 20);
+				for (const auto & tandem : tandems) {
+					if (tandem.numberOfRepeats_ > 2) {
+						containsTandems = true;
+						break;
+					}
+				}
+			}
+			ret.addRow(mipArms_->mips_[mipTar].locGrouping_, mipTar, genome, extractionNumber,
+					bedCore.chrom_, bedCore.chromStart_, bedCore.chromEnd_,
+					bedCore.strand_, bedCore.length(), containsTandems ? "yes" : "no",
+					lengthVariation ? "yes" : "no", hapNum, totalHapsPossible,
+					static_cast<double>(hapNum) / totalHapsPossible, gcContent,
+					longestHomopolymer);
+		}
+	}
+	return ret;
+}
+
+
+//table MipsOnGenome::getMipTarStatsForGenomes(const VecStr & genomes,
+//		const VecStr & mipTars, bool allRecords) const {
+//	table ret;
+//	for (const auto & genome : genomes) {
+//		auto gTable = getMipTarStatsForGenome(genome, mipTars, allRecords);
+//		if (ret.empty()) {
+//			ret = gTable;
+//		} else {
+//			ret.rbind(gTable, false);
+//		}
+//	}
+//	return ret;
+//}
 
 struct ExtractResult {
 	ExtractResult(const std::shared_ptr<AlignmentResults> & ext,
@@ -1150,6 +1289,11 @@ bfs::path MipsOnGenome::pathToAllInfoPrimaryGenome() const {
 			"allTarInfo_" + primaryGenome_ + ".tab.txt");
 }
 
+bfs::path MipsOnGenome::pathToAllInfoAllGenomes() const {
+	return bib::files::make_path(tablesDir_,
+			"allTarInfo_allGenomes.tab.txt");
+}
+
 
 bfs::path MipsOnGenome::pathToMipFasta(const std::string & mipName)const{
 	if(!bib::in(mipName, mipArms_->mips_)){
@@ -1190,16 +1334,25 @@ void MipsOnGenome::genTables() const{
 		tabOpts.out_.overWriteFile_ = true;
 		allTarInfo.outPutContents(tabOpts);
 	}
+
+	auto allInfoTab = getMipTarStatsForGenomes(getGenomes(), getMips(), true);
+	auto allTabOpts = TableIOOpts::genTabFileOut(pathToAllInfoAllGenomes());
+	allTabOpts.out_.overWriteFile_ = true;
+	allInfoTab.outPutContents(allTabOpts);
+
+	OutOptions genomeOpts(bib::files::make_path(tablesDir_, "genomes.txt"));
+	genomeOpts.overWriteFile_ = true;
+	OutOptions targetsOpts(bib::files::make_path(tablesDir_, "mipTargets.txt"));
+	targetsOpts.overWriteFile_ = true;
+
+	auto genomeOut = genomeOpts.openFile();
+	auto targetsOut = targetsOpts.openFile();
+
+	printVector(getGenomes(), "\n", *genomeOut);
+	printVector(getMips(), "\n", *targetsOut);
+
 }
 
-void MipsOnGenome::genTablesFromSeparately() const{
-	if("" != primaryGenome_){
-		auto allTarInfo = getMipTarStatsForGenome(primaryGenome_, getMips());
-		auto tabOpts = TableIOOpts::genTabFileOut(pathToAllInfoPrimaryGenome());
-		tabOpts.out_.overWriteFile_ = true;
-		allTarInfo.outPutContents(tabOpts);
-	}
-}
 
 
 

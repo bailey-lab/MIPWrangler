@@ -62,6 +62,9 @@ public:
 	void showMipSeqsHandler(std::shared_ptr<restbed::Session> session);
 	void showRegionInfoHandler(std::shared_ptr<restbed::Session> session);
 
+	void getInfoMipArmsInfoHandler(std::shared_ptr<restbed::Session> session);
+	void getAllMipTarInfoAllGenomesHandler(std::shared_ptr<restbed::Session> session);
+
 	//getting general info
 	//void (std::shared_ptr<restbed::Session> session);
 	std::shared_ptr<restbed::Resource> getMipGenomeLocs();
@@ -71,6 +74,9 @@ public:
 
 	std::shared_ptr<restbed::Resource> getMipRegionInfoForGenome();
 	std::shared_ptr<restbed::Resource> getMipTarInfoForGenome();
+
+	std::shared_ptr<restbed::Resource> getInfoMipArmsInfo();
+	std::shared_ptr<restbed::Resource> getAllMipTarInfoAllGenomes();
 
 	//get mip seqs
 	std::shared_ptr<restbed::Resource> getMipSeqs();

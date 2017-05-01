@@ -33,6 +33,8 @@ int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
 	bool removeBeds = false;
 
 	mipsterMipExplorerSetUp setUp(inputCommands);
+	setUp.processDebug();
+	setUp.processVerbose();
 	setUp.processComparison(allowableError);
 	setUp.setOption(primaryGenome, "--primaryGenome", "The primary genome", true);
 	setUp.setOption(numThreads, "--numThreads", "Number of Threads");
@@ -43,6 +45,8 @@ int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
 	setUp.setOption(selectGenomes, "--selectGenomes", "Extract info from only these genomes, default is all genomes found");
 	setUp.finishSetUp(std::cout);
 
+	bib::stopWatch watch;
+	watch.setLapName("Initial");
 	MipsOnGenome mips(mainDir, inputDir, numThreads);
 	if("" != mipArmsFnp){
 		mips.setMipArmsFnp(mipArmsFnp);
@@ -53,22 +57,33 @@ int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
 		std::set<std::string> genomeSet{genomes.begin(), genomes.end()};
 		mips.setSelectedGenomes(genomeSet);
 	}
+	watch.startNewLap("loadInArms");
 	mips.loadInArms();
+	watch.startNewLap("loadInGenomes");
 	mips.loadInGenomes();
 	if ("" != primaryGenome) {
 		mips.setPrimaryGenome(primaryGenome);
 	}
+	watch.startNewLap("setUpGenomes");
 	mips.setUpGenomes();
+	watch.startNewLap("createArmFiles");
 	mips.createArmFiles();
+	watch.startNewLap("mapArmsToGenomesSeparately");
 	mips.mapArmsToGenomesSeparately();
 	if(removeBeds){
 		bib::files::rmDirForce(mips.bedsDir_);
 		bib::files::makeDir(bib::files::MkdirPar(mips.bedsDir_));
 	}
+	watch.startNewLap("genBedsFromSeparately");
 	mips.genBedsFromSeparately(allowableError);
+	watch.startNewLap("genFastasFromSeparately");
 	mips.genFastasFromSeparately();
-
+	watch.startNewLap("genTables");
 	mips.genTables();
+
+	if(setUp.pars_.debug_){
+		watch.logLapTimes(std::cout, true, 6, true);
+	}
 	return 0;
 }
 

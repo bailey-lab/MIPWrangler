@@ -75,8 +75,16 @@ std::vector<std::shared_ptr<restbed::Resource>> mgv::getAllResources() {
 	ret.emplace_back(getMipRegionInfoForGenome());
 	ret.emplace_back(getMipTarInfoForGenome());
 
+
+	ret.emplace_back(getInfoMipArmsInfo());
+	ret.emplace_back(getAllMipTarInfoAllGenomes());
+
 	return ret;
 }
+
+
+
+
 
 VecStr mgv::requiredOptions() const {
 	return concatVecs(super::requiredOptions(), VecStr { "masterDir",
@@ -334,6 +342,35 @@ std::shared_ptr<restbed::Resource> mgv::getMipTarInfoForGenome() {
 	return resource;
 }
 
+std::shared_ptr<restbed::Resource> mgv::getInfoMipArmsInfo() {
+	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
+	auto resource = std::make_shared<restbed::Resource>();
+	resource->set_path(UrlPathFactory::createUrl( { { rootName_ },
+			{ "getInfoMipArmsInfo" } }));
+	resource->set_method_handler("POST",
+			std::function<void(std::shared_ptr<restbed::Session>)>(
+					[this](std::shared_ptr<restbed::Session> session) {
+		getInfoMipArmsInfoHandler(session);
+					}));
+	return resource;
+}
+
+std::shared_ptr<restbed::Resource> mgv::getAllMipTarInfoAllGenomes() {
+	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
+	auto resource = std::make_shared<restbed::Resource>();
+	resource->set_path(UrlPathFactory::createUrl( { { rootName_ },
+			{ "getAllMipTarInfoAllGenomes" } }));
+	resource->set_method_handler("POST",
+			std::function<void(std::shared_ptr<restbed::Session>)>(
+					[this](std::shared_ptr<restbed::Session> session) {
+		getAllMipTarInfoAllGenomesHandler(session);
+					}));
+	return resource;
+}
+
+
+
+
 
 
 
@@ -377,6 +414,32 @@ void mgv::getMipGenomeLocsHandler(std::shared_ptr<restbed::Session> session) {
 			HeaderFactory::initiateAppJsonHeader(body);
 	session->close(restbed::OK, body, headers);
 }
+
+void mgv::getInfoMipArmsInfoHandler(std::shared_ptr<restbed::Session> session) {
+	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
+	auto request = session->get_request();
+
+	table mipArms(mipsInfo_->mipArmsFnp_, "\t", true);
+
+	auto body = bib::json::writeAsOneLine(tableToJsonByRow(mipArms, "mip_family"));
+	const std::multimap<std::string, std::string> headers =
+			HeaderFactory::initiateAppJsonHeader(body);
+	session->close(restbed::OK, body, headers);
+}
+
+void mgv::getAllMipTarInfoAllGenomesHandler(std::shared_ptr<restbed::Session> session) {
+	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
+	auto request = session->get_request();
+
+	table allInfo(mipsInfo_->pathToAllInfoAllGenomes(), "\t", true);
+
+	auto body = bib::json::writeAsOneLine(tableToJsonByRow(allInfo, "region"));
+	const std::multimap<std::string, std::string> headers =
+			HeaderFactory::initiateAppJsonHeader(body);
+	session->close(restbed::OK, body, headers);
+}
+
+
 
 
 

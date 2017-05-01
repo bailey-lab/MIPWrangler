@@ -18,15 +18,29 @@ $(document).ready(function() {
 			createLinksTable(addTo, linkPre, names["mipRegions"], cols, mouseOverC, mouseLeaveC);		
 			addH1 ("#mainContent", "Regions General Infoformation");
 			addDiv("#mainContent", "regionInfoTab");
-			addH1 ("#mainContent", "General Infoformation Per Target");
+			addPanelOnlyHead("#mainContent", "General Infoformation Per Target For " + names["primaryGenome"]);
 			addDiv("#mainContent", "tarInfoTab");
-
+			addPanelOnlyHead("#mainContent", "General Infoformation Per Target For All Genomes");
+			addDiv("#mainContent", "tarInfoTabAll");
+			addPanelOnlyHead("#mainContent", "Input Mip Info Table");
+			addDiv("#mainContent", "inputTarInfo");
+			
 			postJSON("/" + rName + "/getMipRegionInfoForGenome", {"genome":names["primaryGenome"]}).then(function (regionInfo) {
 				var regionTable =  new njhTable("#regionInfoTab", regionInfo, names["primaryGenome"] + "_regionInfo", false);	
-				
-				postJSON("/" + rName + "/getMipTarInfoForGenome", {"genome":names["primaryGenome"], "mipTars": names["mips"]}).then(function (tarInfo) {
+				var tarUrls = ["/" + rName + "/getMipTarInfoForGenome" ]
+				tarUrls.push("/" + rName + "/getAllMipTarInfoAllGenomes" );
+				tarUrls.push("/" + rName + "/getInfoMipArmsInfo" );
+				Promise.all(tarUrls.map(function(tarUrl){
+					return postJSON(tarUrl, {"genome": names["primaryGenome"], "mipTars": names["mips"]});
+				})).then(function(allTarInfos){
+					
+					var tarInfo = allTarInfos[0]
+					var allGenomeTarInfo = allTarInfos[1]
+					var inputTarInfoTable = allTarInfos[2]
 					var tarsTable =  new njhTable("#tarInfoTab", tarInfo, names["primaryGenome"] + "_tarInfos", false);	
-
+					var tarInfoTabAllTable =  new njhTable("#tarInfoTabAll", allGenomeTarInfo, "allGenomes" + "_tarInfos", false);	
+					var inputTarInfoTable =  new njhTable("#inputTarInfo", inputTarInfoTable, "mip_arms.tab.txt", false);	
+					
 					addH1 ("#mainContent", names["primaryGenome"]);
 					addDiv("#mainContent", "genomeDiv");
 					d34.select("#genomeDiv").style("margin", "10px");
