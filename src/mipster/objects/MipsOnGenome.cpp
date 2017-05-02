@@ -295,6 +295,20 @@ void MipsOnGenome::mapArmsToGenomesSeparately() {
 	outFile << log << std::endl;
 }
 
+template<typename IN, typename OUT>
+std::vector<OUT> create(const std::vector<IN> & input, std::function<OUT(const IN &)> func){
+	std::vector<OUT> ret;
+	ret.reserve(input.size());
+	for(const auto & inputElement : input){
+		ret.emplace_back(func(inputElement));
+	}
+	return ret;
+}
+
+std::vector<GenomicRegion> bedPtrsToGenomicRegs(const std::vector<std::shared_ptr<BedRecordCore>> & beds){
+	return create<std::shared_ptr<BedRecordCore>, GenomicRegion>(beds, [](const std::shared_ptr<BedRecordCore> & bed)->GenomicRegion{ return GenomicRegion(*bed);});
+
+}
 
 void MipsOnGenome::genFastasFromSeparately() {
 	const VecStr mips = bib::getVecOfMapKeys( mipArms_->mips_);
@@ -336,10 +350,9 @@ void MipsOnGenome::genFastasFromSeparately() {
 					std::vector<seqInfo> trimmedSeqs;
 					for(const auto & bedOpt : bedOpts){
 						const std::string genome = bedOpt.first;
-						auto regions =    gatherRegions(bedOpt.second->inFilename_.string(), "", false);
-						auto extRegions = gatherRegions(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-ext.bed"), "", false);
-						auto ligRegions = gatherRegions(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-lig.bed"), "", false);
-
+						auto regions =    bedPtrsToGenomicRegs(getBeds(bedOpt.second->inFilename_.string()));
+						auto extRegions = bedPtrsToGenomicRegs(getBeds(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-ext.bed")));
+						auto ligRegions = bedPtrsToGenomicRegs(getBeds(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-lig.bed")));
 						if(regions.empty()){
 							succes = false;
 							ss << "Error in parsing " << bedOpt.second->inFilename_ << ", it was empty\n";
@@ -434,6 +447,8 @@ void MipsOnGenome::genFastasFromSeparately() {
 	outFile << log << std::endl;
 }
 
+
+
 void MipsOnGenome::genFastas() {
 	const VecStr mips = bib::getVecOfMapKeys( mipArms_->mips_);
 	const VecStr genomes = bib::getVecOfMapKeys( genomes_	);
@@ -452,6 +467,7 @@ void MipsOnGenome::genFastas() {
 			trimmedOutOpts.out_.overWriteFile_ = true;
 			std::unordered_map<std::string, std::shared_ptr<InOptions>> bedOpts;
 			bool needsUpdate = false;
+
 			for(const auto & genome : genomes){
 				std::shared_ptr<InOptions> bedOpt = std::make_shared<InOptions>(bib::files::make_path(bedsDir_, genome + "_" + mipName + ".bed"));
 				//there is a possibility that the bed creatin failed due to bad mapping but this also doesn't take into account if the beds haven't been created yet
@@ -461,6 +477,10 @@ void MipsOnGenome::genFastas() {
 					}
 					bedOpts[genome] = bedOpt;
 				}
+			}
+			std::cout << "mipName" << std::endl;
+			for(const auto & g : bedOpts){
+				std::cout << g.first << std::endl;
 			}
 			if(bedOpts.empty()){
 				succes = false;
@@ -474,9 +494,11 @@ void MipsOnGenome::genFastas() {
 					std::vector<seqInfo> trimmedSeqs;
 					for(const auto & bedOpt : bedOpts){
 						std::string genome = bedOpt.first;
-						auto regions =    gatherRegions(bedOpt.second->inFilename_.string(), "", false);
-						auto extRegions = gatherRegions(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-ext.bed"), "", false);
-						auto ligRegions = gatherRegions(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-lig.bed"), "", false);
+
+						auto regions =    bedPtrsToGenomicRegs(getBeds(bedOpt.second->inFilename_.string()));
+						auto extRegions = bedPtrsToGenomicRegs(getBeds(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-ext.bed")));
+						auto ligRegions = bedPtrsToGenomicRegs(getBeds(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-lig.bed")));
+
 						if(regions.empty()){
 							succes = false;
 							ss << "Error in parsing " << bedOpt.second->inFilename_ << "\n";
@@ -769,12 +791,12 @@ table MipsOnGenome::getMipTarStatsForGenomes(const VecStr & genomes,
 				if("0" != extractionNumber){
 					genomeName = genome + "." + extractionNumber;
 				}
-				bool containsTandems = false;
+				//bool containsTandems = false;
 				auto search = readsByAllNames.find(genomeName);
 				std::shared_ptr<readObject> refSeq;
 				if(search == readsByAllNames.end()){
 					std::stringstream ss;
-					ss << __PRETTY_FUNCTION__ << ", error couldn't seq for " << genomeName << "\n";
+					ss << __PRETTY_FUNCTION__ << ", error couldn't find seq for " << genomeName << " for " << mipTar << "\n";
 					throw std::runtime_error{ss.str()};
 				}else{
 					refSeq = search->second;
@@ -789,19 +811,20 @@ table MipsOnGenome::getMipTarStatsForGenomes(const VecStr & genomes,
 					gcContent = refSeq->counter_.gcContent_;
 					refSeq->createCondensedSeq();
 					longestHomopolymer = vectorMaximum(refSeq->condensedSeqCount);
-					auto tandems = aligner::findTandemRepeatsInSequence(refSeq->seqBase_.seq_, 2, -2, -7, 20);
-					for(const auto & tandem : tandems){
-						if(tandem.numberOfRepeats_ > 2){
-							containsTandems = true;
-							break;
-						}
-					}
+//					auto tandems = aligner::findTandemRepeatsInSequence(refSeq->seqBase_.seq_, 2, -2, -7, 20);
+//					for(const auto & tandem : tandems){
+//						if(tandem.numberOfRepeats_ > 2){
+//							containsTandems = true;
+//							break;
+//						}
+//					}
 				}
 				ret.addRow(mipArms_->mips_[mipTar].locGrouping_,
 									mipTar, genome, extractionNumber,
 									bedCore.chrom_, bedCore.chromStart_, bedCore.chromEnd_,
 									bedCore.strand_, bedCore.length(),
-									containsTandems ? "yes": "no",
+									//containsTandems ? "yes": "no",
+									"notChecked",
 									lengthVariation ? "yes": "no",
 									hapNum, totalHapsPossible,
 									static_cast<double>(hapNum)/totalHapsPossible,
@@ -870,8 +893,7 @@ table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
 			std::shared_ptr<readObject> refSeq;
 			if (search == readsByAllNames.end()) {
 				std::stringstream ss;
-				ss << __PRETTY_FUNCTION__ << ", error couldn't seq for " << genomeName
-						<< "\n";
+				ss << __PRETTY_FUNCTION__ << ", error couldn't find seq for " << genomeName << " for " << mipTar << "\n";
 				throw std::runtime_error { ss.str() };
 			} else {
 				refSeq = search->second;
@@ -1009,7 +1031,6 @@ std::vector<ExtractResult> getPossibleExtracts(const std::vector<std::shared_ptr
 			}
 		}
 	}
-
 	return ret;
 }
 
