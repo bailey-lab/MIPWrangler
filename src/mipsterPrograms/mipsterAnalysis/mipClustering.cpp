@@ -136,11 +136,11 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 				barcodeTotal+= clus.seqBase_.cnt_;
 				totalReads += readAmount;
 				clus.appendName("_R" + estd::to_string(readAmount));
-				readAmounts[clus.seqBase_.name_] = readAmount;
 				MetaDataInName meta(clus.seqBase_.name_);
 				meta.addMeta("readCnt", readAmount, true);
 				meta.addMeta("barcodeCnt", clus.seqBase_.cnt_, true);
 				meta.resetMetaInName(clus.seqBase_.name_);
+				readAmounts[clus.seqBase_.name_] = readAmount;
 				SeqIOOptions outOpts = opts;
 				outOpts.out_.outFilename_ = mipFamilyAllClustersDir.string() + clus.seqBase_.name_;
 				SeqOutput clusWriter(outOpts);

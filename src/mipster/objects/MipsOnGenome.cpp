@@ -145,79 +145,8 @@ void MipsOnGenome::setMipArmsFnp(const bfs::path & mipArmsFnp){
 }
 
 
-void MipsOnGenome::mapArmsToGenomes() {
-	std::vector<GenomeMip> pairs;
-	for (const auto & gen : genomes_) {
-		for (const auto & m : mipArms_->mips_) {
-			pairs.emplace_back(GenomeMip{gen.first, m.second.name_});
-		}
-	}
-	bib::concurrent::LockableQueue<GenomeMip> pairsQueue(pairs);
-	std::mutex logMut;
-	Json::Value log;
-	log["date"] = bib::getCurrentDateFull();
-	auto mapArm = [this, &pairsQueue,&logMut,&log](){
-		GenomeMip pair;
-		while(pairsQueue.getVal(pair)){
-			std::stringstream ss;
-			bool succes = false;
-			std::string outStub = bib::files::make_path(mapDir_,
-					pair.uid()).string();
-			std::string outCheck = outStub + ".sorted.bam";
-			if (!bfs::exists(outCheck)
-					|| bib::files::firstFileIsOlder(outCheck, genomes_.at(pair.genome_)->fnp_)
-					|| bib::files::firstFileIsOlder(outCheck, mipArms_->mipArmIdFnp_)) {
-				std::stringstream bowtie2Cmd;
-				bowtie2Cmd
-						<< " bowtie2  -p 1 -D 20 -R 3 -N 1 -L 18 -i S,1,0.5 --gbar 1 -k 1 --end-to-end "
-						<< "-x " << bib::files::make_path(genomeDir_, pair.genome_)
-						<< " -f -1 " << bib::files::make_path(armsDir_, pair.mip_)
-						<< "_ext-arm.fasta" << " -2 "
-						<< bib::files::make_path(armsDir_, pair.mip_)
-						<< "_lig-arm.fasta" << " -S " << outStub + ".sam";
-				std::stringstream samtoolsCmds;
-				samtoolsCmds << "samtools view -Sb " << outStub << ".sam | "
-						<< "samtools sort - -o " << outStub << ".sorted.bam && "
-						<< "samtools index " << outStub << ".sorted.bam";
-				auto bowtie2RunOutput = bib::sys::run( { bowtie2Cmd.str() });
-				if (bowtie2RunOutput.success_) {
-					auto samtoolsRunOutput = bib::sys::run( { samtoolsCmds.str() });
-					succes = true;
-					if (!samtoolsRunOutput.success_) {
-						ss << "Failed to sort " << outStub << ".sam" << std::endl;
-						ss << samtoolsRunOutput.stdErr_ << std::endl;
-					}
-				} else {
-					ss << "Failed to map " << pair.mip_ << " to "
-							<< pair.genome_ << std::endl;
-					ss << bowtie2RunOutput.stdErr_ << std::endl;
-				}
-			}else{
-				succes = true;
-				ss << outCheck << " is up to date";
-			}
-			{
-				std::lock_guard<std::mutex> lock(logMut);
-				log[pair.uid()]["succes"] = succes;
-				log[pair.uid()]["message"] = ss.str();
-			}
-		}
-	};
-	std::vector<std::thread> threads;
-	for(uint32_t t = 0; t < numThreads_; ++t){
-		threads.emplace_back(std::thread(mapArm));
-	}
-	for(auto & t : threads){
-		t.join();
-	}
-	std::ofstream outFile;
-	OutOptions logOpts(bib::files::make_path(logDir_, "mapLog-" + bib::getCurrentDate() + ".json"));
-	logOpts.outFilename_ = bib::files::findNonexitantFile(logOpts.outFilename_);
-	openTextFile(outFile, logOpts);
-	outFile << log << std::endl;
-}
 
-void MipsOnGenome::mapArmsToGenomesSeparately() {
+void MipsOnGenome::mapArmsToGenomes() {
 	std::vector<GenomeMip> pairs;
 	for (const auto & gen : genomes_) {
 		for (const auto & m : mipArms_->mips_) {
@@ -295,22 +224,15 @@ void MipsOnGenome::mapArmsToGenomesSeparately() {
 	outFile << log << std::endl;
 }
 
-template<typename IN, typename OUT>
-std::vector<OUT> create(const std::vector<IN> & input, std::function<OUT(const IN &)> func){
-	std::vector<OUT> ret;
-	ret.reserve(input.size());
-	for(const auto & inputElement : input){
-		ret.emplace_back(func(inputElement));
-	}
-	return ret;
+
+
+std::vector<GenomicRegion> bedPtrsToGenomicRegs(
+		const std::vector<std::shared_ptr<BedRecordCore>> & beds) {
+	return bib::convert<std::shared_ptr<BedRecordCore>, GenomicRegion>(beds,
+			[](const std::shared_ptr<BedRecordCore> & bed)->GenomicRegion {return GenomicRegion(*bed);});
 }
 
-std::vector<GenomicRegion> bedPtrsToGenomicRegs(const std::vector<std::shared_ptr<BedRecordCore>> & beds){
-	return create<std::shared_ptr<BedRecordCore>, GenomicRegion>(beds, [](const std::shared_ptr<BedRecordCore> & bed)->GenomicRegion{ return GenomicRegion(*bed);});
-
-}
-
-void MipsOnGenome::genFastasFromSeparately() {
+void MipsOnGenome::genFastas() {
 	const VecStr mips = bib::getVecOfMapKeys( mipArms_->mips_);
 	const VecStr genomes = bib::getVecOfMapKeys( genomes_	);
 	bib::concurrent::LockableQueue<std::string> mipQueue(mips);
@@ -447,138 +369,6 @@ void MipsOnGenome::genFastasFromSeparately() {
 	outFile << log << std::endl;
 }
 
-
-
-void MipsOnGenome::genFastas() {
-	const VecStr mips = bib::getVecOfMapKeys( mipArms_->mips_);
-	const VecStr genomes = bib::getVecOfMapKeys( genomes_	);
-	bib::concurrent::LockableQueue<std::string> mipQueue(mips);
-	std::mutex logMut;
-	Json::Value log;
-	log["date"] = bib::getCurrentDateFull();
-	auto genFastasFunc = [this, &mipQueue,&genomes,&logMut,&log](){
-		std::string mipName;
-		while(mipQueue.getVal(mipName)){
-			std::stringstream ss;
-			bool succes = false;
-			auto outOpts = SeqIOOptions::genFastaOut(bib::files::make_path(fastaDir_, mipName));
-			outOpts.out_.overWriteFile_ = true;
-			auto trimmedOutOpts = SeqIOOptions::genFastaOut(bib::files::make_path(fastaDir_, "trimmed_" + mipName));
-			trimmedOutOpts.out_.overWriteFile_ = true;
-			std::unordered_map<std::string, std::shared_ptr<InOptions>> bedOpts;
-			bool needsUpdate = false;
-
-			for(const auto & genome : genomes){
-				std::shared_ptr<InOptions> bedOpt = std::make_shared<InOptions>(bib::files::make_path(bedsDir_, genome + "_" + mipName + ".bed"));
-				//there is a possibility that the bed creatin failed due to bad mapping but this also doesn't take into account if the beds haven't been created yet
-				if(bedOpt->inExists()){
-					if(outOpts.out_.outExists() && bib::files::firstFileIsOlder(outOpts.out_.outName(), bedOpt->inFilename_)){
-						needsUpdate = true;
-					}
-					bedOpts[genome] = bedOpt;
-				}
-			}
-			std::cout << "mipName" << std::endl;
-			for(const auto & g : bedOpts){
-				std::cout << g.first << std::endl;
-			}
-			if(bedOpts.empty()){
-				succes = false;
-				ss << "No bed files found for " << mipName << "\n";
-			}else{
-				if(outOpts.outExists() && !needsUpdate){
-					succes = true;
-					ss << outOpts.out_.outName() << " already up to date";
-				}else{
-					std::vector<seqInfo> seqs;
-					std::vector<seqInfo> trimmedSeqs;
-					for(const auto & bedOpt : bedOpts){
-						std::string genome = bedOpt.first;
-
-						auto regions =    bedPtrsToGenomicRegs(getBeds(bedOpt.second->inFilename_.string()));
-						auto extRegions = bedPtrsToGenomicRegs(getBeds(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-ext.bed")));
-						auto ligRegions = bedPtrsToGenomicRegs(getBeds(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-lig.bed")));
-
-						if(regions.empty()){
-							succes = false;
-							ss << "Error in parsing " << bedOpt.second->inFilename_ << "\n";
-						}else{
-							TwoBit::TwoBitFile twoBitFile(bib::files::make_path(genomeDir_, genome + ".2bit"));
-							std::string seq = "";
-							twoBitFile[regions.front().chrom_]->getSequence(seq, regions.front().start_, regions.front().end_);
-							//consider leaving lower case
-							bib::strToUpper(seq);
-							if(regions.front().reverseSrand_){
-								seq = seqUtil::reverseComplement(seq, "DNA");
-							}
-							seqInfo trimmedSeq(genome, seq);
-							readVecTrimmer::trimOffForwardBases(trimmedSeq, extRegions.front().getLen());
-							readVecTrimmer::trimOffEndBases(trimmedSeq, ligRegions.front().getLen());
-							seqs.emplace_back(seqInfo(genome, seq));
-							trimmedSeqs.emplace_back(trimmedSeq);
-						}
-					}
-					if(seqs.empty()){
-						succes = false;
-						ss << "Failed to extract any sequences from bed files " << "\n";
-					}else{
-						auto collapseSimSeqs = [](std::vector<seqInfo> & seqs){
-							std::vector<seqInfo> outputSeqs;
-							for(const auto & seq : seqs){
-								if(outputSeqs.empty()){
-									outputSeqs.emplace_back(seq);
-								}else{
-									bool foundSame = false;
-									for( auto & outSeq : outputSeqs){
-										if(seq.seq_ == outSeq.seq_ ){
-											outSeq.name_ += "-" + seq.name_;
-											foundSame = true;
-											break;
-										}
-									}
-									if(!foundSame){
-										outputSeqs.emplace_back(seq);
-									}
-								}
-							}
-							for(auto & outSeq : outputSeqs){
-								if(std::string::npos != outSeq.name_.find('-')){
-									auto gs = bib::tokenizeString(outSeq.name_, "-");
-									bib::sort(gs);
-									outSeq.name_ = bib::conToStr(gs, "-");
-								}
-							}
-							return outputSeqs;
-						};
-
-						succes = true;
-						auto outputSeqs = collapseSimSeqs(seqs);
-						SeqOutput::write(outputSeqs, outOpts);
-						auto trimedOutputSeqs = collapseSimSeqs(trimmedSeqs);
-						SeqOutput::write(trimedOutputSeqs, trimmedOutOpts);
-					}
-				}
-			}
-			{
-				std::lock_guard<std::mutex> lock(logMut);
-				log[mipName]["succes"] = succes;
-				log[mipName]["message"] = ss.str();
-			}
-		}
-	};
-	std::vector<std::thread> threads;
-	for(uint32_t t = 0; t < numThreads_; ++t){
-		threads.emplace_back(std::thread(genFastasFunc));
-	}
-	for(auto & t : threads){
-		t.join();
-	}
-	std::ofstream outFile;
-	OutOptions logOpts(bib::files::make_path(logDir_, "fastaLog-" + bib::getCurrentDate() + ".json"));
-	logOpts.outFilename_ = bib::files::findNonexitantFile(logOpts.outFilename_);
-	openTextFile(outFile, logOpts);
-	outFile << log << std::endl;
-}
 
 
 table MipsOnGenome::getGenomeLocsForMipTar(const std::string & tar) const{
@@ -835,6 +625,29 @@ table MipsOnGenome::getMipTarStatsForGenomes(const VecStr & genomes,
 	return ret;
 }
 
+
+
+table MipsOnGenome::genExtractionNumberTable() const{
+	auto genomes = getGenomes();
+	table ret{toVecStr("target", genomes)};
+
+	for(const auto & m : getMips()){
+		VecStr row{m};
+		for(const auto & g : genomes){
+			auto bedPath = pathToMipBed(m,g);
+			uint32_t count = 0;
+			if(bfs::exists(bedPath)){
+				auto bRecods = getBeds(bedPath);
+				count = bRecods.size();
+			}
+			row.emplace_back(estd::to_string(count));
+		}
+		ret.addRow(row);
+	}
+
+	return ret;
+}
+
 table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
 		const VecStr & mipTars, bool allRecords) const{
 	table ret(VecStr { "region", "target", "genome", "extractionNumber", "chrom", "start", "end",
@@ -943,99 +756,12 @@ table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
 //	return ret;
 //}
 
-struct ExtractResult {
-	ExtractResult(const std::shared_ptr<AlignmentResults> & ext,
-			const std::shared_ptr<AlignmentResults> & lig) :
-			ext_(ext), lig_(lig) {
-
-	}
-	std::shared_ptr<AlignmentResults> ext_;
-	std::shared_ptr<AlignmentResults> lig_;
-
-	std::shared_ptr<GenomicRegion> gRegion_;
-
-	void setRegion() {
-		if (ext_->gRegion_.chrom_ != lig_->gRegion_.chrom_) {
-			std::stringstream ss;
-			ss << __PRETTY_FUNCTION__ << ", error extention chrom, "
-					<< ext_->gRegion_.chrom_ << "doesn't equal ligation chrom "
-					<< lig_->gRegion_.chrom_ << "\n";
-			throw std::runtime_error { ss.str() };
-		}
-		if (ext_->gRegion_.reverseSrand_ == lig_->gRegion_.reverseSrand_) {
-			std::stringstream ss;
-			ss << __PRETTY_FUNCTION__
-					<< ", error extention and ligation are on the same strand, should be mapping to opposite strands"
-					<< "\n";
-			throw std::runtime_error { ss.str() };
-		}
-		if (ext_->gRegion_.reverseSrand_) {
-			if (ext_->gRegion_.start_ < lig_->gRegion_.start_) {
-				std::stringstream ss;
-				ss << __PRETTY_FUNCTION__
-						<< ", error if extention is mapping to the reverse strand, it's start, "
-						<< ext_->gRegion_.start_
-						<< ", should be greater than ligation start, "
-						<< lig_->gRegion_.start_ << "\n";
-				throw std::runtime_error { ss.str() };
-			}
-		}else{
-			if (ext_->gRegion_.start_ > lig_->gRegion_.start_) {
-				std::stringstream ss;
-				ss << __PRETTY_FUNCTION__
-						<< ", error if extention is mapping to the plus strand, it's start, "
-						<< ext_->gRegion_.start_
-						<< ", should be less than than ligation start, "
-						<< lig_->gRegion_.start_ << "\n";
-				throw std::runtime_error { ss.str() };
-			}
-		}
-
-		size_t start = ext_->gRegion_.start_;
-		size_t end = lig_->gRegion_.end_;
-		if(ext_->gRegion_.reverseSrand_){
-			start = lig_->gRegion_.start_;
-			end = ext_->gRegion_.end_;
-		}
-		gRegion_ = std::make_shared<GenomicRegion>("", ext_->gRegion_.chrom_, start, end, ext_->gRegion_.reverseSrand_);
-	}
 
 
-};
-
-std::vector<ExtractResult> getPossibleExtracts(const std::vector<std::shared_ptr<AlignmentResults>> & alnResultsExt,
-		const std::vector<std::shared_ptr<AlignmentResults>> & alnResultsLig, const size_t insertSizeCutOff){
-	std::vector<ExtractResult> ret;
-	//same chrom, opposite strands, less than the insert size
-	for (const auto & ext : alnResultsExt) {
-		for (const auto & lig : alnResultsLig) {
-			if (ext->gRegion_.chrom_ == lig->gRegion_.chrom_
-					&& ext->gRegion_.reverseSrand_ != lig->gRegion_.reverseSrand_) {
-				if(ext->gRegion_.reverseSrand_){
-					if(ext->gRegion_.start_ > lig->gRegion_.start_){
-						ExtractResult extraction(ext, lig);
-						extraction.setRegion();
-						if (extraction.gRegion_->getLen() <= insertSizeCutOff) {
-							ret.emplace_back(extraction);
-						}
-					}
-				}else{
-					if(ext->gRegion_.start_ < lig->gRegion_.start_){
-						ExtractResult extraction(ext, lig);
-						extraction.setRegion();
-						if (extraction.gRegion_->getLen() <= insertSizeCutOff) {
-							ret.emplace_back(extraction);
-						}
-					}
-				}
-			}
-		}
-	}
-	return ret;
-}
 
 
-void MipsOnGenome::genBedsFromSeparately(const comparison & allowableError) {
+
+void MipsOnGenome::genBeds(const comparison & allowableError) {
 	std::vector<GenomeMip> pairs;
 	for (const auto & gen : genomes_) {
 		for (const auto & m : mipArms_->mips_) {
@@ -1089,7 +815,7 @@ void MipsOnGenome::genBedsFromSeparately(const comparison & allowableError) {
 						succes = true;
 						ss << bedOpts.outName() << " already up to date" << "\n";
 					}else{
-						auto extractions = getPossibleExtracts(alnResultsExt, alnResultsLig, insertSizeCutoff);
+						auto extractions = getPossibleGenomeExtracts(alnResultsExt, alnResultsLig, insertSizeCutoff);
 						if(extractions.empty()){
 							ss << "Failed to extract any results for " << pair.mip_ << " in " << pair.genome_ << std::endl;
 						}else{
@@ -1159,115 +885,7 @@ std::vector<MipsOnGenome::GenomeMip> MipsOnGenome::genGenomeMipPairs() const {
 	return pairs;
 }
 
-void MipsOnGenome::genBeds() {
-	std::vector<GenomeMip> pairs;
-	for (const auto & gen : genomes_) {
-		for (const auto & m : mipArms_->mips_) {
-			pairs.emplace_back(GenomeMip{gen.first, m.second.name_});
-		}
-	}
-	bib::concurrent::LockableQueue<GenomeMip> pairsQueue(pairs);
-	std::mutex logMut;
-	Json::Value log;
-	log["date"] = bib::getCurrentDateFull();
-	auto genBedsFunc = [this, &pairsQueue,&logMut,&log](){
-		GenomeMip pair;
-		while(pairsQueue.getVal(pair)){
-			std::string outStub = bib::files::make_path(mapDir_,
-					pair.genome_ + "_" + pair.mip_).string();
-			std::string outCheck = outStub + ".sorted.bam";
-			std::stringstream ss;
-			bool succes = false;
-			if (!bfs::exists(outCheck)) {
-				std::lock_guard<std::mutex> lock(logMut);
-				ss << "Failed to find " << outCheck << " for " << pair.mip_ << " to "
-						<< pair.genome_ << std::endl;
-			}else{
-				uint32_t insertSizeCutoff = 1000;
-				//temporary fix
-				if(bib::containsSubString(pair.mip_, "full")){
-					insertSizeCutoff = 10000;
-				}
-				//temporary fix
-				if(bib::containsSubString(pair.mip_, "eba175_S0_Sub0_mip0-30")){
-					insertSizeCutoff = 10000;
-				}
-				//temporary fix
-//				if(bib::containsSubString(pair.mip_, "lsa") && bib::containsSubString(pair.mip_, "full")){
-//					insertSizeCutoff = 5000;
-//				}
 
-				auto results = getMipMapResults(outCheck, insertSizeCutoff);
-				if(results.empty()){
-					ss << "Failed to get results from " << outCheck << " for " << pair.mip_ << " to "
-							<< pair.genome_ << std::endl;
-				}else if(results.size() > 1){
-					ss << "Was expecting only to get 1 result from " << outCheck << " for " << pair.mip_ << " to "
-													<< pair.genome_ << " but got " << results.size( ) << " instead" << std::endl;
-				}else{
-					OutOptions bedOpts(bib::files::make_path(bedsDir_, pair.genome_ + "_" + pair.mip_ + ".bed"));
-					if(bedOpts.outExists() && bib::files::firstFileIsOlder(outCheck ,bedOpts.outName())){
-						succes = true;
-						ss << bedOpts.outName() << " already up to date" << "\n";
-					}else{
-						if (results.front().isConcordant() && results.front().isMapped()) {
-							OutOptions bedExtOpts(bib::files::make_path(bedsDir_, pair.genome_ + "_" + pair.mip_ + "-ext.bed"));
-							OutOptions bedLigOpts(bib::files::make_path(bedsDir_, pair.genome_ + "_" + pair.mip_ + "-lig.bed"));
-							//full region
-							std::ofstream outFile;
-							bedOpts.overWriteFile_ = true;
-							bedOpts.openFile(outFile);
-							outFile << results.front().region_.genBedRecordCore().toDelimStr() << std::endl;
-							//ext
-							std::ofstream outExtFile;
-							bedExtOpts.overWriteFile_ = true;
-							bedExtOpts.openFile(outExtFile);
-							outExtFile << results.front().extArmRegion_.genBedRecordCore().toDelimStr() << std::endl;
-							//lig
-							std::ofstream outLigFile;
-							bedLigOpts.overWriteFile_ = true;
-							bedLigOpts.openFile(outLigFile);
-							outLigFile << results.front().ligArmRegion_.genBedRecordCore().toDelimStr() << std::endl;
-							succes =  true;
-						} else {
-							if (!results.front().isMapped()) {
-								if (!results.front().extAln_.IsMapped()) {
-									ss << "Result for " << results.front().mipName_ << " mapped to "
-											<< results.front().genomeName_ << " extension arm didn't map "
-											<< std::endl;
-								}
-								if (!results.front().ligAln_.IsMapped()) {
-									ss << "Result for " << results.front().mipName_ << " mapped to "
-											<< results.front().genomeName_ << " ligation arm didn't map" << std::endl;
-								}
-							} else if (!results.front().isConcordant()) {
-								ss << "Result for " << results.front().mipName_ << " mapped to "
-										<< results.front().genomeName_ << " had discordant arms" << std::endl;
-							}
-						}
-					}
-				}
-			}
-			{
-				std::lock_guard<std::mutex> lock(logMut);
-				log[pair.uid()]["succes"] = succes;
-				log[pair.uid()]["message"] = ss.str();
-			}
-		}
-	};
-	std::vector<std::thread> threads;
-	for(uint32_t t = 0; t < numThreads_; ++t){
-		threads.emplace_back(std::thread(genBedsFunc));
-	}
-	for(auto & t : threads){
-		t.join();
-	}
-	std::ofstream outFile;
-	OutOptions logOpts(bib::files::make_path(logDir_, "bedLog-" + bib::getCurrentDate() + ".json"));
-	logOpts.outFilename_ = bib::files::findNonexitantFile(logOpts.outFilename_);
-	openTextFile(outFile, logOpts);
-	outFile << log << std::endl;
-}
 
 void MipsOnGenome::setPrimaryGenome(const std::string & genome){
 	if(!bib::in(genome, genomes_)){
@@ -1313,6 +931,11 @@ bfs::path MipsOnGenome::pathToAllInfoPrimaryGenome() const {
 bfs::path MipsOnGenome::pathToAllInfoAllGenomes() const {
 	return bib::files::make_path(tablesDir_,
 			"allTarInfo_allGenomes.tab.txt");
+}
+
+bfs::path MipsOnGenome::pathToExtractionCounts() const{
+	return bib::files::make_path(tablesDir_,
+			"extractionCountsTable.tab.txt");
 }
 
 
@@ -1371,6 +994,13 @@ void MipsOnGenome::genTables() const{
 
 	printVector(getGenomes(), "\n", *genomeOut);
 	printVector(getMips(), "\n", *targetsOut);
+
+	auto extractionCounts = genExtractionNumberTable();
+
+	auto extractionCountsOpts = TableIOOpts::genTabFileOut(pathToExtractionCounts());
+	extractionCountsOpts.out_.overWriteFile_ = true;
+	extractionCounts.outPutContents(extractionCountsOpts);
+
 
 }
 

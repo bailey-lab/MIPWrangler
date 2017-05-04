@@ -12,7 +12,8 @@ namespace bibseq {
 
 class MipsOnGenome {
 public:
-	MipsOnGenome(const bfs::path & mainDir, const bfs::path & mainInputDir, uint32_t numThreads);
+	MipsOnGenome(const bfs::path & mainDir, const bfs::path & mainInputDir,
+			uint32_t numThreads);
 
 	bfs::path mainDir_;
 	bfs::path mainInputDir_;
@@ -32,14 +33,12 @@ public:
 
 	uint32_t numThreads_ = 1;
 
-
 private:
 	std::string primaryGenome_ = "";
 	std::set<std::string> selectedGenomes_;
 public:
 
 	std::string getPrimaryGenome();
-
 
 	class Genome {
 	public:
@@ -73,17 +72,10 @@ public:
 	void setMipArmsFnp(const bfs::path & mipArmsFnp);
 
 	void mapArmsToGenomes();
-	void mapArmsToGenomesSeparately();
-
-
-	void genBeds();
-	void genBedsFromSeparately(const comparison & allowableError);
-
+	void genBeds(const comparison & allowableError);
 	void genFastas();
-	void genFastasFromSeparately();
 
 	void genTables() const;
-
 
 	void setPrimaryGenome(const std::string & genome);
 
@@ -95,7 +87,7 @@ public:
 			const std::string & genomeName) const;
 	bfs::path pathToAllInfoPrimaryGenome() const;
 	bfs::path pathToAllInfoAllGenomes() const;
-
+	bfs::path pathToExtractionCounts() const;
 
 	VecStr getMips() const;
 	VecStr getGenomes() const;
@@ -108,8 +100,12 @@ public:
 
 	table getMipRegionStatsForGenome(const std::string & genome) const;
 
-	table getMipTarStatsForGenome(const std::string & genome, const VecStr & mipTars, bool allRecords = false) const;
-	table getMipTarStatsForGenomes(const VecStr & genomes, const VecStr & mipTars, bool allRecords = false) const;
+	table getMipTarStatsForGenome(const std::string & genome,
+			const VecStr & mipTars, bool allRecords = false) const;
+	table getMipTarStatsForGenomes(const VecStr & genomes, const VecStr & mipTars,
+			bool allRecords = false) const;
+
+	table genExtractionNumberTable() const;
 
 };
 
