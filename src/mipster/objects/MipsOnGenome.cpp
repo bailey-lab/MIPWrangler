@@ -226,11 +226,7 @@ void MipsOnGenome::mapArmsToGenomes() {
 
 
 
-std::vector<GenomicRegion> bedPtrsToGenomicRegs(
-		const std::vector<std::shared_ptr<BedRecordCore>> & beds) {
-	return bib::convert<std::shared_ptr<BedRecordCore>, GenomicRegion>(beds,
-			[](const std::shared_ptr<BedRecordCore> & bed)->GenomicRegion {return GenomicRegion(*bed);});
-}
+
 
 void MipsOnGenome::genFastas() {
 	const VecStr mips = bib::getVecOfMapKeys( mipArms_->mips_);
