@@ -83,6 +83,10 @@ public:
 	void setSelectedGenomes(const VecStr & genomes);
 
 	bfs::path pathToMipFasta(const std::string & mipName) const;
+
+	bfs::path pathToMipExtArmFasta(const std::string & mipName) const;
+	bfs::path pathToMipLigArmFasta(const std::string & mipName) const;
+
 	bfs::path pathToMipBed(const std::string & mipName,
 			const std::string & genomeName) const;
 	bfs::path pathToAllInfoPrimaryGenome() const;

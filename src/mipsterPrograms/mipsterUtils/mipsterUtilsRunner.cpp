@@ -7,9 +7,17 @@
 
     
 #include "mipsterUtilsRunner.hpp"
+#include <elucidator/seqToolsUtils.h>
+#include <elucidator/objects/BioDataObject.h>
+
+
 #include <unordered_map>
 
+
 namespace bibseq {
+
+
+
 
 mipsterUtilsRunner::mipsterUtilsRunner()
     : bib::progutils::programRunner({addFunc("alignTarget", alignTargets, false),
@@ -19,7 +27,11 @@ mipsterUtilsRunner::mipsterUtilsRunner()
 																		 addFunc("processMipOverlapGraphSingle", processMipOverlapGraphSingle, false),
 																		 addFunc("rearmTargetsAndCombine", rearmTargetsAndCombine, false),
 																		 addFunc("createExtArmFastas", createExtArmFastas, false),
-																		 addFunc("createLigArmFastas", createLigArmFastas, false)
+																		 addFunc("createLigArmFastas", createLigArmFastas, false),
+																		 addFunc("mipFastasToSeqTable", mipFastasToSeqTable, false),
+																		 addFunc("extractPossibleMipCapturesFromGenome", extractPossibleMipCapturesFromGenome, false),
+																		 addFunc("creatingMipArmsFromSeqs", creatingMipArmsFromSeqs, false),
+																		 addFunc("fixingMipBedFiles", fixingMipBedFiles, false),
 },
                     "mipsterUtils") {}
 
@@ -547,8 +559,149 @@ int mipsterUtilsRunner::createExtArmFastas(
 	return 0;
 }
 
-//
 
+int mipsterUtilsRunner::mipFastasToSeqTable(const bib::progutils::CmdArgs & inputCommands){
+	std::string filePat = "^trimmed_.*.fasta$";
+	bfs::path inputDir = "./";
+	auto outOpts = TableIOOpts::genTabFileOut("out.tab.txt", true);
+	seqSetUp setUp(inputCommands);
+	setUp.processVerbose();
+	setUp.processDebug();
+	setUp.processWritingOptions(outOpts.out_);
+	setUp.setOption(filePat, "--filePat", "File pattern to search for");
+	setUp.setOption(inputDir, "--inputDir", "Input directory to search");
+	setUp.finishSetUp(std::cout);
+
+	auto files = bib::files::listAllFiles(inputDir, false, {std::regex{filePat}});
+	table outTab(VecStr{"target", "name","length", "seq"});
+	for(const auto & f : files){
+		if(setUp.pars_.verbose_){
+			std::cout << f.first << std::endl;
+		}
+		auto seqOpts = SeqIOOptsWithTime(SeqIOOptions::genFastaIn(f.first, false));
+		auto seqs = seqOpts.get<seqInfo>();
+		for(const auto & seq : seqs){
+			if(setUp.pars_.verbose_ && setUp.pars_.debug_){
+				std::cout << seq.name_ << std::endl;
+			}
+			auto bName = bfs::basename(f.first);
+			bName = bib::replaceString(bName, "trimmed_", "");
+			outTab.addRow(bName, seq.name_,len(seq), seq.seq_);
+		}
+	}
+	outTab.outPutContents(outOpts);
+	return 0;
+}
+
+int mipsterUtilsRunner::extractPossibleMipCapturesFromGenome(const bib::progutils::CmdArgs & inputCommands){
+	comparison comp;
+	bfs::path ligBamFnp = "";
+	bfs::path extBamFnp = "";
+	size_t insertSize = 1000;
+	bfs::path twoBitFnp = "";
+	OutOptions outOpts(bfs::path(""));
+
+	seqSetUp setUp(inputCommands);
+	setUp.processVerbose();
+	setUp.processDebug();
+	setUp.setOption(twoBitFnp, "--twoBitFnp", "Two Bit file path", true);
+	setUp.setOption(ligBamFnp, "--ligBamFnp", "lig Bam file path", true);
+	setUp.setOption(extBamFnp, "--extBamFnp", "ext Bam file path", true);
+	setUp.processComparison(comp);
+	setUp.processWritingOptions(outOpts);
+	setUp.finishSetUp(std::cout);
+
+
+	std::vector<std::shared_ptr<AlignmentResults>> alnResultsExt = gatherMapResults(
+			extBamFnp, twoBitFnp, comp);
+	std::vector<std::shared_ptr<AlignmentResults>> alnResultsLig = gatherMapResults(
+			ligBamFnp, twoBitFnp, comp);
+
+	auto extractResults = getPossibleGenomeExtracts(alnResultsExt, alnResultsLig, insertSize);
+	if(setUp.pars_.debug_){
+		std::cout << "Found " << extractResults.size() << " possible extractions" << std::endl;
+	}
+
+	std::ofstream outfile;
+	std::ostream out(determineOutBuf(outfile, outOpts));
+
+	for(const auto & extract : extractResults){
+		out << extract.gRegion_->genBedRecordCore().toDelimStr() << std::endl;
+	}
+	return 0;
+}
+
+int mipsterUtilsRunner::creatingMipArmsFromSeqs(const bib::progutils::CmdArgs & inputCommands){
+	uint32_t extensionArmSize = 15;
+	uint32_t ligationArmSize = 15;
+	uint32_t extensionBarSize = 10;
+	uint32_t ligationBarSize = 4;
+	std::string mipSet = "";
+	std::string nameSuffix = "";
+	seqSetUp setUp(inputCommands);
+	setUp.setOption(extensionArmSize, "--extensionArmSize","Extension Arm Size");
+	setUp.setOption(ligationArmSize,  "--ligationArmSize", "Ligation Arm Size");
+	setUp.setOption(extensionBarSize, "--extensionBarSize","Extension Bar Size");
+	setUp.setOption(ligationBarSize,  "--ligationBarSize", "Ligation Bar size");
+	setUp.setOption(nameSuffix, "--nameSuffix","Name Suffix to the name in the seq file");
+	setUp.setOption(mipSet, "--mipSet","Mip Set Name", true);
+	setUp.processDefaultReader(true);
+	setUp.finishSetUp(std::cout);
+
+	SeqInput reader(setUp.pars_.ioOptions_);
+	std::string mipNameSuffix = "_S0_Sub0_mip0";
+	table ret(VecStr{"mip_family","mip_id","extension_arm","ligation_arm","extension_barcode_length","ligation_barcode_length","gene_name","mipset"});
+	seqInfo seq;
+	reader.openIn();
+	while(reader.readNextRead(seq)){
+		ret.addRow(seq.name_ + nameSuffix + mipNameSuffix,
+				seq.name_ + nameSuffix + mipNameSuffix,
+				seq.seq_.substr(0, extensionArmSize),
+				seqUtil::reverseComplement(seq.seq_.substr(len(seq) - ligationArmSize), "DNA"),
+				extensionBarSize,
+				ligationBarSize,
+				seq.name_ + nameSuffix,
+				mipSet);
+	}
+	auto outOpts = TableIOOpts::genTabFileOut(setUp.pars_.ioOptions_.out_.outFilename_, true);
+	outOpts.out_.overWriteFile_ = setUp.pars_.ioOptions_.out_.overWriteFile_;
+	ret.outPutContents(outOpts);
+	return 0;
+}
+
+int mipsterUtilsRunner::fixingMipBedFiles(const bib::progutils::CmdArgs & inputCommands){
+	bfs::path bedFile = "";
+	OutOptions bedOut(bfs::path("out.bed"));
+	seqSetUp setUp(inputCommands);
+	setUp.setOption(bedFile, "--bed", "Bed file to fix", true);
+	setUp.processWritingOptions(bedOut);
+	setUp.finishSetUp(std::cout);
+
+	BioDataFileIO<BedRecordCore> reader(IoOptions(InOptions(bedFile), bedOut));
+
+	reader.openIn();
+
+	BedRecordCore bRecord;
+	std::vector<BedRecordCore> bRecords;
+	while(reader.readNextRecord(bRecord)){
+		MetaDataInName meta(bRecord.name_);
+		auto mipName = meta.getMeta("mipTar");
+		bRecord.name_ = mipName;
+		bRecords.emplace_back(bRecord);
+	}
+	reader.closeIn();
+	reader.openOut();
+
+	for(const auto & record : bRecords){
+		reader.write(record, [](const BedRecordCore & record, std::ostream & out){
+			out << record.toDelimStr() << std::endl;
+		});
+	}
+
+
+
+	return 0;
+}
 
 
                     
