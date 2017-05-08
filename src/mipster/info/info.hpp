@@ -102,6 +102,7 @@ struct genPopClusInfoWithBars {
 	genPopClusInfoWithBars(const std::string & popUid, const seqInfo & seqBase);
 
 	std::string popUid_;
+	std::string mipPopUid_;
 	seqInfo seqBase_;
 
 	uint32_t sampCnt_ = 0;

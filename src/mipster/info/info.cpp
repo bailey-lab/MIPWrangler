@@ -353,7 +353,7 @@ genInputPopClusInfoWithBars::genInputPopClusInfoWithBars(
 
 genPopClusInfoWithBars::genPopClusInfoWithBars(const std::string & popUid,
 		const seqInfo & seqBase) : popUid_(popUid),
-		seqBase_(seqBase) {
+		seqBase_(seqBase), mipPopUid_(seqBase_.name_) {
 
 }
 
@@ -382,7 +382,7 @@ void genPopClusInfoWithBars::update() {
 }
 
 std::string genPopClusInfoWithBars::getInfoHeader(const std::string & delim) {
-	return vectorToString(VecStr { "h_popUID", "h_sampleCnt", "h_sampleFrac",
+	return vectorToString(VecStr { "h_popUID", "h_mipPopUID", "h_sampleCnt", "h_sampleFrac",
 			"h_medianBarcodeFrac", "h_meanBarcodeFrac", "h_readCnt", "h_readFrac",
 			"h_barcodeCnt", "h_barcodeFrac", "h_inputNames", "h_seq", "h_qual" },
 			delim);
@@ -395,7 +395,7 @@ std::string genPopClusInfoWithBars::getInfo(const std::string & delim) const {
 		names.emplace_back(i.seqBase_.name_);
 	}
 	return vectorToString(
-			toVecStr(popUid_, sampCnt_, sampFrac_, medianBarcodeFrac_,
+			toVecStr(popUid_, mipPopUid_, sampCnt_, sampFrac_, medianBarcodeFrac_,
 					meanBarcodeFrac_, readCnt_, readFrac_, barcodeCnt_, barcodeFrac_,
 					vectorToString(names, ","), seqBase_.seq_,
 					seqBase_.getFastqQualString(SangerQualOffset)), delim);

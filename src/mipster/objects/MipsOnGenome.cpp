@@ -199,6 +199,7 @@ void MipsOnGenome::mapArmsToGenomes() {
 							<< pair.genome_ << std::endl;
 					ss << bowtie2CmdLigRunOutput.stdErr_ << std::endl;
 				}
+				succes = true;
 			}else{
 				succes = true;
 				ss << outCheckExt << " and " <<  outCheckLig << " is up to date";
@@ -295,11 +296,17 @@ void MipsOnGenome::genFastas() {
 										extractionName = genome + "." + extractionNumber;
 									}
 								}
-								seqInfo trimmedSeq(extractionName, seq);
-								readVecTrimmer::trimOffForwardBases(trimmedSeq, extRegions[regPos].getLen());
-								readVecTrimmer::trimOffEndBases(trimmedSeq, ligRegions[regPos].getLen());
 								seqs.emplace_back(seqInfo(extractionName, seq));
-								trimmedSeqs.emplace_back(trimmedSeq);
+								if(extRegions[regPos].overlaps(ligRegions[regPos])){
+									ss << "Couldn't trim seq for " << mipName << " in " << genome << " because ligation and ext arms overlap" << "\n";
+									ss << "ext: " << extRegions[regPos].chrom_ << ":" << extRegions[regPos].start_ << "-" << extRegions[regPos].end_ << "\n";
+									ss << "lig: " << ligRegions[regPos].chrom_ << ":" << ligRegions[regPos].start_ << "-" << ligRegions[regPos].end_ << "\n";
+								}else{
+									seqInfo trimmedSeq(extractionName, seq);
+									readVecTrimmer::trimOffForwardBases(trimmedSeq, extRegions[regPos].getLen());
+									readVecTrimmer::trimOffEndBases(trimmedSeq, ligRegions[regPos].getLen());
+									trimmedSeqs.emplace_back(trimmedSeq);
+								}
 							}
 						}
 					}

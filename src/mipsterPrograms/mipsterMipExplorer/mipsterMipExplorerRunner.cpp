@@ -68,15 +68,15 @@ int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
 	mips.setUpGenomes();
 	watch.startNewLap("createArmFiles");
 	mips.createArmFiles();
-	watch.startNewLap("mapArmsToGenomesSeparately");
+	watch.startNewLap("mapArmsToGenomes");
 	mips.mapArmsToGenomes();
 	if(removeBeds){
 		bib::files::rmDirForce(mips.bedsDir_);
 		bib::files::makeDir(bib::files::MkdirPar(mips.bedsDir_));
 	}
-	watch.startNewLap("genBedsFromSeparately");
+	watch.startNewLap("genBeds");
 	mips.genBeds(allowableError);
-	watch.startNewLap("genFastasFromSeparately");
+	watch.startNewLap("genFastas");
 	mips.genFastas();
 	watch.startNewLap("genTables");
 	mips.genTables();
