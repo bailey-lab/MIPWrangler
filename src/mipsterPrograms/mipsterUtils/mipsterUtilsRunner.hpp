@@ -30,5 +30,11 @@ class mipsterUtilsRunner : public bib::progutils::programRunner {
 	static int createExtArmFastas(const bib::progutils::CmdArgs & inputCommands);
 	static int createLigArmFastas(const bib::progutils::CmdArgs & inputCommands);
 
+
+	static int mipFastasToSeqTable(const bib::progutils::CmdArgs & inputCommands);
+	static int extractPossibleMipCapturesFromGenome(const bib::progutils::CmdArgs & inputCommands);
+	static int creatingMipArmsFromSeqs(const bib::progutils::CmdArgs & inputCommands);
+	static int fixingMipBedFiles(const bib::progutils::CmdArgs & inputCommands);
+
 };
 } // namespace bibseq

@@ -129,9 +129,29 @@ void MipsOnGenome::loadInArms(){
 }
 void MipsOnGenome::createArmFiles(){
 	OutOptions opts(armsDir_);
+	bib::files::makeDirP(bib::files::MkdirPar(bib::files::make_path(armsDir_, "md5s")));
 	opts.overWriteFile_ = true;
 	for(const auto & m : mipArms_->mips_){
-		m.second.writeOutArms(opts);
+		if(!opts.outExists()){
+			m.second.writeOutArms(opts);
+		}else{
+			OutOptions md5sumFile(bib::files::make_path(armsDir_, "md5s", m.first));
+			if(!md5sumFile.outExists()){
+				auto md5Sum = bib::md5(m.second.extentionArm_ + m.second.ligationArm_);
+				std::ofstream outMd5File;
+				md5sumFile.openFile(outMd5File);
+				outMd5File << md5Sum;
+				m.second.writeOutArms(opts);
+			}else{
+				auto md5Sum = bib::md5(m.second.extentionArm_ + m.second.ligationArm_);
+				auto md5SumFromFile = bib::files::get_file_contents(md5sumFile.outName(), false);
+//				std::cout << md5Sum << std::endl;
+//				std::cout << md5SumFromFile << std::endl;
+				if(md5Sum != md5SumFromFile){
+					m.second.writeOutArms(opts);
+				}
+			}
+		}
 	}
 }
 std::string MipsOnGenome::GenomeMip::uid(const std::string & sep) const {
@@ -168,10 +188,10 @@ void MipsOnGenome::mapArmsToGenomes() {
 			std::string outCheckLig = outStub + "_lig.sorted.bam";
 			if (!  bfs::exists(outCheckExt)
 					|| bib::files::firstFileIsOlder(outCheckExt, genomes_.at(pair.genome_)->fnp_)
-					|| bib::files::firstFileIsOlder(outCheckExt, mipArms_->mipArmIdFnp_) ||
+					|| bib::files::firstFileIsOlder(outCheckExt, pathToMipExtArmFasta(pair.mip_)) ||
 					!  bfs::exists(outCheckLig)
 					|| bib::files::firstFileIsOlder(outCheckLig, genomes_.at(pair.genome_)->fnp_)
-					|| bib::files::firstFileIsOlder(outCheckLig, mipArms_->mipArmIdFnp_)) {
+					|| bib::files::firstFileIsOlder(outCheckLig, pathToMipLigArmFasta(pair.mip_))) {
 				std::stringstream bowtie2CmdExt;
 				bowtie2CmdExt
 						<< " bowtie2 -D 20 -R 3 -N 1 -L 15 -i S,1,0.5 -a --end-to-end "
@@ -944,6 +964,28 @@ bfs::path MipsOnGenome::pathToMipFasta(const std::string & mipName)const{
 	}
 	return bib::files::make_path(fastaDir_, mipName + ".fasta");
 }
+
+
+bfs::path MipsOnGenome::pathToMipExtArmFasta(const std::string & mipName) const{
+	if(!bib::in(mipName, mipArms_->mips_)){
+		std::stringstream ss;
+		ss << __PRETTY_FUNCTION__ << ": Error, no mip found matching " << mipName << "\n";
+		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
+		throw std::runtime_error{ss.str()};
+	}
+	return bib::files::make_path(armsDir_, mipName + "_ext-arm.fasta");
+}
+
+bfs::path MipsOnGenome::pathToMipLigArmFasta(const std::string & mipName) const{
+	if(!bib::in(mipName, mipArms_->mips_)){
+		std::stringstream ss;
+		ss << __PRETTY_FUNCTION__ << ": Error, no mip found matching " << mipName << "\n";
+		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
+		throw std::runtime_error{ss.str()};
+	}
+	return bib::files::make_path(armsDir_, mipName + "_lig-arm.fasta");
+}
+//,
 
 VecStr MipsOnGenome::getMips() const {
 	auto ret = bib::getVecOfMapKeys(mipArms_->mips_);
