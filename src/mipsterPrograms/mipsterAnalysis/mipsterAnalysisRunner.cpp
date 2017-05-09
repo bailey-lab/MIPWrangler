@@ -23,9 +23,13 @@ mipsterAnalysisRunner::mipsterAnalysisRunner()
 					 addFunc("mipPopulationClustering", mipPopulationClustering, false),
 					 addFunc("mipPopulationClusteringMultiple", mipPopulationClusteringMultiple, false),
 					 addFunc("mipCorrectForContamWithSameBarcodes", mipCorrectForContamWithSameBarcodes, false),
-					 addFunc("mipCorrectForContamWithSameBarcodesMultiple", mipCorrectForContamWithSameBarcodesMultiple, false)
+					 addFunc("mipSkipBarcodeCorrection", mipSkipBarcodeCorrection, false),
+					 addFunc("mipSkipBarcodeCorrectionMultiple", mipSkipBarcodeCorrectionMultiple, false)
            },//
           "mipsterAnalysis") {}
-
+/*
+ * 	static int (const bib::progutils::CmdArgs & inputCommands);
+	static int (const bib::progutils::CmdArgs & inputCommands);
+ */
 
 } /* namespace bibseq */

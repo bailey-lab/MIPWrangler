@@ -120,7 +120,7 @@ void correctForContamForMipFam(const mipCorrectForContamWithSameBarcodesPars & p
 				ss << "Error in " << __PRETTY_FUNCTION__
 						<< ", error in parsing read for meta data: bar and mipTar" << std::endl;
 				ss << "Current meta data is: "
-						<< bib::conToStr(getVectorOfMapKeys(read.meta_), ",") << std::endl;
+						<< bib::conToStr(getVectorOfMapKeys(read.meta_.meta_), ",") << std::endl;
 				throw std::runtime_error { ss.str() };
 			}
 		}

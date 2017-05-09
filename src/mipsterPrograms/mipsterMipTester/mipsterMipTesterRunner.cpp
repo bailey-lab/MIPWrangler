@@ -126,7 +126,7 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 						}
 					}
 					writer.closeOut();
-					auto opts = SeqIOOptions::genFastaIn(outOpts.out_.outName());
+					auto opts = SeqIOOptions::genFastqIn(outOpts.out_.outName());
 					opts.out_.outFilename_ = bib::files::make_path(sampDir, samp + ".sorted.bam");
 					opts.out_.outExtention_ = ".sorted.bam";
 					auto runOutput = cmdRunner.bowtie2Align(opts,
@@ -146,6 +146,11 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 	for(auto & t : threads){
 		t.join();
 	}
+
+	OutOptions logOpts(bib::files::make_path(setUp.pars_.directoryName_, "alignLogs.json"));
+	std::ofstream logFile;
+	logOpts.openFile(logFile);
+	logFile << bib::json::toJson(outputs) << std::endl;
 
 	std::unordered_map<std::string, std::vector<GenomicRegion>> regionsByChrom;
 	for(const auto & reg : regions){

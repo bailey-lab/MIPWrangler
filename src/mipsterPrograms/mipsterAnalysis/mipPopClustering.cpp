@@ -146,7 +146,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		}
 
 		if ("" != pars.previousPopFilename) {
-			sampColl.renamePopWithSeqs(getSeqs<readObject>(pars.previousPopFilename.string()), pars.previousPopErrors);
+			sampColl.addRefMetaToName(getSeqs<readObject>(pars.previousPopFilename.string()), pars.previousPopErrors);
 		}
 		//auto sampTab = sampColl.genSampleCollapseInfo(std::set<std::string>{foundSamples.begin(), foundSamples.end()});
 		//auto popTab = sampColl.genPopulationCollapseInfo();
@@ -184,13 +184,15 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 				auto popUID =
 						sampColl.popCollapse_->collapsed_.clusters_[sampColl.popCollapse_->collapsed_.subClustersPositions_.at(
 								clus.seqBase_.getStubName(true))].seqBase_.getStubName(true);
+				if(MetaDataInName::nameHasMetaData(popUID)){
+					MetaDataInName::removeMetaDataInName(popUID);
+				}
 				clus.addMeta("h_popUID", popUID, true);
 				//clus.addMeta("region", "", true);
 				clus.resetMetaInName();
 			}
 			sampColl.dumpSample(samp);
 		}
-
 	}
 
 

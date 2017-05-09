@@ -6,6 +6,7 @@
  */
 
 #include "info.hpp"
+#include <unordered_map>
 
 namespace bibseq {
 namespace bfs = boost::filesystem;
@@ -352,9 +353,11 @@ genInputPopClusInfoWithBars::genInputPopClusInfoWithBars(
 }
 
 genPopClusInfoWithBars::genPopClusInfoWithBars(const std::string & popUid,
-		const seqInfo & seqBase) : popUid_(popUid),
-		seqBase_(seqBase), mipPopUid_(seqBase_.name_) {
-
+		const seqInfo & seqBase) :
+		popUid_(popUid), mipPopUid_(seqBase.getStubName(true)), seqBase_(seqBase) {
+	if(MetaDataInName::nameHasMetaData(mipPopUid_)){
+		MetaDataInName::removeMetaDataInName(mipPopUid_);
+	}
 }
 
 void genPopClusInfoWithBars::addInfo(const seqInfo & seqBaseInfo) {

@@ -27,6 +27,9 @@ class mipsterAnalysisRunner : public bib::progutils::programRunner {
 	static int mipBarcodeCorrection(const bib::progutils::CmdArgs & inputCommands);
 	static int mipBarcodeCorrectionMultiple(const bib::progutils::CmdArgs & inputCommands);
 
+	static int mipSkipBarcodeCorrection(const bib::progutils::CmdArgs & inputCommands);
+	static int mipSkipBarcodeCorrectionMultiple(const bib::progutils::CmdArgs & inputCommands);
+
 	static int mipClustering(const bib::progutils::CmdArgs & inputCommands);
 	static int mipClusteringMultiple(const bib::progutils::CmdArgs & inputCommands);
 
