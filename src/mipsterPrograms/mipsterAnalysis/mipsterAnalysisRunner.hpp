@@ -24,6 +24,9 @@ class mipsterAnalysisRunner : public bib::progutils::programRunner {
 	static int mipIllumExtractByArmAndFilter(const bib::progutils::CmdArgs & inputCommands);
 	static int mipIllumExtractByArmAndFilterMultiple(const bib::progutils::CmdArgs & inputCommands);
 
+	static int mipIllumExtractByArmAndFilterPaired(const bib::progutils::CmdArgs & inputCommands);
+	static int mipIllumExtractByArmAndFilterMultiplePaired(const bib::progutils::CmdArgs & inputCommands);
+
 	static int mipBarcodeCorrection(const bib::progutils::CmdArgs & inputCommands);
 	static int mipBarcodeCorrectionMultiple(const bib::progutils::CmdArgs & inputCommands);
 

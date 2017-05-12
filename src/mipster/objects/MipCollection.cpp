@@ -7,6 +7,7 @@
 
 #include "MipCollection.hpp"
 #include "mipster/mipUtils.h"
+#include <unordered_map>
 
 namespace bibseq {
 
@@ -191,6 +192,7 @@ std::string MipCollection::getFamilyForTarget(const std::string & mipTarget) con
 	}
 	return ret;
 }
+
 Mip MipCollection::determineBestMipInFamily(const seqInfo & read, Mip mip,
 		aligner & alignerObjForGroupDet) const{
 	// if part of a mip family which could have multiple mips
@@ -208,12 +210,49 @@ Mip MipCollection::determineBestMipInFamily(const seqInfo & read, Mip mip,
 		}
 		for (const auto & mipName : mipNamesForFamily_.at(mip.familyName_)) {
 			const auto & otherMip = mips_.at(mipName);
-			alignerObjForGroupDet.alignCacheLocal(backSeq, otherMip.ligationArmObj_.seqBase_);
+			alignerObjForGroupDet.alignCacheLocal(backSeq, otherMip.ligationArmObj_);
 			//normalize score to arm length
 			double currentScore = alignerObjForGroupDet.parts_.score_
-					/ static_cast<double>(len(otherMip.ligationArmObj_.seqBase_));
+					/ static_cast<double>(len(otherMip.ligationArmObj_));
 			auto armPosMotifCurrent = otherMip.getPossibleExtArmPos(read);
 			auto ligArmPosMotifCurrent = otherMip.getPossibleLigArmPos(read);
+			//ensure that even if the ligation arm is better that the extension arm still fits
+			//this could happen if there was a chimeric event that switched arms
+			if (!armPosMotifCurrent.empty()
+					&& !ligArmPosMotifCurrent.empty()) {
+				if (currentScore > bestScore) {
+					bestScore = currentScore;
+					mip = mips_.at(mipName);
+				}
+			}
+		}
+	}
+	return mip;
+}
+
+Mip MipCollection::determineBestMipInFamily(const PairedRead & seq, Mip mip,
+		aligner & alignerObjForGroupDet) const{
+	// if part of a mip family which could have multiple mips
+	// with same extraction arm, find best fitting ligatiion arm;
+	if (mipNamesForFamily_.at(mip.familyName_).size() > 1) {
+		double bestScore = 0.0;
+		seqInfo backSeq;
+		uint32_t sizeOfBackSeq = 2
+				* (mip.ligationArm_.size() + mip.ligBarcodeLen_ + mip.wiggleRoomArm_);
+		if (sizeOfBackSeq < seq.mateSeqBase_.seq_.size()) {
+			backSeq = seq.mateSeqBase_.getSubRead(
+					seq.mateSeqBase_.seq_.size() - sizeOfBackSeq);
+		} else {
+			backSeq = seq.mateSeqBase_;
+		}
+		for (const auto & mipName : mipNamesForFamily_.at(mip.familyName_)) {
+			const auto & otherMip = mips_.at(mipName);
+			alignerObjForGroupDet.alignCacheLocal(backSeq, otherMip.ligationArmObj_);
+			//normalize score to arm length
+			double currentScore = alignerObjForGroupDet.parts_.score_
+					/ static_cast<double>(len(otherMip.ligationArmObj_));
+			auto armPosMotifCurrent = otherMip.getPossibleExtArmPos(seq.seqBase_);
+			auto ligArmPosMotifCurrent = otherMip.getPossibleLigArmPos(seq.mateSeqBase_);
 			//ensure that even if the ligation arm is better that the extension arm still fits
 			//this could happen if there was a chimeric event that switched arms
 			if (!armPosMotifCurrent.empty()

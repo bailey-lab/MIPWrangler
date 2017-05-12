@@ -25,6 +25,9 @@ public:
 
 	std::string rawDataSuffix_;
 
+	std::string firstReadSuffix_ = "_R1.fastq";
+	std::string secondReadSuffix_ = "_R2.fastq";
+
 	std::string mipServerName_;
 
 	std::shared_ptr<MipCollection> mips_;
@@ -89,6 +92,9 @@ public:
 
 	bfs::path pathMipExtractInfo(const std::string & mipTar) const;
 	bfs::path pathSampleRawData(const MipFamSamp & mipSampName) const;
+
+	bfs::path pathSampleRawDataFirstRead(const MipFamSamp & mipSampName) const;
+	bfs::path pathSampleRawDataSecondRead(const MipFamSamp & mipSampName) const;
 
 	bfs::path pathPopClusFinalHaplo(const MipFamSamp & mipSampName) const;
 	//bfs::path pathPopClusOriginalHaplo(const MipFamSamp & mipSampName) const;

@@ -1,16 +1,17 @@
 /*
- * mipExtract.cpp
+ * mipExtractFromPaired.cpp
  *
- *  Created on: Feb 5, 2016
+ *  Created on: May 10, 2017
  *      Author: nick
  */
+
 
 #include "mipsterAnalysisRunner.hpp"
 #include "mipsterAnalysisSetUp.hpp"
 
 namespace bibseq {
 
-void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
+void extractFilterSampleForMipsPaired(const SeqIOOptions & sampleIOOpts,
 		const SetUpMaster & mipMaster, aligner & alignerObjForFamilyDet,
 		const mipIllumArmExtractionPars & pars, const QualFilteringPars & qFilPars,
 		bool verbose) {
@@ -23,7 +24,7 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 	//set up sub directories
 	bfs::path filteredOffDir = bib::files::makeDir(sampDirMaster.extractDir_.string(), bib::files::MkdirPar("filteredOff"));
 	//create out files
-	MultiSeqOutCache<seqInfo> mipOuts;
+	MultiSeqOutCache<PairedRead> mipOuts;
 	mipOuts.setOpenLimit(pars.fileOpenLimit_);
 
 	mipOuts.addReader("indeterminate",
@@ -37,13 +38,14 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 	VecStr allMipTargets = mipMaster.getAllMipTargets();
 	for (const auto & mip : allMipTargets) {
 		mipOuts.addReader(mip, SeqIOOptions(bib::files::join(VecStr {
-			sampDirMaster.extractDir_.string(), mip, mip }), sampleIOOpts.outFormat_,sampleIOOpts.out_));
+			sampDirMaster.extractDir_.string(), mip, mip }), sampleIOOpts.outFormat_, sampleIOOpts.out_));
 		for (const auto & outName : filterOutNames) {
 			mipOuts.addReader(mip + outName,
 					SeqIOOptions(
 							bib::files::join(
 									VecStr { sampDirMaster.extractDir_.string(), mip, mip
-											+ outName }), sampleIOOpts.outFormat_,sampleIOOpts.out_));
+											+ outName }), sampleIOOpts.outFormat_,
+											sampleIOOpts.out_) );
 		}
 	}
 
@@ -51,22 +53,17 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 	//read in reads
 	SeqIO readerOpt(sampleIOOpts);
 	readerOpt.openIn();
-	seqInfo read;
+	PairedRead seq;
 	uint32_t readCount = 1;
-	while (readerOpt.readNextRead(read)) {
+	while (readerOpt.readNextRead(seq)) {
 		if (readCount % 100 == 0 && verbose) {
 			std::cout << "\r" << "currently on " << readCount;
 			std::cout.flush();
 		}
 		++readCount;
-		if (len(read) < pars.smallFragmentLength) {
-			allExtractStats.increaseSmallFragment();
-			mipOuts.add("smallFragment", read);
-			continue;
-		}
 		//get length and resize aligner vector if needed
 		uint64_t maxLen = alignerObjForFamilyDet.parts_.maxSize_;
-		readVec::getMaxLength(read, maxLen);
+		readVec::getMaxLength(seq, maxLen);
 		if (maxLen > alignerObjForFamilyDet.parts_.maxSize_) {
 			alignerObjForFamilyDet.parts_.setMaxSize(maxLen);
 		}
@@ -74,29 +71,36 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 		std::unordered_map<std::string, std::pair<std::vector<Mip::ArmPosScore>, std::vector<Mip::ArmPosScore>>> possibleArms;
 		std::unordered_map<std::string, std::vector<Mip::ArmPosScore>> possibleExtArms;
 
+//		allExtractStats.increaseUnmatched();
+//		mipOuts.add("unmatchedReads", seq);
+//
 		for (const auto & mKey : allMipTargets) {
 			const auto & mip = mipMaster.mips_->mips_.at(mKey);
 			//check arm
-			auto armPosMotif = mip.getPossibleExtArmPos(read);
+			auto armPosMotif = mip.getPossibleExtArmPos(seq.seqBase_);
 			//if found arm and at the right position continue on;
 			if (!armPosMotif.empty()) {
 				found = true;
 				possibleExtArms.emplace(mip.name_, armPosMotif);
-				auto ligArmPosMotif = mip.getPossibleLigArmPos(read);
+				auto ligArmPosMotif = mip.getPossibleLigArmPos(seq.mateSeqBase_);
 				if(!ligArmPosMotif.empty()){
 					possibleArms.emplace(mip.name_, std::make_pair(armPosMotif, ligArmPosMotif));
 				}
 			}
 		}
+
+
+
 		if(possibleArms.empty()){
 			if(possibleExtArms.empty()){
 				//no matches found
 				allExtractStats.increaseUnmatched();
-				mipOuts.add("unmatchedReads", read);
+				mipOuts.add("unmatchedReads", seq);
+
 			}else if(possibleExtArms.size() == 1){
 				const auto & mip = mipMaster.mips_->mips_.at(possibleExtArms.begin()->first);
 				//quality control
-				SinlgeMipExtractInfo::extractCase eCase = mip.checkRead(read, qFilPars);
+				SinlgeMipExtractInfo::extractCase eCase = mip.checkRead(seq, qFilPars);
 
 				std::string failedQaulifierName = MipExtractionStats::getNameForCase(
 						eCase);
@@ -104,13 +108,14 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 				if(!allExtractStats.haveStatFor(mip.name_)){
 					bib::files::makeDirP(sampDirMaster.extractDir_.string(), bib::files::MkdirPar(mip.name_));
 				}
-				mipOuts.add(mip.name_ + failedQaulifierName, read);
+				mipOuts.add(mip.name_ + failedQaulifierName, seq);
+				//mipOuts.add("unmatchedReads", seq);
 				allExtractStats.increaseCount(mip.name_, eCase);
 			}else{
 				const auto & mip = mipMaster.mips_->mips_.at(possibleExtArms.begin()->first);
-				auto currentMip = mipMaster.mips_->determineBestMipInFamily(read, mip, alignerObjForFamilyDet);
+				auto currentMip = mipMaster.mips_->determineBestMipInFamily(seq, mip, alignerObjForFamilyDet);
 				//quality control
-				SinlgeMipExtractInfo::extractCase eCase = currentMip.checkRead(read, qFilPars);
+				SinlgeMipExtractInfo::extractCase eCase = currentMip.checkRead(seq, qFilPars);
 
 				std::string failedQaulifierName = MipExtractionStats::getNameForCase(
 						eCase);
@@ -118,15 +123,15 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 				if(!allExtractStats.haveStatFor(currentMip.name_)){
 					bib::files::makeDirP(sampDirMaster.extractDir_.string(), bib::files::MkdirPar(currentMip.name_));
 				}
-				mipOuts.add(currentMip.name_ + failedQaulifierName, read);
+				mipOuts.add(currentMip.name_ + failedQaulifierName, seq);
+				//mipOuts.add("unmatchedReads", seq);
 				allExtractStats.increaseCount(currentMip.name_, eCase);
 			}
-
 		}else if(1 == possibleArms.size()){
 			//only one possible match
 			const auto & mip = mipMaster.mips_->mips_.at(possibleArms.begin()->first);
 			//quality control
-			SinlgeMipExtractInfo::extractCase eCase = mip.checkRead(read, qFilPars);
+			SinlgeMipExtractInfo::extractCase eCase = mip.checkRead(seq, qFilPars);
 
 			std::string failedQaulifierName = MipExtractionStats::getNameForCase(
 					eCase);
@@ -134,7 +139,8 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 			if(!allExtractStats.haveStatFor(mip.name_)){
 				bib::files::makeDirP(sampDirMaster.extractDir_.string(), bib::files::MkdirPar(mip.name_));
 			}
-			mipOuts.add(mip.name_ + failedQaulifierName, read);
+			mipOuts.add(mip.name_ + failedQaulifierName, seq);
+			//mipOuts.add("unmatchedReads", seq);
 			allExtractStats.increaseCount(mip.name_, eCase);
 		}else{
 			//multiple possible matches
@@ -166,7 +172,7 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 				const auto & mip = mipMaster.mips_->mips_.at(bestMips.front());
 
 				//quality control
-				SinlgeMipExtractInfo::extractCase eCase = mip.checkRead(read, qFilPars);
+				SinlgeMipExtractInfo::extractCase eCase = mip.checkRead(seq, qFilPars);
 
 				std::string failedQaulifierName = MipExtractionStats::getNameForCase(
 						eCase);
@@ -174,13 +180,15 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 				if(!allExtractStats.haveStatFor(mip.name_)){
 					bib::files::makeDirP(sampDirMaster.extractDir_.string(), bib::files::MkdirPar(mip.name_));
 				}
-				mipOuts.add(mip.name_ + failedQaulifierName, read);
+				mipOuts.add(mip.name_ + failedQaulifierName, seq);
+				//mipOuts.add("unmatchedReads", seq);
 				allExtractStats.increaseCount(mip.name_, eCase);
 
 			}else if(bestMips.size() > 1){
 				//no matches found
 
 				allExtractStats.increaseIndeterminate();
+
 				std::stringstream appName;
 				appName << "[";
 				for(const auto & best : bestMips){
@@ -203,12 +211,14 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 							<< "ligScore=" << bestLigScore << ";";
 				}
 				appName << "]";
-				read.name_.append(appName.str());
-				mipOuts.add("indeterminate", read);
+				seq.seqBase_.name_.append(appName.str());
+				seq.mateSeqBase_.name_.append(appName.str());
+				mipOuts.add("indeterminate", seq);
+				//mipOuts.add("unmatchedReads", seq);
 			}else{
 				std::stringstream ss;
 				ss << __PRETTY_FUNCTION__ << std::endl;
-				ss << "Best Mips vector is empty, which should be able to happen" << std::endl;
+				ss << "Best Mips vector is empty, which shouldn't be able to happen" << std::endl;
 				ss << "For : " << sampleIOOpts.firstName_ << std::endl;
 				throw std::runtime_error{ss.str()};
 			}
@@ -244,11 +254,11 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 	alignerObjForFamilyDet.processAlnInfoOutputNoCheck(sampDirMaster.extractAlnCacheDir_.string(), verbose);
 }
 
-int mipsterAnalysisRunner::mipIllumExtractByArmAndFilter(
+int mipsterAnalysisRunner::mipIllumExtractByArmAndFilterPaired(
 		const bib::progutils::CmdArgs & inputCommands) {
 	mipsterAnalysisSetUp setUp(inputCommands);
 	mipIllumArmExtractionPars pars;
-	setUp.setUpMipIllumArmExtraction(pars);
+	setUp.setUpMipIllumArmExtractionPaired(pars);
 	SetUpMaster mipMaster(pars.masterDir);
 	mipMaster.setMipArmFnp(pars.mipArmsFileName);
 	mipMaster.setMipsSampsNamesFnp(pars.mipsSamplesFile);
@@ -269,41 +279,41 @@ int mipsterAnalysisRunner::mipIllumExtractByArmAndFilter(
 	}
 	mipMaster.mips_->setAllMinimumExpectedLen(pars.minLen);
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
-	uint64_t maxLen = pars.minLen * 1.5;
+	uint64_t maxLen = pars.minLen * 2;
 	aligner alignerObjForFamilyDet = aligner(maxLen, setUp.pars_.gapInfo_,
 			setUp.pars_.scoring_);
 	//read in mip info and convert to mip class
 	MipCollection mips(pars.mipArmsFileName, pars.allowableErrors);
-	extractFilterSampleForMips(setUp.pars_.ioOptions_, mipMaster,
+	extractFilterSampleForMipsPaired(setUp.pars_.ioOptions_, mipMaster,
 			alignerObjForFamilyDet, pars, setUp.pars_.qFilPars_,
 			setUp.pars_.verbose_);
 
-	setUp.rLog_ << "Number of Alignments Done: "
-			<< alignerObjForFamilyDet.numberOfAlingmentsDone_ << "\n";
+//	setUp.rLog_ << "Number of Alignments Done: "
+//			<< alignerObjForFamilyDet.numberOfAlingmentsDone_ << "\n";
 	return 0;
 }
 
-void extractMultiSamples(const SetUpMaster & mipMaster,
+void extractMultiSamplesPaired(const SetUpMaster & mipMaster,
 		const mipIllumArmExtractionParsMultiple& pars,
 		const SeqSetUpPars & setUpPars, concurrent::AlignerPool & aligners,
 		bib::concurrent::LockableQueue<std::string>& sampsQueue) {
 	std::string sampleName = "";
 	auto alignerObjForFamilyDet = aligners.popAligner();
 	while (sampsQueue.getVal(sampleName)) {
-		SeqIOOptions sampOpts = SeqIOOptions::genFastqIn(
-				bib::files::make_path(mipMaster.directoryMaster_.masterDir_.string(), sampleName,
-								sampleName + pars.seqFileSuffix).string());
+		SeqIOOptions sampOpts = SeqIOOptions::genPairedIn(mipMaster.pathSampleRawDataFirstRead(MipFamSamp("", sampleName)),
+				mipMaster.pathSampleRawDataSecondRead(MipFamSamp("", sampleName)));
+		sampOpts.revComplMate_ = true;
 		mipIllumArmExtractionPars samplePars = pars.createForSample(sampleName);
-		extractFilterSampleForMips(sampOpts, mipMaster, *alignerObjForFamilyDet,
+		extractFilterSampleForMipsPaired(sampOpts, mipMaster, *alignerObjForFamilyDet,
 				samplePars, setUpPars.qFilPars_, setUpPars.verbose_);
 	}
 }
 
-int mipsterAnalysisRunner::mipIllumExtractByArmAndFilterMultiple(
+int mipsterAnalysisRunner::mipIllumExtractByArmAndFilterMultiplePaired(
 		const bib::progutils::CmdArgs & inputCommands) {
 	mipsterAnalysisSetUp setUp(inputCommands);
 	mipIllumArmExtractionParsMultiple pars;
-	setUp.setUpMipIllumArmExtractionMultiple(pars);
+	setUp.setUpMipIllumArmExtractionMultiplePaired(pars);
 	SetUpMaster mipMaster(pars.masterDir);
 	mipMaster.setMipArmFnp(pars.mipArmsFileName);
 	mipMaster.setMipsSampsNamesFnp(pars.mipsSamplesFile);
@@ -326,14 +336,14 @@ int mipsterAnalysisRunner::mipIllumExtractByArmAndFilterMultiple(
 	logFile << "Ran from: " << inputCommands.workingDir_ << std::endl;
 	logFile << "Command: " << inputCommands.commandLine_ << std::endl;
 	bib::concurrent::LockableQueue<std::string> sampsQueue(mipMaster.names_->samples_);
-	uint64_t maxLen = pars.minLen * 1.5;
+	uint64_t maxLen = pars.minLen * 2;
 	concurrent::AlignerPool aligners(maxLen, setUp.pars_.gapInfo_,
 			setUp.pars_.scoring_, pars.numThreads);
 	aligners.initAligners();
 	//read in mip info and convert to mip class
 	std::vector<std::thread> threads;
 	for (uint32_t threadNum = 0; threadNum < pars.numThreads; ++threadNum) {
-		threads.emplace_back(extractMultiSamples, std::cref(mipMaster), std::cref(pars),
+		threads.emplace_back(extractMultiSamplesPaired, std::cref(mipMaster), std::cref(pars),
 				std::cref(setUp.pars_), std::ref(aligners), std::ref(sampsQueue));
 	}
 	for (auto & t : threads) {
@@ -344,4 +354,5 @@ int mipsterAnalysisRunner::mipIllumExtractByArmAndFilterMultiple(
 }
 
 }
+
 

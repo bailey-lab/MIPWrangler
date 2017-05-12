@@ -195,6 +195,88 @@ SinlgeMipExtractInfo::extractCase Mip::checkRead(seqInfo & read,
 	return eCase;
 }
 
+SinlgeMipExtractInfo::extractCase Mip::checkRead(PairedRead & seq,
+		const QualFilteringPars & qFilPars) const {
+	//assumes good until a failure is reached;
+	SinlgeMipExtractInfo::extractCase eCase =
+			SinlgeMipExtractInfo::extractCase::GOOD;
+	//quality control
+	//check ligation arm
+	auto ligArmPos = getPossibleLigArmPos(seq.mateSeqBase_);
+	if (ligArmPos.empty()) {
+		//if fails ligation arm and is below minimum expected length
+		//add failure to bad min length as it probably just doesn't have the arm
+		if (len(seq.seqBase_) < minimumExpectedLen_ || len(seq.mateSeqBase_) < minimumExpectedLen_) {
+			eCase = SinlgeMipExtractInfo::extractCase::MINLENBAD;
+			seq.seqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
+			seq.mateSeqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
+		}else{
+			eCase = SinlgeMipExtractInfo::extractCase::BADREVERSE;
+			seq.seqBase_.name_.append("_failedLigArm");
+			seq.mateSeqBase_.name_.append("_failedLigArm");
+		}
+		return eCase;
+	}
+
+	//check minimum length
+	if (len(seq.seqBase_) < minimumExpectedLen_ || len(seq.mateSeqBase_) < minimumExpectedLen_) {
+		eCase = SinlgeMipExtractInfo::extractCase::MINLENBAD;
+		seq.seqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
+		seq.mateSeqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
+		return eCase;
+	}
+
+	//check if trimming to bad quality
+	if(qFilPars.trimAtQual_){
+		readVecTrimmer::trimAtFirstQualScore(seq.seqBase_, qFilPars.trimAtQualCutOff_);
+		readVecTrimmer::trimToLastQualScore(seq.mateSeqBase_, qFilPars.trimAtQualCutOff_);
+		//check minimum length again after trimming
+		if (len(seq.seqBase_) < minimumExpectedLen_ || len(seq.mateSeqBase_) < minimumExpectedLen_) {
+			eCase = SinlgeMipExtractInfo::extractCase::MINLENBAD;
+			seq.seqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
+			seq.mateSeqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
+			return eCase;
+		}
+	}
+
+
+
+	//check quality scores
+	bool failedQuality = false;
+	if (qFilPars.checkingQFrac_) {
+		if (seq.getQualCheck(qFilPars.qualCheck_) < qFilPars.qualCheckCutOff_ ) {
+			failedQuality = true;
+			seq.seqBase_.name_.append("_failedQC");
+			seq.mateSeqBase_.name_.append("_failedQC");
+		}
+	} else if (qFilPars.checkingQWindow) {
+		if (!seqUtil::checkQualityWindow(qFilPars.qualityWindowLength_,
+				qFilPars.qualityWindowThres_, qFilPars.qualityWindowStep_,
+				seq.seqBase_.qual_) ||
+				!seqUtil::checkQualityWindow(qFilPars.qualityWindowLength_,
+								qFilPars.qualityWindowThres_, qFilPars.qualityWindowStep_,
+								seq.mateSeqBase_.qual_)) {
+			failedQuality = true;
+			seq.seqBase_.name_.append("_failedQCWindow");
+			seq.mateSeqBase_.name_.append("_failedQCWindow");
+		}
+	}
+	if (failedQuality) {
+		eCase = SinlgeMipExtractInfo::extractCase::QUALITYFAILED;
+		return eCase;
+	}
+
+	//check for Ns
+	if (std::string::npos != seq.seqBase_.seq_.find('N') || std::string::npos != seq.mateSeqBase_.seq_.find('N')) {
+		eCase = SinlgeMipExtractInfo::extractCase::CONTAINSNS;
+		seq.seqBase_.name_.append("_Contains_Ns");
+		seq.mateSeqBase_.name_.append("_Contains_Ns");
+		return eCase;
+	}
+
+	return eCase;
+}
+
 
 std::vector<Mip::ArmPosScore> Mip::getPossibleExtArmPos(const seqInfo & read) const {
 	std::vector<Mip::ArmPosScore> ret;

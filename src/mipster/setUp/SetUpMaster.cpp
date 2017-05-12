@@ -679,8 +679,7 @@ bool SetUpMaster::checkForClusteredMipFamForSamp(const MipFamSamp & mipSampName)
 
 bool SetUpMaster::checkForRawDataForSamp(const MipFamSamp & mipSampName) const{
 	SampleDirectoryMaster sampDirMaster(directoryMaster_, mipSampName);
-	return bfs::exists(bib::files::join(VecStr { sampDirMaster.masterSampleDir_.string(),
-		mipSampName.samp_ + rawDataSuffix_}));
+	return bfs::exists(pathSampleRawData(mipSampName));
 }
 
 VecStr SetUpMaster::getAllMipTargets() const {
@@ -802,6 +801,16 @@ bfs::path SetUpMaster::pathSampleExtractInfo(const MipFamSamp & mipSampName) con
 bfs::path SetUpMaster::pathSampleRawData(const MipFamSamp & mipSampName) const{
 	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
 				mipSampName.samp_ + rawDataSuffix_);
+}
+
+bfs::path SetUpMaster::pathSampleRawDataFirstRead(const MipFamSamp & mipSampName) const{
+	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
+				mipSampName.samp_ + firstReadSuffix_);
+}
+
+bfs::path SetUpMaster::pathSampleRawDataSecondRead(const MipFamSamp & mipSampName) const{
+	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
+				mipSampName.samp_ + secondReadSuffix_);
 }
 
 bfs::path SetUpMaster::pathPopClusFinalHaplo(const MipFamSamp & mipSampName) const{

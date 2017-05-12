@@ -244,7 +244,7 @@ public:
 
 	seqInfo genomicDna_;
 
-	std::shared_ptr<RefSeqGeneRecord> refGeneRecord_ = nullptr;
+	std::shared_ptr<RefSeqGeneRecord> refGeneRecord_ ;//= nullptr;
 
 	std::unordered_map<std::string, mipTargetReads> processedReads_;
 

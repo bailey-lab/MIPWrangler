@@ -31,8 +31,8 @@ public:
 	uint32_t ligBarcodeLen_ = 0;
 	std::string ligationArm_;
 	std::string extentionArm_;
-	readObject ligationArmObj_;
-	readObject extentionArmObj_;
+	seqInfo ligationArmObj_;
+	seqInfo extentionArmObj_;
 	motif ligationArmMotObj_;
 	motif extentionArmMotObj_;
 
@@ -63,6 +63,9 @@ public:
 	BarcodeInfo determineBarcodes(const seqInfo & read) const;
 
 	SinlgeMipExtractInfo::extractCase checkRead(seqInfo & read,
+			const QualFilteringPars & qFilPars) const;
+
+	SinlgeMipExtractInfo::extractCase checkRead(PairedRead & read,
 			const QualFilteringPars & qFilPars) const;
 
 

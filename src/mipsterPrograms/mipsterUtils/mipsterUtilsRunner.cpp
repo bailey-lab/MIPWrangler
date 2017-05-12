@@ -479,8 +479,8 @@ int mipsterUtilsRunner::rearmTargetsAndCombine(
 			SeqInput reader(SeqIOOptions::genFastaIn(f));
 			auto seqs = reader.readAllReads<seqInfo>();
 			for(auto & seq : seqs){
-				seq.prepend(mips.mips_[bfs::basename(f)].extentionArmObj_.seqBase_.seq_);
-				seq.append(mips.mips_[bfs::basename(f)].ligationArmObj_.seqBase_.seq_);
+				seq.prepend(mips.mips_[bfs::basename(f)].extentionArmObj_.seq_);
+				seq.append(mips.mips_[bfs::basename(f)].ligationArmObj_.seq_);
 				auto genomes = tokenizeString(seq.name_, "-");
 				readVec::getMaxLength(seq, maxLen);
 				for(const auto & genome : genomes){
@@ -527,7 +527,7 @@ int mipsterUtilsRunner::createLigArmFastas(
 	for(const auto & m : mips.mips_){
 		auto ligOpts = SeqIOOptions::genFastaOut(m.first + "-lig");
 		ligOpts.out_.overWriteFile_ = overWrite;
-		auto ligArmObj = m.second.ligationArmObj_.seqBase_;
+		auto ligArmObj = m.second.ligationArmObj_;
 		ligArmObj.reverseComplementRead(false, true);
 		SeqOutput::write(std::vector<seqInfo>{ligArmObj}, ligOpts);
 	}
@@ -553,7 +553,7 @@ int mipsterUtilsRunner::createExtArmFastas(
 	for(const auto & m : mips.mips_){
 		auto extOpts = SeqIOOptions::genFastaOut(m.first + "-ext");
 		extOpts.out_.overWriteFile_ = overWrite;
-		auto extArmObj = m.second.extentionArmObj_.seqBase_;
+		auto extArmObj = m.second.extentionArmObj_;
 		SeqOutput::write(std::vector<seqInfo>{extArmObj}, extOpts);
 	}
 	return 0;

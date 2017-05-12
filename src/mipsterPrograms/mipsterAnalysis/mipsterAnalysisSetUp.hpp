@@ -24,6 +24,11 @@ class mipsterAnalysisSetUp : public seqSetUp {
 	void setUpMipIllumArmExtractionMultiple(
 			mipIllumArmExtractionParsMultiple & pars);
 
+
+	void setUpMipIllumArmExtractionPaired(mipIllumArmExtractionPars & pars);
+	void setUpMipIllumArmExtractionMultiplePaired(
+			mipIllumArmExtractionParsMultiple & pars);
+
 	void setUpMipBarcodeCorrection(mipBarcodeCorrectionPars & pars);
 	void setUpMipBarcodeCorrectionMultiple(
 			mipBarcodeCorrectionParsMultiple & pars);

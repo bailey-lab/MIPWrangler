@@ -50,6 +50,9 @@ public:
 	Mip determineBestMipInFamily(const seqInfo & read, Mip mip,
 			aligner & alignerObjForGroupDet) const;
 
+	Mip determineBestMipInFamily(const PairedRead & read, Mip mip,
+			aligner & alignerObjForGroupDet) const;
+
 
 	void setAllAllowableArmError(uint32_t allowableArmError);
 	void setAllWiggleRoomInArm(uint32_t wiigleRoom);

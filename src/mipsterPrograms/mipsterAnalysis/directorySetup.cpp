@@ -171,6 +171,10 @@ int mipsterAnalysisRunner::runGzExtractStitch(const bib::progutils::CmdArgs & in
 							bfs::rename(r2f.first, sampRawDir.string() + r2f.first.filename().string());
 						}
 						log["laneCatLogs"] = laneCatLogs;
+					} else if (r1_files.size() == 1 && success && !allEmpty) {
+						auto r2_files = bib::files::listAllFiles(sampDir, false, {std::regex{R"(.*_R2_.*.fastq)"}});
+						bfs::rename(r1_files.begin()->first,  outputDirectory + key + "/" + key + "_R1.fastq");
+						bfs::rename(r2_files.begin()->first,  outputDirectory + key + "/" + key + "_R2.fastq");
 					}
 					if(success){
 						currentSamplesExtracted.emplace_back(key);

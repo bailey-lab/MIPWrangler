@@ -16,6 +16,8 @@ mipsterAnalysisRunner::mipsterAnalysisRunner()
 	 	 	 	   addFunc("runGzExtractStitch", runGzExtractStitch, false),
 					 addFunc("mipIllumExtractByArmAndFilter", mipIllumExtractByArmAndFilter, false),
 					 addFunc("mipIllumExtractByArmAndFilterMultiple", mipIllumExtractByArmAndFilterMultiple, false),
+					 addFunc("mipIllumExtractByArmAndFilterPaired", mipIllumExtractByArmAndFilterPaired, false),
+					 addFunc("mipIllumExtractByArmAndFilterMultiplePaired", mipIllumExtractByArmAndFilterMultiplePaired, false),
 					 addFunc("mipBarcodeCorrection", mipBarcodeCorrection, false),
 					 addFunc("mipBarcodeCorrectionMultiple", mipBarcodeCorrectionMultiple, false),
 					 addFunc("mipClustering", mipClustering, false),

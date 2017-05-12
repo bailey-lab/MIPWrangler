@@ -50,6 +50,63 @@ void mipsterAnalysisSetUp::setUpRunGzExtractStitch(
 }
 
 
+void mipsterAnalysisSetUp::setUpMipIllumArmExtractionPaired(mipIllumArmExtractionPars & pars){
+	processDefaults(pars);
+	pars_.qFilPars_.checkingQFrac_ = true;
+	processQualityFiltering();
+	if (commands_.hasFlagCaseInsenNoDash("-qualWindow")) {
+		pars_.qFilPars_.checkingQWindow = true;
+		pars_.qFilPars_.checkingQFrac_ = false;
+	}
+	pars_.qFilPars_.trimAtQual_ = setOption(pars_.qFilPars_.trimAtQualCutOff_, "--trimAtQual",
+			"Trim Reads at first occurrence of quality score");
+	setOption(pars.sampleName, "--sample", "Name of the sample/sample dir to cluster", true);
+	setOption(pars.allowableErrors, "--allowableErrors",
+			"Number of Errors To Allow in Arm");
+	setOption(pars.smallFragmentLength, "--smallFragmentLength",
+			"Length to consider a read to be small fragment and shouldn't be processed");
+	setOption(pars.wiggleRoom, "--wiggleRoom",
+			"Amount of bases to allow the arms to be from the front of the read");
+	setOption(pars.minLen, "--minLen", "Minimum Length of Read to Be Extracted");
+	processReadInNames(VecStr{"--fastq1", "--fastq2"});
+	pars_.ioOptions_.revComplMate_ = true;
+	pars_.gap_ = "5,1";
+	pars_.gapRight_ = "0,0";
+	pars_.gapLeft_ = "0,0";
+	processAlignerDefualts();
+	finishSetUp(std::cout);
+}
+
+void mipsterAnalysisSetUp::setUpMipIllumArmExtractionMultiplePaired(
+		mipIllumArmExtractionParsMultiple & pars){
+	pars.logFilename = "mipArmExtractLog";
+	pars.logFileRequired = false;
+	processMultipleDefaults(pars);
+	pars_.qFilPars_.checkingQFrac_ = true;
+	processQualityFiltering();
+	if (commands_.hasFlagCaseInsenNoDash("-qualWindow")) {
+		pars_.qFilPars_.checkingQWindow = true;
+		pars_.qFilPars_.checkingQFrac_ = false;
+	}
+	pars_.qFilPars_.trimAtQual_ = setOption(pars_.qFilPars_.trimAtQualCutOff_, "--trimAtQual",
+			"Trim Reads at first occurrence of quality score");
+	setOption(pars.allowableErrors, "--allowableErrors",
+			"Number of Errors To Allow in Arm");
+	setOption(pars.smallFragmentLength, "--smallFragmentLength",
+			"Length to consider a read to be small fragment and shouldn't be processed");
+	setOption(pars.wiggleRoom, "--wiggleRoom",
+			"Amount of bases to allow the arms including barcode to be from the front of the read");
+	setOption(pars.minLen, "--minLen", "Minimum Length of Read to Be Extracted");
+	setOption(pars.seqFileSuffix, "--seqFileSuffix", "The ending of the sequence append to sample name");
+	setOption(pars.fileOpenLimit_, "--fileOpenLimit", "Number of file allowed to open by one process");
+	pars.fileOpenLimit_ = (pars.fileOpenLimit_ - pars.numThreads) /pars.numThreads;
+	pars_.gap_ = "5,1";
+	pars_.gapRight_ = "0,0";
+	pars_.gapLeft_ = "0,0";
+	processAlignerDefualts();
+	finishSetUp(std::cout);
+}
+
 void mipsterAnalysisSetUp::setUpMipIllumArmExtraction(
 		mipIllumArmExtractionPars & pars) {
 	processDefaults(pars);
@@ -67,7 +124,7 @@ void mipsterAnalysisSetUp::setUpMipIllumArmExtraction(
 	setOption(pars.wiggleRoom, "--wiggleRoom",
 			"Amount of bases to allow the arms to be from the front of the read");
 	setOption(pars.minLen, "--minLen", "Minimum Length of Read to Be Extracted");
-	processDefaultReader(true);
+	processReadInNames(VecStr{"--fastq"});
 	pars_.gap_ = "5,1";
 	pars_.gapRight_ = "0,0";
 	pars_.gapLeft_ = "0,0";
