@@ -415,8 +415,8 @@ table MipsOnGenome::getGenomeLocsForMipTar(const std::string & tar) const{
 	for(const auto & genome : genomes_){
 		auto bedFnp = bib::files::make_path(pathToMipBed(tar, genome.first));
 		if(bfs::exists(bedFnp)){
-			BedRecordCore bedCore;
-			BioDataFileIO<BedRecordCore> bedReader((IoOptions(InOptions(bedFnp))));
+			Bed6RecordCore bedCore;
+			BioDataFileIO<Bed6RecordCore> bedReader((IoOptions(InOptions(bedFnp))));
 			bedReader.openIn();
 			uint32_t longestHomopolymer = 0;
 			double gcContent = 0;
@@ -455,8 +455,8 @@ table MipsOnGenome::getGenomeLocsForAllMipTars() const {
 		for(const auto & genome : getGenomes()){
 			auto bedFnp = bib::files::make_path(bedsDir_, genome + "_" + tar + ".bed");
 			if (bfs::exists(bedFnp)) {
-				BedRecordCore bedCore;
-				BioDataFileIO<BedRecordCore> bedReader((IoOptions(InOptions(bedFnp))));
+				Bed6RecordCore bedCore;
+				BioDataFileIO<Bed6RecordCore> bedReader((IoOptions(InOptions(bedFnp))));
 				bedReader.openIn();
 				uint32_t longestHomopolymer = 0;
 				double gcContent = 0;
@@ -504,8 +504,8 @@ table MipsOnGenome::getGenomeLocsForGenome(const std::string & genome) const {
 					seqsByName[tok] = seq;
 				}
 			}
-			BedRecordCore bedCore;
-			BioDataFileIO<BedRecordCore> bedReader((IoOptions(InOptions(bedFnp))));
+			Bed6RecordCore bedCore;
+			BioDataFileIO<Bed6RecordCore> bedReader((IoOptions(InOptions(bedFnp))));
 			bedReader.openIn();
 			uint32_t longestHomopolymer = 0;
 			double gcContent = 0;
@@ -591,8 +591,8 @@ table MipsOnGenome::getMipTarStatsForGenomes(const VecStr & genomes,
 			}
 			//std::cout << mipTar << std::endl;
 
-			BedRecordCore bedCore;
-			BioDataFileIO<BedRecordCore> bedReader((IoOptions(InOptions(bedFnp))));
+			Bed6RecordCore bedCore;
+			BioDataFileIO<Bed6RecordCore> bedReader((IoOptions(InOptions(bedFnp))));
 			bedReader.openIn();
 			while(bedReader.readNextRecord(bedCore)){
 				MetaDataInName meta(bedCore.name_);
@@ -711,8 +711,8 @@ table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
 		}
 		//std::cout << mipTar << std::endl;
 
-		BedRecordCore bedCore;
-		BioDataFileIO<BedRecordCore> bedReader((IoOptions(InOptions(bedFnp))));
+		Bed6RecordCore bedCore;
+		BioDataFileIO<Bed6RecordCore> bedReader((IoOptions(InOptions(bedFnp))));
 		bedReader.openIn();
 		while (bedReader.readNextRecord(bedCore)) {
 			MetaDataInName meta(bedCore.name_);

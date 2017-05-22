@@ -677,12 +677,12 @@ int mipsterUtilsRunner::fixingMipBedFiles(const bib::progutils::CmdArgs & inputC
 	setUp.processWritingOptions(bedOut);
 	setUp.finishSetUp(std::cout);
 
-	BioDataFileIO<BedRecordCore> reader(IoOptions(InOptions(bedFile), bedOut));
+	BioDataFileIO<Bed6RecordCore> reader(IoOptions(InOptions(bedFile), bedOut));
 
 	reader.openIn();
 
-	BedRecordCore bRecord;
-	std::vector<BedRecordCore> bRecords;
+	Bed6RecordCore bRecord;
+	std::vector<Bed6RecordCore> bRecords;
 	while(reader.readNextRecord(bRecord)){
 		MetaDataInName meta(bRecord.name_);
 		auto mipName = meta.getMeta("mipTar");
@@ -693,7 +693,7 @@ int mipsterUtilsRunner::fixingMipBedFiles(const bib::progutils::CmdArgs & inputC
 	reader.openOut();
 
 	for(const auto & record : bRecords){
-		reader.write(record, [](const BedRecordCore & record, std::ostream & out){
+		reader.write(record, [](const Bed6RecordCore & record, std::ostream & out){
 			out << record.toDelimStr() << std::endl;
 		});
 	}
