@@ -314,7 +314,8 @@ int mipsterAnalysisRunner::mipPopulationClusteringMultiple(
 			infofilePaths.emplace_back(filePath);
 		}
 	}
-	MasterTableStaticCache allInfoTab(tabOpts, infofilePaths);
+	MasterTableStaticCache allInfoTab(tabOpts, infofilePaths, true);
+
 	allInfoTab.writeTab();
 	logInfo["totalRunTime"] = setUp.timer_.totalTimeFormatted(6);
 	logFile << logInfo;
