@@ -894,7 +894,7 @@ void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 
 			MasterTableStaticCache allExtractInfo(
 					TableIOOpts(InOptions(), "\t", OutOptions(), "\t", true),
-					extractInfoFilepaths);
+					extractInfoFilepaths, true);
 			auto byTarget = allExtractInfo.get().splitTableOnColumn("mipTarget");
 			auto allTargets = mips_->getMipsForFamily(names_->mips_);
 			for (auto & tar : byTarget) {
@@ -925,7 +925,7 @@ void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 				OutOptions(allPopInfoFile),
 				"\t", true);
 		allPopInfoOpts.out_.overWriteFile_ = true;
-		MasterTableStaticCache allPopInfo(allPopInfoOpts, popClusInfofilepaths);
+		MasterTableStaticCache allPopInfo(allPopInfoOpts, popClusInfofilepaths, true);
 		allPopInfo.writeTab();
 		allPopInfo.writeTabGz();
 		bool needsUpdate = false;

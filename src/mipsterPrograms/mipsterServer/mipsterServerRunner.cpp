@@ -222,7 +222,7 @@ int mipsterServerRunner::mipServerSetUp(const bib::progutils::CmdArgs & inputCom
 			if (search == allInfoBySample.end()) {
 				allInfoBySample[s.first] = s.second;
 			} else {
-				allInfoBySample[s.first].rbind(s.second, false);
+				allInfoBySample[s.first].rbind(s.second, true);
 			}
 		}
 	}

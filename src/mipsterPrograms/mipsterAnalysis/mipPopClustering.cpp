@@ -163,7 +163,8 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		auto popTabOpts = TableIOOpts::genTabFileOut(bib::files::make_path(mipFamilyDir, "population", "populationCluster.tab.txt"), true);
 		auto sampTabOpts = TableIOOpts::genTabFileOut(bib::files::make_path(mipFamilyDir, "selectedClustersInfo.tab.txt"), true);
 
-		auto tabs = printMipSampleCollapseInfo(sampColl, !expectedSeqs.empty(), pars.mipName);
+		auto tabs = printMipSampleCollapseInfo(sampColl, true, pars.mipName);
+		//auto tabs = printMipSampleCollapseInfo(sampColl, !expectedSeqs.empty(), pars.mipName);
 		//popTab.outPutContents(popTabOpts);
 		//sampTab.outPutContents(sampTabOpts);
 		tabs.popTab_.outPutContents(popTabOpts);

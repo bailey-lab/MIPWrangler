@@ -37,6 +37,8 @@ class mav: public bibseq::SeqApp {
 	std::unordered_map<std::string, TableCache> popClusInfoBySample_;
 	std::unordered_map<std::string, TableCache> popClusInfoByTar_;
 	std::unordered_map<std::string, TableCache> popClusPopInfoByTar_;
+
+
 	/*
 	std::unordered_map<std::string, SeqIOOptsWithTime> popHapsByTar_;
 	std::unordered_map<std::string,
