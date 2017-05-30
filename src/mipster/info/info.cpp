@@ -212,6 +212,7 @@ genClusInfoWithBars::genClusInfoWithBars(const seqInfo & seqBase,
 				expectsStr) {
 	//scopedMessage mess{"genClusInfoWithBars_begin", "genClusInfoWithBars_end",std::cout, true};
 	processNameForBarReadInfo(seqBase_.name_, barcodeCnt_, readCnt_);
+
 	barcodeFrac_ = 0;
 	readFrac_ = 0;
 }
@@ -366,6 +367,7 @@ void genPopClusInfoWithBars::addInfo(const seqInfo & seqBaseInfo) {
 
 void genPopClusInfoWithBars::setFractions(const genInfoWithBars & info,
 		uint32_t sampTotal) {
+
 	sampFrac_ = sampCnt_ / static_cast<double>(sampTotal);
 	barcodeFrac_ = barcodeCnt_ / static_cast<double>(info.totalBarcodeCnt_);
 	readFrac_ = readCnt_ / static_cast<double>(info.totalReadCnt_);

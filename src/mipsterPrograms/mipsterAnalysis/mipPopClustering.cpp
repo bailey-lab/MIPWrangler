@@ -109,7 +109,6 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 					expectedSeqs, alignerObj, false);
 			alignerObj.weighHomopolymers_ = oldWeighHomopolymers;
 		}
-
 		for(auto & clus : sampColl.sampleCollapses_[samp]->collapsed_.clusters_){
 			updateNameWithBarinfo(clus);
 		}

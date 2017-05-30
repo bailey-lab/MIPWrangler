@@ -70,6 +70,7 @@ void mav::getMipOverlapGraphDataHandler(std::shared_ptr<restbed::Session> sessio
 			SeqOverlapGraph graph;
 
 			for (const auto & seq : finalSeqs) {
+				//std::cout << bib::json::writeAsOneLine(seq->toJsonJustInfo()) << std::endl;
 				readVec::getMaxLength(seq, maxSize);
 
 				std::unordered_map<std::string, std::string> meta;
@@ -105,8 +106,10 @@ void mav::getMipOverlapGraphDataHandler(std::shared_ptr<restbed::Session> sessio
 							seq2Rev.reverseComplementRead(true, true);
 							alignerObj.alignCacheGlobal(*seq1, seq2Rev);
 							alignerObj.profilePrimerAlignment(*seq1, seq2Rev);
-							bool passFor = noErrors.passErrorProfile(forComp);
-							bool passRev = noErrors.passErrorProfile(alignerObj.comp_);
+							bool passFor = noErrors.passErrorProfile(forComp) && forComp.distances_.query_.covered_
+									>= overlapMin;
+							bool passRev = noErrors.passErrorProfile(alignerObj.comp_) && alignerObj.comp_.distances_.query_.covered_
+									>= overlapMin;
 							if (passFor && passRev) {
 								if (forComp.distances_.query_.covered_
 										>= alignerObj.comp_.distances_.query_.covered_) {
