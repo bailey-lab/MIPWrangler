@@ -63,7 +63,7 @@ std::vector<MipMapResult> getMipMapResults(const bfs::path & fnp, uint32_t inser
 	BamTools::BamReader bReader;
 	BamTools::BamAlignment bAln;
 	bReader.Open(fnp.string());
-	checkBamOpenThrow(bReader);
+	checkBamOpenThrow(bReader, fnp);
 	loadBamIndexThrow(bReader);
 	auto refs = bReader.GetReferenceData();
 	BamAlnsCache alnCache;

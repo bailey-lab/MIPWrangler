@@ -171,10 +171,11 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 		}
 		BamTools::BamAlignment bAln;
 		BamTools::BamReader bReader;
-		bReader.Open(
-				bib::files::make_path(setUp.pars_.directoryName_, samp.first,
-						samp.first + ".sorted.bam").string());
-		checkBamOpenThrow(bReader);
+		auto bamFile = bib::files::make_path(setUp.pars_.directoryName_, samp.first,
+				samp.first + ".sorted.bam").string();
+		bReader.Open(bamFile);
+
+		checkBamOpenThrow(bReader, bamFile);
 		auto refData = bReader.GetReferenceData();
 		while(bReader.GetNextAlignment(bAln)){
 			if(setUp.pars_.debug_){
