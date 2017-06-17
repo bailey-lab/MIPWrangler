@@ -12,9 +12,21 @@ namespace bibseq {
 
 class MipsOnGenome {
 public:
-	MipsOnGenome(const bfs::path & mainDir, const bfs::path & mainInputDir,
-			uint32_t numThreads);
 
+	struct pars{
+		bfs::path mainDir = "";
+		bfs::path inputDir = "";
+		std::string primaryGenome = "";
+		std::string selectGenomes = "";
+		bfs::path mipArmsFnp = "";
+		uint32_t numThreads = 1;
+		comparison allowableError;
+		bool removeBeds = false;
+	};
+
+	MipsOnGenome(const pars & inputParameters);
+
+	pars inputParameters_;
 	bfs::path mainDir_;
 	bfs::path mainInputDir_;
 

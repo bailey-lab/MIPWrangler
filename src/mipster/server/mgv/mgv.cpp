@@ -18,28 +18,33 @@ mgv::mgv(const Json::Value & config) :
 	mainDir_ = config["masterDir"].asString();
 	serverResourceDir_ = bib::appendAsNeededRet(config["resources"].asString(),
 			"/");
-	mipsInfo_ = std::make_unique<MipsOnGenome>(mainDir_,
-			config["inputDir"].asString(), config["numThreads"].asUInt());
+	MipsOnGenome::pars mogPars;
+	mogPars.mainDir = mainDir_;
+	mogPars.inputDir = config["inputDir"].asString();
+	mogPars.numThreads = config["numThreads"].asUInt();
 	if (config.isMember("selectedGenomes")) {
 		auto selectedGenomes = bib::json::jsonArrayToSet<std::string>(
 				config["selectedGenomes"],
 				[](const Json::Value & val) {return val.asString();});
-		mipsInfo_->setSelectedGenomes(selectedGenomes);
+		mogPars.selectGenomes = bib::conToStr(selectedGenomes, ",");
+
 	}
-	if("" != config["mipArmsFnp"].asString()){
-		mipsInfo_->mipArmsFnp_ = config["mipArmsFnp"].asString();
+	if ("" != config["mipArmsFnp"].asString()) {
+		mogPars.mipArmsFnp = config["mipArmsFnp"].asString();
 	}
+	mogPars.primaryGenome = config["primaryGenome"].asString();
+	mipsInfo_ = std::make_unique<MipsOnGenome>(mogPars);
+
 	mipsInfo_->loadInArms();
 	mipsInfo_->loadInGenomes();
-	if (config.isMember("primaryGenome")) {
-		mipsInfo_->setPrimaryGenome(config["primaryGenome"].asString());
-	}
 
-	 jsFiles_->addFiles(
-	 bib::files::gatherFiles(bib::files::make_path(serverResourceDir_, "mgv/js"), ".js"));
+	jsFiles_->addFiles(
+			bib::files::gatherFiles(
+					bib::files::make_path(serverResourceDir_, "mgv/js"), ".js"));
 
-	 cssFiles_->addFiles(
-	 bib::files::gatherFiles(bib::files::make_path(serverResourceDir_, "mgv/css"), ".css"));
+	cssFiles_->addFiles(
+			bib::files::gatherFiles(
+					bib::files::make_path(serverResourceDir_, "mgv/css"), ".css"));
 
 	addScripts(bib::files::make_path(serverResourceDir_, "mgv"));
 
@@ -52,7 +57,9 @@ mgv::mgv(const Json::Value & config) :
 		}
 	}
 	//add all tar info table
-	allTarInfo_ = std::make_unique<TableCache>(TableIOOpts(InOptions(mipsInfo_->pathToAllInfoPrimaryGenome()), "\t", true ) );
+	allTarInfo_ = std::make_unique<TableCache>(
+			TableIOOpts(InOptions(mipsInfo_->pathToAllInfoPrimaryGenome()), "\t",
+					true));
 }
 
 std::vector<std::shared_ptr<restbed::Resource>> mgv::getAllResources() {

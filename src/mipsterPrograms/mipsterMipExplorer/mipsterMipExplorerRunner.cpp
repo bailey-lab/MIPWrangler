@@ -20,62 +20,44 @@ mipsterMipExplorerRunner::mipsterMipExplorerRunner() :
 }//
 
 
-
 int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
 		const bib::progutils::CmdArgs & inputCommands) {
-	bfs::path mainDir = "";
-	bfs::path inputDir = "";
-	std::string primaryGenome = "";
-	std::string selectGenomes = "";
-	bfs::path mipArmsFnp = "";
-	uint32_t numThreads = 1;
-	comparison allowableError;
-	bool removeBeds = false;
+
+	MipsOnGenome::pars inputPars;
 
 	mipsterMipExplorerSetUp setUp(inputCommands);
 	setUp.processDebug();
 	setUp.processVerbose();
-	setUp.processComparison(allowableError);
-	setUp.setOption(primaryGenome, "--primaryGenome", "The primary genome", true);
-	setUp.setOption(numThreads, "--numThreads", "Number of Threads");
-	setUp.setOption(mipArmsFnp, "--mipArmsFnp", "Mip Arms Fnp");
-	setUp.setOption(removeBeds, "--removeBeds", "Whether to remove the bed file to do a re-extraction or not, usefull if changing number of errors allowed");
-	setUp.setOption(mainDir, "--masterDir", "The master output directory", true);
-	setUp.setOption(inputDir, "--inputDir", "The master input directory, with arm sequences and genomes", true);
-	setUp.setOption(selectGenomes, "--selectGenomes", "Extract info from only these genomes, default is all genomes found");
+	setUp.processComparison(inputPars.allowableError);
+	setUp.setOption(inputPars.primaryGenome, "--primaryGenome", "The primary genome", true);
+	setUp.setOption(inputPars.numThreads, "--numThreads", "Number of Threads");
+	setUp.setOption(inputPars.mipArmsFnp, "--mipArmsFnp", "Mip Arms Fnp");
+	setUp.setOption(inputPars.removeBeds, "--removeBeds", "Whether to remove the bed file to do a re-extraction or not, usefull if changing number of errors allowed");
+	setUp.setOption(inputPars.mainDir, "--masterDir", "The master output directory", true);
+	setUp.setOption(inputPars.inputDir, "--inputDir", "The master input directory, with arm sequences and genomes", true);
+	setUp.setOption(inputPars.selectGenomes, "--selectGenomes", "Extract info from only these genomes, default is all genomes found");
 	setUp.finishSetUp(std::cout);
 
 	bib::stopWatch watch;
 	watch.setLapName("Initial");
-	MipsOnGenome mips(mainDir, inputDir, numThreads);
-	if("" != mipArmsFnp){
-		mips.setMipArmsFnp(mipArmsFnp);
-	}
-	if("" != selectGenomes){
-		auto genomes = tokenizeString(selectGenomes, ",");
-		genomes.emplace_back(primaryGenome);
-		std::set<std::string> genomeSet{genomes.begin(), genomes.end()};
-		mips.setSelectedGenomes(genomeSet);
-	}
+	MipsOnGenome mips(inputPars);
+
 	watch.startNewLap("loadInArms");
 	mips.loadInArms();
 	watch.startNewLap("loadInGenomes");
 	mips.loadInGenomes();
-	if ("" != primaryGenome) {
-		mips.setPrimaryGenome(primaryGenome);
-	}
 	watch.startNewLap("setUpGenomes");
 	mips.setUpGenomes();
 	watch.startNewLap("createArmFiles");
 	mips.createArmFiles();
 	watch.startNewLap("mapArmsToGenomes");
 	mips.mapArmsToGenomes();
-	if(removeBeds){
+	if(inputPars.removeBeds){
 		bib::files::rmDirForce(mips.bedsDir_);
 		bib::files::makeDir(bib::files::MkdirPar(mips.bedsDir_));
 	}
 	watch.startNewLap("genBeds");
-	mips.genBeds(allowableError);
+	mips.genBeds(inputPars.allowableError);
 	watch.startNewLap("genFastas");
 	mips.genFastas();
 	watch.startNewLap("genTables");

@@ -13,22 +13,34 @@
 #include <TwoBit.h>
 
 namespace bibseq {
-MipsOnGenome::MipsOnGenome(const bfs::path & mainDir,
-		const bfs::path & mainInputDir, uint32_t numThreads) :
-		mainDir_(mainDir),mainInputDir_(mainInputDir), numThreads_(numThreads) {
+
+
+
+MipsOnGenome::MipsOnGenome(const pars & inputParameters) :inputParameters_(inputParameters),
+		mainDir_(inputParameters.mainDir),
+		mainInputDir_(inputParameters.inputDir),
+		numThreads_(inputParameters.numThreads) {
 	genomeDir_ = bib::files::make_path(mainInputDir_, "genomes");
 	infoDir_ = bib::files::make_path(mainInputDir_, "info");
-	mipArmsFnp_ = bib::files::make_path(infoDir_, "mip_arms.tab.txt");
-	bib::files::makeDirP(bib::files::MkdirPar { mainDir });
+	mipArmsFnp_ = inputParameters.mipArmsFnp != "" ? inputParameters.mipArmsFnp : bib::files::make_path(infoDir_, "mip_arms.tab.txt");
+	bib::files::makeDirP(bib::files::MkdirPar { mainDir_ });
 
-	mapDir_ = bib::files::makeDirP(mainDir, bib::files::MkdirPar("mapped"));
-	bedsDir_ = bib::files::makeDirP(mainDir, bib::files::MkdirPar("beds"));
-	fastaDir_ = bib::files::makeDirP(mainDir, bib::files::MkdirPar("fastas"));
-	armsDir_ = bib::files::makeDirP(mainDir, bib::files::MkdirPar("arms"));
-	logDir_ = bib::files::makeDirP(mainDir, bib::files::MkdirPar("logs"));
-	tablesDir_ = bib::files::makeDirP(mainDir, bib::files::MkdirPar("tables"));
+	mapDir_ = bib::files::makeDirP(mainDir_, bib::files::MkdirPar("mapped"));
+	bedsDir_ = bib::files::makeDirP(mainDir_, bib::files::MkdirPar("beds"));
+	fastaDir_ = bib::files::makeDirP(mainDir_, bib::files::MkdirPar("fastas"));
+	armsDir_ = bib::files::makeDirP(mainDir_, bib::files::MkdirPar("arms"));
+	logDir_ = bib::files::makeDirP(mainDir_, bib::files::MkdirPar("logs"));
+	tablesDir_ = bib::files::makeDirP(mainDir_, bib::files::MkdirPar("tables"));
+	if("" != inputParameters.selectGenomes){
+		auto genomes = tokenizeString(inputParameters.selectGenomes, ",");
+		genomes.emplace_back(inputParameters.primaryGenome);
+		std::set<std::string> genomeSet{genomes.begin(), genomes.end()};
+		setSelectedGenomes(genomeSet);
+	}
 	checkInputThrow();
+
 	requireExternalProgramThrow("bowtie2");
+
 }
 
 void MipsOnGenome::checkInputThrow() const {
@@ -116,11 +128,29 @@ void MipsOnGenome::loadInGenomes(){
 			genomes_[bib::files::removeExtension(f.filename().string())] = std::make_unique<Genome>(f);
 		}
 	}
+	setPrimaryGenome(inputParameters_.primaryGenome);
 }
 void MipsOnGenome::setUpGenomes(){
-	for(auto & gen : genomes_){
-		gen.second->createTwoBit();
-		gen.second->buildBowtie2Index();
+
+	auto genomeNames = getVectorOfMapKeys(genomes_);
+
+	bib::concurrent::LockableQueue<std::string> genomeQueue(genomeNames);
+
+	auto runSetUpGenome = [&genomeQueue,this](){
+		std::string genome = "";
+		while(genomeQueue.getVal(genome)){
+			genomes_.at(genome)->createTwoBit();
+			genomes_.at(genome)->buildBowtie2Index();
+		}
+	};
+
+	std::vector<std::thread> threads;
+	for(uint32_t t = 0; t < numThreads_; ++t){
+		threads.emplace_back(std::thread(runSetUpGenome));
+	}
+
+	for(auto & t : threads){
+		t.join();
 	}
 }
 
