@@ -152,11 +152,14 @@ int mipsterUtilsRunner::writeOutPossibleHaplotypes(
 					MetaDataInName meta(buildingSeq.name_);
 					buildingSeq.name_ = meta.getMeta("h_popUID");
 					for(const auto & tokPos : iter::range<size_t>(0,toks.size()  - 1)){
-						alignerObj.alignCacheGlobal(mog.overlapGraph_->nodes_.at(toks[tokPos])->val_, mog.overlapGraph_->nodes_.at(toks[tokPos + 1])->val_);
-						auto lastGap = alignerObj.alignObjectA_.seqBase_.seq_.find_last_of('-');
+						alignerObj.alignCacheGlobal(mog.overlapGraph_->nodes_.at(toks[tokPos])->val_,
+								mog.overlapGraph_->nodes_.at(toks[tokPos + 1])->val_);
+
+						auto lastGap = alignerObj.alignObjectA_.seqBase_.seq_.find_last_not_of('-');
 						if(std::string::npos != lastGap ){
 							auto nextSeqPos = alignerObj.getSeqPosForAlnBPos(lastGap);
 							buildingSeq.append(mog.overlapGraph_->nodes_.at(toks[tokPos + 1])->val_->getSubRead(nextSeqPos));
+
 							MetaDataInName meta(mog.overlapGraph_->nodes_.at(toks[tokPos + 1])->val_->name_);
 							buildingSeq.name_.append("-" + meta.getMeta("h_popUID"));
 						}
