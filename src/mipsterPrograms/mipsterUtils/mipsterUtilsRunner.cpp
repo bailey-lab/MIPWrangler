@@ -32,8 +32,187 @@ mipsterUtilsRunner::mipsterUtilsRunner()
 																		 addFunc("extractPossibleMipCapturesFromGenome", extractPossibleMipCapturesFromGenome, false),
 																		 addFunc("creatingMipArmsFromSeqs", creatingMipArmsFromSeqs, false),
 																		 addFunc("fixingMipBedFiles", fixingMipBedFiles, false),
+																		 addFunc("writeOutPossibleHaplotypes", writeOutPossibleHaplotypes, false),
 },
                     "mipsterUtils") {}
+
+//
+
+
+//std::vector<std::vector<SeqOverlapGraph::node>> getPossibleHaplotypes(const MipOverlapGraph & mog){
+//	/**@todo add amount of overlap in edge
+//	 *
+//	 */
+//	std::vector<std::shared_ptr<SeqOverlapGraph::node>> nodesToProcess;
+//	for(const auto & n : mog.overlapGraph_->nodes_){
+//		if(n.second->headless() || n.second->headEdges_.size() > 1){
+//			nodesToProcess.emplace_back(n);
+//		}
+//	}
+//	std::vector<std::vector<SeqOverlapGraph::node>> ret;
+//	for(const auto & n : nodesToProcess){
+//		std::vector<SeqOverlapGraph::node> currentPath;
+//		auto currentNode = n;
+//		while(n->tailEdges_.size() == 1){
+//			currentPath.emplace_back(currentNode);
+//			currentNode = n->tailEdges_.front()->tail_.lock();
+//		}
+//		ret.emplace_back(currentPath);
+//	}
+//	return ret;
+//}
+
+int mipsterUtilsRunner::writeOutPossibleHaplotypes(
+		const bib::progutils::CmdArgs & inputCommands) {
+	double freqCutOff = 0;
+	mipCorePars pars;
+	comparison noErrors;
+	uint32_t minOverlap = 5;
+	mipsterUtilsSetUp setUp(inputCommands);
+	pars.processDefaults(setUp);
+	setUp.processDebug();
+	setUp.processVerbose();
+	setUp.setOption(minOverlap, "--minOverlap",
+			"Minimum Overlap Allowed Between targets");
+	setUp.processComparison(noErrors);
+	setUp.pars_.gapLeft_ = "0,0";
+	setUp.pars_.gapRight_ = "0,0";
+	setUp.pars_.gap_ = "5,1";
+	setUp.processAlignerDefualts();
+	setUp.processDirectoryOutputName("processMipOverlapGraph_TODAY", true);
+	setUp.setOption(freqCutOff, "--freqCutOff", "freq Cut Off to exclude sequences");
+	setUp.finishSetUp(std::cout);
+	setUp.startARunLog(setUp.pars_.directoryName_);
+	SetUpMaster mipMaster(pars.masterDir);
+	mipMaster.setMipArmFnp(pars.mipArmsFileName);
+	mipMaster.setMipsSampsNamesFnp(pars.mipsSamplesFile);
+	mipMaster.loadMipsSampsInfo(pars.allowableErrors);
+	auto warnings = mipMaster.checkDirStruct();
+	if (!warnings.empty()) {
+		std::stringstream ss;
+		ss
+				<< "Error in directory structure, make sure you are in the correct analysis directory"
+				<< std::endl;
+		ss << "Following warnings;" << std::endl;
+		ss << bib::conToStr(warnings, "\n") << std::endl;
+		throw std::runtime_error { ss.str() };
+	}
+	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
+
+
+
+
+	auto regions = mipMaster.mips_->getMipRegionsForFams(mipMaster.names_->mips_);
+	for(const auto & samp : mipMaster.names_->samples_){
+		for(const auto & region : regions){
+			MipOverlapGraph mog(region, noErrors, minOverlap);
+			auto mipFams = mipMaster.mips_->getMipFamsForRegion(region);
+			uint64_t maxSize = 0;
+			for(const auto & mipFam : mipFams){
+				if(bib::in(mipFam,mipMaster.names_->mips_ )){
+					//std::cout << mipMaster.pathPopClusFinalHaplo(MipFamSamp(mipFam, samp)) << std::endl;
+
+					auto seqOpts = SeqIOOptions::genFastqIn(mipMaster.pathPopClusFinalHaplo(MipFamSamp(mipFam, samp)).string(), true);
+					seqInfo seq;
+					SeqInput reader(seqOpts);
+					reader.openIn();
+					while(reader.readNextRead(seq)){
+						if(seq.frac_ >freqCutOff){
+							readVec::getMaxLength(seq, maxSize);
+							mog.addMipSeqToMipSeqMap(seq);
+						}
+					}
+				}
+			}
+			aligner alignerObj(maxSize, setUp.pars_.gapInfo_, setUp.pars_.scoring_,
+					setUp.pars_.colOpts_.alignOpts_.countEndGaps_);
+			alignerObj.processAlnInfoInput(setUp.pars_.alnInfoDirName_, setUp.pars_.verbose_);
+			mog.genMipOverlapGraph(alignerObj);
+
+			std::stringstream ss;
+			mog.overlapGraph_->writePaths(ss);
+			auto sampDirPath = bib::files::make_path(setUp.pars_.directoryName_, samp, region);
+			bib::files::makeDirP(bib::files::MkdirPar(sampDirPath.string()));
+			std::ofstream possibleHapsFile;
+			std::ofstream lociInfoFile;
+			openTextFile(possibleHapsFile,bib::files::join(sampDirPath.string(), "possibleHapsFile"),".txt",false, true );
+			openTextFile(lociInfoFile,bib::files::join(sampDirPath.string(), "lociInfoFile"),".txt",false, true );
+			OutOptions lociAlleNameKeyOpts(bib::files::make_path(sampDirPath, "nameKey.tab.txt"));
+			std::ofstream lociAlleNameKeyFile;
+			lociAlleNameKeyOpts.openFile(lociAlleNameKeyFile);
+			lociAlleNameKeyFile << "seqName\tLociName" << std::endl;
+			auto overlapPaths = streamToVecStr(ss);
+			auto seqOutOpts = SeqIOOptions::genFastaOut(bib::files::make_path(sampDirPath, "allOverlapsStitched.fasta"));
+			SeqOutput writer(seqOutOpts);
+			writer.openOut();
+			for(const auto & oPath : overlapPaths){
+				auto toks = tokenizeString(oPath, " -> ");
+				if(toks.size() > 1){
+					seqInfo buildingSeq = *(mog.overlapGraph_->nodes_.at(toks[0])->val_);
+					MetaDataInName meta(buildingSeq.name_);
+					buildingSeq.name_ = meta.getMeta("h_popUID");
+					for(const auto & tokPos : iter::range<size_t>(0,toks.size()  - 1)){
+						alignerObj.alignCacheGlobal(mog.overlapGraph_->nodes_.at(toks[tokPos])->val_, mog.overlapGraph_->nodes_.at(toks[tokPos + 1])->val_);
+						auto lastGap = alignerObj.alignObjectA_.seqBase_.seq_.find_last_of('-');
+						if(std::string::npos != lastGap ){
+							auto nextSeqPos = alignerObj.getSeqPosForAlnBPos(lastGap);
+							buildingSeq.append(mog.overlapGraph_->nodes_.at(toks[tokPos + 1])->val_->getSubRead(nextSeqPos));
+							MetaDataInName meta(mog.overlapGraph_->nodes_.at(toks[tokPos + 1])->val_->name_);
+							buildingSeq.name_.append("-" + meta.getMeta("h_popUID"));
+						}
+					}
+					writer.write(buildingSeq);
+				}
+			}
+
+			for(const auto & oPath : overlapPaths){
+				auto toks = tokenizeString(oPath, " -> ");
+				for(const auto & tok : toks){
+
+					seqInfo tempSeq(tok);
+					auto alleleNum = bib::lexical_cast<uint32_t>(tempSeq.getReadId());
+					std::unordered_map<std::string, std::string> meta;
+					tempSeq.processNameForMeta(meta);
+					uint32_t lociNum = 0;
+					if (bib::has(meta, "mipFam")) {
+						auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
+						lociNum = bib::lexical_cast<uint32_t>(
+								bib::replaceString(mipFamToks.back(), "mip", ""));
+					} else {
+						std::stringstream ss;
+						ss << __PRETTY_FUNCTION__ << ": Error, should have meta data for mipFam"
+								<< std::endl;
+						throw std::runtime_error { ss.str() };
+					}
+					if(tok != toks.front()){
+						possibleHapsFile << " ";
+					}
+					possibleHapsFile << "L" << lociNum + 1 << ".A" << alleleNum + 1;
+				}
+				possibleHapsFile << std::endl;
+			}
+			lociInfoFile << "LOCI " << mog.seqsByMipNum_.size() << std::endl;
+			for(const auto & mipSubRegion : mog.seqsByMipNum_){
+				lociInfoFile << "L" << mipSubRegion.first + 1 << " " << mipSubRegion.second.size() << std::endl;;
+			}
+			for (const auto & mipSubRegion : mog.seqsByMipNum_) {
+				for (const auto & seq : mipSubRegion.second) {
+					auto alleleNum = bib::lexical_cast<uint32_t>(seq->getReadId());
+					lociInfoFile << "L" << mipSubRegion.first + 1 << " A" << alleleNum + 1
+							<< " " << roundDecPlaces(seq->frac_, 3) << std::endl;
+					lociAlleNameKeyFile << seq->name_ << "\t" << "L"
+							<< mipSubRegion.first + 1 << ".A" << alleleNum + 1 << std::endl;
+				}
+			}
+			alignerObj.processAlnInfoOutput(setUp.pars_.alnInfoDirName_,
+					setUp.pars_.verbose_);
+		}
+	}
+
+
+
+	return 0;
+}
 
 
 int mipsterUtilsRunner::processMipOverlapGraph(
@@ -99,6 +278,7 @@ int mipsterUtilsRunner::processMipOverlapGraph(
 					setUp.pars_.colOpts_.alignOpts_.countEndGaps_);
 			alignerObj.processAlnInfoInput(setUp.pars_.alnInfoDirName_, setUp.pars_.verbose_);
 			mog.genMipOverlapGraph(alignerObj);
+
 			std::stringstream ss;
 			mog.overlapGraph_->writePaths(ss);
 			auto sampDirPath = bib::files::make_path(setUp.pars_.directoryName_, samp, region);

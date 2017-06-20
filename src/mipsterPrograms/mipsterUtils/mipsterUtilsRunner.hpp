@@ -21,6 +21,7 @@ class mipsterUtilsRunner : public bib::progutils::programRunner {
 
 	static int scanForContam(const bib::progutils::CmdArgs & inputCommands);
 
+	static int writeOutPossibleHaplotypes(const bib::progutils::CmdArgs & inputCommands);
 	static int processMipOverlapGraph(const bib::progutils::CmdArgs & inputCommands);
 	static int processMipOverlapGraphSingle(const bib::progutils::CmdArgs & inputCommands);
 
