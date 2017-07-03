@@ -37,5 +37,8 @@ class mipsterUtilsRunner : public bib::progutils::programRunner {
 	static int creatingMipArmsFromSeqs(const bib::progutils::CmdArgs & inputCommands);
 	static int fixingMipBedFiles(const bib::progutils::CmdArgs & inputCommands);
 
+
+	static int creatingSeqTableFromDirectory(const bib::progutils::CmdArgs & inputCommands);
+
 };
 } // namespace bibseq

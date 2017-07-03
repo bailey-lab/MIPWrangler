@@ -33,6 +33,7 @@ mipsterUtilsRunner::mipsterUtilsRunner()
 																		 addFunc("creatingMipArmsFromSeqs", creatingMipArmsFromSeqs, false),
 																		 addFunc("fixingMipBedFiles", fixingMipBedFiles, false),
 																		 addFunc("writeOutPossibleHaplotypes", writeOutPossibleHaplotypes, false),
+																		 addFunc("creatingSeqTableFromDirectory", creatingSeqTableFromDirectory, false),
 },
                     "mipsterUtils") {}
 
@@ -885,6 +886,40 @@ int mipsterUtilsRunner::fixingMipBedFiles(const bib::progutils::CmdArgs & inputC
 
 	return 0;
 }
+
+
+int mipsterUtilsRunner::creatingSeqTableFromDirectory(const bib::progutils::CmdArgs & inputCommands){
+	bfs::path directory = "";
+	OutOptions outOpts(bfs::path(""));
+	seqSetUp setUp(inputCommands);
+	setUp.setOption(directory, "--directory", "Input directory", true);
+	setUp.processWritingOptions(outOpts);
+	setUp.finishSetUp(std::cout);
+
+	std::ofstream outFile;
+	std::ostream out(outOpts.determineOutBuf(outFile));
+	out << "target\tgenome\tseq" << std::endl;
+	auto inputFiles = bib::files::gatherFiles(directory, ".fasta", false);
+	for(const auto & inputFile : inputFiles){
+		auto seqIn = SeqIOOptions::genFastaIn(inputFile);
+		SeqInput reader(seqIn);
+		auto seqs = reader.readAllReads<seqInfo>();
+		auto targetName = bfs::basename(inputFile);
+		for(const auto & seq : seqs){
+			auto toks = tokenizeString(seq.name_, "-");
+			for(const auto & tok : toks){
+				out << targetName
+						<<  "\t" << tok
+						<< "\t" << seq.seq_ << std::endl;
+			}
+		}
+	}
+
+
+
+	return 0;
+}
+
 
 
                     
