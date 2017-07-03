@@ -1021,14 +1021,14 @@ table SetUpMaster::gatherExtractStats(const std::vector<MipFamSamp> & samplesExt
 							uint32_t readsSmallFragment = 0;
 							for(const auto & row : extractTab.content_) {
 								if("unmatched" == row[extractTab.getColPos("mipTarget")]) {
-									unmatchedExtArm = bib::lexical_cast<uint32_t>(row[extractTab.getColPos("readNumber")]);
+									unmatchedExtArm = estd::stou(row[extractTab.getColPos("readNumber")]);
 								} else if("smallFragment" == row[extractTab.getColPos("mipTarget")]) {
-									readsSmallFragment = bib::lexical_cast<uint32_t>(row[extractTab.getColPos("readNumber")]);
+									readsSmallFragment = estd::stou(row[extractTab.getColPos("readNumber")]);
 								} else if("total" == row[extractTab.getColPos("mipTarget")]) {
-									matchingExtArm = bib::lexical_cast<uint32_t>(row[extractTab.getColPos("goodReads")]);
-									readsFailingLigationArm = bib::lexical_cast<uint32_t>(row[extractTab.getColPos("failedLigationArm")]);
-									raedsFailingMinLen = bib::lexical_cast<uint32_t>(row[6]);
-									readsFailingQuality = bib::lexical_cast<uint32_t>(row[7]);
+									matchingExtArm = estd::stou(row[extractTab.getColPos("goodReads")]);
+									readsFailingLigationArm = estd::stou(row[extractTab.getColPos("failedLigationArm")]);
+									raedsFailingMinLen = estd::stou(row[6]);
+									readsFailingQuality = estd::stou(row[7]);
 								}
 							}
 							{

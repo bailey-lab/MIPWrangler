@@ -24,8 +24,8 @@ bool MipNameSorter::compareNames(const std::string & name1,
 			&& std::regex_match(name2, match2, namePat)) {
 		return
 				match1[1] == match2[1] ?
-						bib::lexical_cast<uint32_t>(match1[2])
-								< bib::lexical_cast<uint32_t>(match2[2]) :
+						estd::stou(match1[2])
+								< estd::stou(match2[2]) :
 						name1 < name2;
 	} else {
 		return name1 < name2;
@@ -40,8 +40,8 @@ bool MipNameSorter::compareNames(const std::string & name1,
 	if (std::regex_match(name1, match1, namePat)
 			&& std::regex_match(name2, match2, namePat)) {
 		if (match1[1] == match2[1]) {
-			return bib::lexical_cast<uint32_t>(match1[2])
-					< bib::lexical_cast<uint32_t>(match2[2]);
+			return estd::stou(match1[2])
+					< estd::stou(match2[2]);
 		} else {
 			return compareNames(name1, name2, secondaryPat);
 		}

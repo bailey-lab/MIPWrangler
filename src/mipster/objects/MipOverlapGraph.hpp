@@ -39,7 +39,7 @@ public:
 		getSeqBase(seq).processNameForMeta(meta);
 		if(bib::has(meta, "mipFam")) {
 			auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
-			uint32_t mipNum = bib::lexical_cast<uint32_t>(bib::replaceString(mipFamToks.back(), "mip", ""));
+			uint32_t mipNum = estd::stou(bib::replaceString(mipFamToks.back(), "mip", ""));
 			seqsByMipNum_[mipNum].emplace_back(std::make_shared<seqInfo>(getSeqBase(seq)));
 		} else {
 			std::stringstream ss;

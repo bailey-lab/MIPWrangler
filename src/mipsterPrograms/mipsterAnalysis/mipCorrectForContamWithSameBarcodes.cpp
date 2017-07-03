@@ -47,7 +47,7 @@ void correctForContamForMipFam(const mipCorrectForContamWithSameBarcodesPars & p
 						throw std::runtime_error { ss.str() };
 					}
 					barCounts[bars.samp_].increaseCountByString(toks[0],
-							bib::lexical_cast<uint32_t>(toks[1]));
+							estd::stou(toks[1]));
 				}
 			}
 		}

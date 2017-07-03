@@ -16,7 +16,7 @@ VecStr processMipExtractInfoFile(table info){
 		//"readsUsed","readsFailing_BarcodeFiltering", "readsFailing_Minlen", "readsFailing_Quality"}};
 	//trim off (%) so elements can be treated as numbers
 	info.trimElementsAtFirstOccurenceOf("(");
-	uint32_t unmatched = bib::lexical_cast<uint32_t>(info.content_.back()[1]);
+	uint32_t unmatched = estd::stou(info.content_.back()[1]);
 	info.content_.erase(info.content_.end()-1);
 	uint32_t readsUsed = getSumOfVecStr<uint32_t>(info.getColumn("readsUsed"));
 	uint32_t readsFailingBarCodeFiltering = getSumOfVecStr<uint32_t>(info.getColumn("readsNotUsed"));
@@ -202,8 +202,8 @@ void processNameForBarReadInfo(const std::string & name,
 	auto bPos = name.rfind("_B");
 	auto underPos = name.rfind("_");
 	//std::cout << vectorToString(toVecStr(rPos, bPos, underPos, name.substr(rPos + 2, bPos - rPos - 2),name.substr(bPos + 2, underPos - bPos - 2) ), "\n") << std::endl;
-	readNum = bib::lexical_cast<uint32_t>(name.substr(rPos + 2, bPos - rPos - 2));
-	barNum = bib::lexical_cast<uint32_t>(name.substr(bPos + 2, underPos - bPos - 2));
+	readNum = estd::stou(name.substr(rPos + 2, bPos - rPos - 2));
+	barNum = estd::stou(name.substr(bPos + 2, underPos - bPos - 2));
 }
 genClusInfoWithBars::genClusInfoWithBars(const seqInfo & seqBase,
 		const std::string & firstReadName, uint32_t clusterID,

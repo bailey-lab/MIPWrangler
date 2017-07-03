@@ -150,9 +150,9 @@ MipCollection::MipCollection(const bfs::path & mipArmIdFile,
 			throw std::runtime_error{ss.str()};
 		}
 		mips_[row[mipInfo.getColPos("mip_id")]] = Mip(
-				bib::lexical_cast<uint32_t>(
+				estd::stou(
 						row[mipInfo.getColPos("extension_barcode_length")]),
-				bib::lexical_cast<uint32_t>(
+						estd::stou(
 						row[mipInfo.getColPos("ligation_barcode_length")]),
 				row[mipInfo.getColPos("ligation_arm")],
 				row[mipInfo.getColPos("extension_arm")],
