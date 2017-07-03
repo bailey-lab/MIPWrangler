@@ -153,7 +153,7 @@ int mipsterServerRunner::mipServerSetUp(const bib::progutils::CmdArgs & inputCom
 	auto sampNames = stats.getColumn("sampleName");
 	watch.startNewLap("Read in extraction info files");
 	for (const auto & e : iter::enumerate(readsUsed)) {
-		if (bib::lexical_cast<uint32_t>(e.element) > 0) {
+		if (estd::stou(e.element) > 0) {
 			std::string sampName = sampNames[e.index];
 			if(setUp.pars_.verbose_){
 				std::cout << "Currently on sample: " << sampName << std::endl;

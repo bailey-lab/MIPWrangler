@@ -173,13 +173,13 @@ int mipsterUtilsRunner::writeOutPossibleHaplotypes(
 				for(const auto & tok : toks){
 
 					seqInfo tempSeq(tok);
-					auto alleleNum = bib::lexical_cast<uint32_t>(tempSeq.getReadId());
+					auto alleleNum = estd::stou(tempSeq.getReadId());
 					std::unordered_map<std::string, std::string> meta;
 					tempSeq.processNameForMeta(meta);
 					uint32_t lociNum = 0;
 					if (bib::has(meta, "mipFam")) {
 						auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
-						lociNum = bib::lexical_cast<uint32_t>(
+						lociNum = estd::stou(
 								bib::replaceString(mipFamToks.back(), "mip", ""));
 					} else {
 						std::stringstream ss;
@@ -200,7 +200,7 @@ int mipsterUtilsRunner::writeOutPossibleHaplotypes(
 			}
 			for (const auto & mipSubRegion : mog.seqsByMipNum_) {
 				for (const auto & seq : mipSubRegion.second) {
-					auto alleleNum = bib::lexical_cast<uint32_t>(seq->getReadId());
+					auto alleleNum = estd::stou(seq->getReadId());
 					lociInfoFile << "L" << mipSubRegion.first + 1 << " A" << alleleNum + 1
 							<< " " << roundDecPlaces(seq->frac_, 3) << std::endl;
 					lociAlleNameKeyFile << seq->name_ << "\t" << "L"
@@ -300,13 +300,13 @@ int mipsterUtilsRunner::processMipOverlapGraph(
 				auto toks = tokenizeString(oPath, " -> ");
 				for(const auto & tok : toks){
 					seqInfo tempSeq(tok);
-					auto alleleNum = bib::lexical_cast<uint32_t>(tempSeq.getReadId());
+					auto alleleNum = estd::stou(tempSeq.getReadId());
 					std::unordered_map<std::string, std::string> meta;
 					tempSeq.processNameForMeta(meta);
 					uint32_t lociNum = 0;
 					if (bib::has(meta, "mipFam")) {
 						auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
-						lociNum = bib::lexical_cast<uint32_t>(
+						lociNum = estd::stou(
 								bib::replaceString(mipFamToks.back(), "mip", ""));
 					} else {
 						std::stringstream ss;
@@ -329,7 +329,7 @@ int mipsterUtilsRunner::processMipOverlapGraph(
 			}
 			for (const auto & mipSubRegion : mog.seqsByMipNum_) {
 				for (const auto & seq : mipSubRegion.second) {
-					auto alleleNum = bib::lexical_cast<uint32_t>(seq->getReadId());
+					auto alleleNum = estd::stou(seq->getReadId());
 					lociInfoFile << "L" << mipSubRegion.first + 1 << " A" << alleleNum + 1
 							<< " " << roundDecPlaces(seq->frac_, 3) << std::endl;
 					lociAlleNameKeyFile << seq->name_ << "\t" << "L"
@@ -466,7 +466,7 @@ int mipsterUtilsRunner::scanForContam(
 						throw std::runtime_error { ss.str() };
 					}
 					barCounts[bars.samp_].increaseCountByString(toks[0],
-							bib::lexical_cast<uint32_t>(toks[1]));
+							estd::stou(toks[1]));
 				}
 			}
 		}

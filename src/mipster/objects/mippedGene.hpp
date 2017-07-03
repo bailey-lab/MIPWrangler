@@ -25,13 +25,13 @@ public:
 			auto rPos = seqBase.name_.rfind("_R");
 			auto bPos = seqBase.name_.rfind("_B");
 			auto fPos = seqBase.name_.rfind("_f");
-			readNumber_ = bib::lexical_cast<uint32_t>(seqBase.name_.substr(rPos + 2, bPos - 2 - rPos));
-			seqBase_.cnt_ = bib::lexical_cast<uint32_t>(seqBase.name_.substr(bPos + 2, fPos - 2 - bPos));
+			readNumber_ = estd::stou(seqBase.name_.substr(rPos + 2, bPos - 2 - rPos));
+			seqBase_.cnt_ = estd::stou(seqBase.name_.substr(bPos + 2, fPos - 2 - bPos));
 			seqBase_.frac_ = bib::lexical_cast<double>(seqBase.name_.substr(fPos + 2));
 		}else{
 			auto rPos = seqBase.name_.rfind("_R");
 			auto tPos = seqBase.name_.rfind("_t");
-			readNumber_ = bib::lexical_cast<uint32_t>(seqBase.name_.substr(rPos + 2, tPos - 2 - rPos));
+			readNumber_ = estd::stou(seqBase.name_.substr(rPos + 2, tPos - 2 - rPos));
 		}
 
 
@@ -40,9 +40,9 @@ public:
 		mipSampName_ = seqBase.name_.substr(0, firstUnderscore);
 		mipTargetName_ = seqBase.name_.substr(firstUnderscore +1, firstPeriod - 1 - firstUnderscore);
 		auto targetUnderscore = mipTargetName_.rfind("_");
-		targetId_ = bib::lexical_cast<uint32_t>(mipTargetName_.substr(targetUnderscore + 1));
+		targetId_ = estd::stou(mipTargetName_.substr(targetUnderscore + 1));
 		auto otherUnderScore = seqBase.name_.find("_", firstPeriod);
-		clusterId_ = bib::lexical_cast<uint32_t>(seqBase.name_.substr(firstPeriod + 1, otherUnderScore - 1 - firstPeriod));
+		clusterId_ = estd::stou(seqBase.name_.substr(firstPeriod + 1, otherUnderScore - 1 - firstPeriod));
 	}
 
 	uint32_t readNumber_;

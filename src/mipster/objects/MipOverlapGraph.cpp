@@ -113,7 +113,7 @@ void MipOverlapGraph::addMipNumToOverlapJson(Json::Value & graphJson) {
 		seq.processNameForMeta(meta);
 		if (bib::has(meta, "mipFam")) {
 			auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
-			uint32_t mipNum = bib::lexical_cast<uint32_t>(
+			uint32_t mipNum = estd::stou(
 					bib::replaceString(mipFamToks.back(), "mip", ""));
 			node["mipNum"] = mipNum;
 		} else {

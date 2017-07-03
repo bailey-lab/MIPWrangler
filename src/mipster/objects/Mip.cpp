@@ -324,7 +324,7 @@ uint32_t Mip::getMipNumFromName(const std::string & name)  {
 	std::smatch match;
 	uint32_t mipNumber = std::numeric_limits<uint32_t>::max();
 	if (std::regex_match(name, match, namePat)) {
-		mipNumber = bib::lexical_cast<uint32_t>(match[2]);
+		mipNumber = estd::stou(match[2]);
 	} else {
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__

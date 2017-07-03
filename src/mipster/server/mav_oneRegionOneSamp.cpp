@@ -77,7 +77,7 @@ void mav::getMipOverlapGraphDataHandler(std::shared_ptr<restbed::Session> sessio
 				seq->processNameForMeta(meta);
 				if (bib::has(meta, "mipFam")) {
 					auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
-					uint32_t mipNum = bib::lexical_cast<uint32_t>(
+					uint32_t mipNum = estd::stou(
 							bib::replaceString(mipFamToks.back(), "mip", ""));
 					seqsByMipNum[mipNum].push_back(seq);
 				} else {
@@ -194,12 +194,12 @@ void mav::getMipOverlapGraphDataHandler(std::shared_ptr<restbed::Session> sessio
 				seq.processNameForMeta(meta);
 				if (bib::has(meta, "mipFam")) {
 					auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
-					uint32_t mipNum = bib::lexical_cast<uint32_t>(
+					uint32_t mipNum = estd::stou(
 							bib::replaceString(mipFamToks.back(), "mip", ""));
 					node["mipNum"] = mipNum;
 					std::string clusterId = seq.name_.substr(seq.name_.find("].") + 2,
 							seq.name_.rfind("_R") - (seq.name_.find("].") + 2));
-					node["color"] = outColorsStrs[bib::lexical_cast<uint32_t>(clusterId)];
+					node["color"] = outColorsStrs[estd::stou(clusterId)];
 				} else {
 					std::stringstream ss;
 					ss << __PRETTY_FUNCTION__
@@ -299,7 +299,7 @@ void mav::mipOverlapGraphData(std::string geneName, std::string sampleName){
 			seq->processNameForMeta(meta);
 			if(bib::has(meta, "mipFam")){
 				auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
-				uint32_t mipNum = bib::lexical_cast<uint32_t>(bib::replaceString(mipFamToks.back(), "mip", ""));
+				uint32_t mipNum = estd::stou(bib::replaceString(mipFamToks.back(), "mip", ""));
 				seqsByMipNum[mipNum].push_back(seq);
 			}else{
 				std::stringstream ss;
@@ -407,11 +407,11 @@ void mav::mipOverlapGraphData(std::string geneName, std::string sampleName){
 			seq.processNameForMeta(meta);
 			if (bib::has(meta, "mipFam")) {
 				auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
-				uint32_t mipNum = bib::lexical_cast<uint32_t>(
+				uint32_t mipNum = estd::stou(
 						bib::replaceString(mipFamToks.back(), "mip", ""));
 				node["mipNum"] = mipNum;
 				std::string clusterId = seq.name_.substr(seq.name_.find("].") + 2, seq.name_.rfind("_R") - (seq.name_.find("].") + 2));
-				node["color"] = outColorsStrs[bib::lexical_cast<uint32_t>(clusterId)];
+				node["color"] = outColorsStrs[estd::stou(clusterId)];
 			} else {
 				std::stringstream ss;
 				ss << __PRETTY_FUNCTION__ << ": Error, should have meta data for mipFam"
