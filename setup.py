@@ -7,7 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "scripts/setUpScripts"))
 from utils import Utils
 from genFuncs import genHelper 
 from color_text import ColorText as CT
-import pickle, datetime
+import pickle, datetime, re
 
 #tuples
 BuildPaths = namedtuple("BuildPaths", 'url build_dir build_sub_dir local_dir')
@@ -45,6 +45,7 @@ class CPPLibPackageVersionR():
         self.rExecutable_ = ""
         self.rHome_ = ""
         self.depends_ = []
+        self.cmd_ = ""
         
         
     def setExecutableLoc(self, localPath):
@@ -98,6 +99,7 @@ class CPPLibPackageVersion():
         self.additionalLdFlags_ = []
         self.libName_ = name
         self.altLibName_ = ""
+        self.cmd_ = ""
         
         
     def getDownloadUrl(self):
@@ -569,7 +571,8 @@ class Packages():
     def __armadillo(self):
         name = "armadillo"
         buildCmd = "mkdir -p build && cd build && CC={CC} CXX={CXX} cmake -DCMAKE_INSTALL_PREFIX:PATH={local_dir} .. && make -j {num_cores} install"
-        pack = CPPLibPackage(name, buildCmd, self.dirMaster_, "file", "7.800.2")
+        pack = CPPLibPackage(name, buildCmd, self.dirMaster_, "file", "7.900.1")
+        pack.addVersion("http://baileylab.umassmed.edu/sourceCodes/armadillo/armadillo-7.900.1.tar.gz", "7.900.1")
         pack.addVersion("http://baileylab.umassmed.edu/sourceCodes/armadillo/armadillo-7.800.2.tar.gz", "7.800.2")
         pack.addVersion("http://baileylab.umassmed.edu/sourceCodes/armadillo/armadillo-7.800.1.tar.gz", "7.800.1")
         pack.addVersion("http://baileylab.umassmed.edu/sourceCodes/armadillo/armadillo-7.600.1.tar.gz", "7.600.1")
@@ -767,8 +770,8 @@ class Packages():
         if not Utils.isMac():
             buildCmd = """git submodule init && git submodule update && sed -i 's/CMAKE_CXX_FLAGS}} -stdlib=libc++/CMAKE_CXX_FLAGS}}/g' cmake/build_configuration.cmake && mkdir build && cd build && CC={CC} CXX={CXX} cmake -DBUILD_TESTS=NO -DBUILD_EXAMPLES=NO -DBUILD_SSL=NO -DBUILD_SHARED=YES -DCMAKE_INSTALL_PREFIX={local_dir} .. && make install -j {num_cores}"""
         else:
-            buildCmd = """git submodule init && git submodule update && mkdir build && cd build && CC={CC} CXX={CXX} cmake -DBUILD_TESTS=NO -DBUILD_EXAMPLES=NO -DBUILD_SSL=NO -DBUILD_SHARED=YES -DCMAKE_INSTALL_PREFIX={local_dir} .. && make install -j {num_cores}"""
-
+            buildCmd = """git submodule init && git submodule update &&                                                                                                    mkdir build && cd build && CC={CC} CXX={CXX} cmake -DBUILD_TESTS=NO -DBUILD_EXAMPLES=NO -DBUILD_SSL=NO -DBUILD_SHARED=YES -DCMAKE_INSTALL_PREFIX={local_dir} .. && make install -j {num_cores}"""
+            
         pack = CPPLibPackage(name, buildCmd, self.dirMaster_, "git", "4.0")
         if self.args.noInternet:
             with open(os.path.join(self.dirMaster_.cache_dir, name, name + '.pkl'), 'rb') as inputPkl:
@@ -783,6 +786,9 @@ class Packages():
             for ref in [b.replace("/", "__") for b in refs.branches] + refs.tags:
                 pack.addVersion(url, ref)
                 pack.versions_[ref].libPath_ = pack.versions_[ref].libPath_ + "rary"
+                allFloats = re.findall(r"[+-]? *(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?", ref)
+                if len(allFloats) >= 1 and float(allFloats[0]) >= 4.5:
+                    pack.versions_[ref].cmd_ = """git submodule init && git submodule update &&                                                                                                    mkdir build && cd build && CC={CC} CXX={CXX} cmake -DBUILD_TESTS=NO -DBUILD_EXAMPLES=NO -DBUILD_SSL=NO -DBUILD_SHARED=YES -DCMAKE_INSTALL_PREFIX={local_dir} .. && make install -j {num_cores}"""
             Utils.mkdir(os.path.join(self.dirMaster_.cache_dir, name))
             with open(os.path.join(self.dirMaster_.cache_dir, name, name + '.pkl'), 'wb') as output:
                 pickle.dump(pack, output, pickle.HIGHEST_PROTOCOL)
@@ -1711,13 +1717,15 @@ class Setup:
     def num_cores(self):
         retCores = Utils.num_cores()
         if self.args.numCores:
-            if not self.args.numCores > retCores:
+            if self.args.numCores < retCores:
                 retCores = self.args.numCores
         else:
             if retCores > 8:
                 retCores  = retCores/2
             if 1 != retCores:
                 retCores -= 1
+            if retCores < 1:
+                retCores = 1 
         return retCores
 
     def __buildFromFile(self, packVer, cmd):
@@ -1871,7 +1879,10 @@ class Setup:
             raise Exception("No set up for version " + str(version) + " for " + str(package))
         packVer = pack.versions_[version]
         bPaths = packVer.bPaths_
-        cmd = pack.defaultBuildCmd_.format(external = Utils.shellquote(self.dirMaster_.base_dir), build_sub_dir = Utils.shellquote(bPaths.build_sub_dir), local_dir=Utils.shellquote(bPaths.local_dir), num_cores=self.num_cores(), CC=self.CC, CXX=self.CXX)
+        cmd = pack.defaultBuildCmd_
+        if packVer.cmd_ and "" != packVer.cmd_:
+            cmd = packVer.cmd_
+        cmd = cmd.format(external = Utils.shellquote(self.dirMaster_.base_dir), build_sub_dir = Utils.shellquote(bPaths.build_sub_dir), local_dir=Utils.shellquote(bPaths.local_dir), num_cores=self.num_cores(), CC=self.CC, CXX=self.CXX)
         Utils.mkdir(os.path.dirname(bPaths.local_dir))
         if "" != cmd and self.args.verbose:
             print cmd
@@ -2266,7 +2277,7 @@ class SetupRunner:
         parser.add_argument('--instRPackageName',type=str, nargs=1)
         parser.add_argument('--instRPackageSource',type=str, nargs=1) 
         parser.add_argument('--addBashCompletion', dest = 'addBashCompletion', action = 'store_true')
-        parser.add_argument('--numCores', type=str)
+        parser.add_argument('--numCores', type=int)
         parser.add_argument('--outMakefile', type=str)
         parser.add_argument('--overWrite', action = 'store_true')
         parser.add_argument('--append', action = 'store_true')
