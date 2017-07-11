@@ -11,6 +11,7 @@
 #include <elucidator/BamToolsUtils.h>
 #include <elucidator/objects/BioDataObject.h>
 #include <elucidator/simulation.h>
+#include <elucidator/seqToolsUtils.h>
 
 
 namespace bibseq {
@@ -457,7 +458,7 @@ namespace sim{
 void simMipLib(const LibAdundInfo & libInfo,
 		const MipCollection & mCol,
 		const VecStr & regions,
-		const std::string & mipArmsDir,
+		const std::unordered_map<std::string, std::unordered_map<std::string, seqInfo>> & seqs,
 				const std::string & workingDir,
 				double captureEfficiency,
 				uint64_t intErrorRate,
@@ -499,18 +500,18 @@ void simMipLib(const LibAdundInfo & libInfo,
 	}
 	for(const auto & region : regions){
 
-		std::unordered_map<std::string, std::unordered_map<std::string, seqInfo>> seqs;
-		for(const auto & gAbund : libInfo.genomesRelAbundance_){
-			SeqIOOptions inOpts = SeqIOOptions::genFastaIn(bib::files::make_path(mipArmsDir, gAbund.genome_ + "_" + region + "-mips.fasta").string());
-			seqInfo seq;
-			SeqInput reader(inOpts);
-			reader.openIn();
-			while(reader.readNextRead(seq)){
-				std::unordered_map<std::string, std::string> meta;
-				seq.processNameForMeta(meta);
-				seqs[meta["genome"]][meta["mipTar"]] = seq;
-			}
-		}
+
+//		for(const auto & gAbund : libInfo.genomesRelAbundance_){
+//			SeqIOOptions inOpts = SeqIOOptions::genFastaIn(bib::files::make_path(mipArmsDir, gAbund.genome_ + "_" + region + "-mips.fasta").string());
+//			seqInfo seq;
+//			SeqInput reader(inOpts);
+//			reader.openIn();
+//			while(reader.readNextRead(seq)){
+//				std::unordered_map<std::string, std::string> meta;
+//				seq.processNameForMeta(meta);
+//				seqs[meta["genome"]][meta["mipTar"]] = seq;
+//			}
+//		}
 		auto mips = mCol.getMipTarsForRegion(region);
 		for(const auto & mipName : mips){
 			auto mip = mCol.mips_.at(mipName);
@@ -526,7 +527,7 @@ void simMipLib(const LibAdundInfo & libInfo,
 				}
 				std::string extBarcode = simulation::evenRandStr(mip.extBarcodeLen_, std::vector<char>{'A', 'C', 'G', 'T'}, gen);
 				std::string ligBarcode = simulation::evenRandStr(mip.ligBarcodeLen_, std::vector<char>{'A', 'C', 'G', 'T'}, gen);
-				std::string seq = extBarcode + seqs[genome][mipName].seq_ + ligBarcode;
+				std::string seq = extBarcode + seqs.at(genome).at(mipName).seq_ + ligBarcode;
 				std::unordered_map<std::string, uint64_t> seqCounts;
 				std::mutex seqMapLock;
 				std::stringstream nameStream;
@@ -614,9 +615,10 @@ int mipsterSimRunner::simMips(const bib::progutils::CmdArgs & inputCommands) {
 	long double errorRate = 3.5e-06;
 	uint32_t numThreads = 2;
 
+	bfs::path genomeDir = "";
 	std::string genomesName = "";
 	std::string regionsName = "";
-	std::string refDir = "";
+	std::string mgvDirectory = "";
 	std::string abundanceFile = "";
 
 	bool sim454 = false;
@@ -627,7 +629,8 @@ int mipsterSimRunner::simMips(const bib::progutils::CmdArgs & inputCommands) {
 
 
 	setUp.setOption(captureEfficiency, "--captureEfficiency", "Efficiency of capture of the starting template, percent of starting template that actually gets captured");
-	setUp.setOption(refDir, "--refDir", "Directory with Reference Files to simulate off of", true);
+	setUp.setOption(genomeDir, "--genomeDir", "Genome Directory containing the genome files", true);
+	setUp.setOption(mgvDirectory, "--mgvDirectory", "Directory with Reference Files to simulate off of", true);
 	setUp.setOption(mipFile, "--mipArmsFilename", "Mip Arms File", true);
 	setUp.setOption(genomesName, "--genomes", "Genomes To Simulate", true);
 	setUp.setOption(regionsName, "--regions", "Regions To Simulate", true);
@@ -650,9 +653,27 @@ int mipsterSimRunner::simMips(const bib::progutils::CmdArgs & inputCommands) {
 	bib::randomGenerator gen;
 	uint64_t intErrorRate = errorRate * std::numeric_limits<uint64_t>::max();
 
+	std::stringstream ss;
+	bool fail = false;
+	ss << __PRETTY_FUNCTION__ << ", error the following files need to exist" << "\n";
+	auto checkDir = [&fail,&ss](const bfs::path & fnp){
+		if(!bfs::exists(fnp)){
+			ss << fnp << "\n";
+			fail = true;
+		}
+	};
+	checkDir(abundanceFile);
+	checkDir(mgvDirectory);
+	checkDir(bib::files::make_path(mgvDirectory, "beds"));
+	checkDir(genomeDir);
+	if(fail){
+		throw std::runtime_error{ss.str()};
+	}
+
 
 	VecStr genomes = bib::tokenizeString(genomesName, ",");
 	VecStr regions = bib::tokenizeString(regionsName, ",");
+
 	VecStr libNames;
 	VecStr libDirNames;
 	auto libraryAbundances = processAbundanceLibaries(abundanceFile, genomes);
@@ -672,9 +693,51 @@ int mipsterSimRunner::simMips(const bib::progutils::CmdArgs & inputCommands) {
 	std::ofstream logFile;
 	Json::Value jsonLog;
 	openTextFile(logFile, OutOptions(bfs::path(setUp.pars_.directoryName_ + "simProgramLogs.json")));
+
+	std::unordered_map<std::string, std::unordered_map<std::string, seqInfo>> seqs;
+	MultiGenomeMapper gMapper(genomeDir, genomes.front());
+	gMapper.init();
+	bool failedREgionExtraction = false;
+	std::stringstream extractionMessage;
+	extractionMessage << __PRETTY_FUNCTION__ << ", found the following errors while extracting regions " << "\n";
+	//check for all bed files first
+	for(const auto & tar : names.mips_){
+		for(const auto & genome : genomes){
+			auto bedFnp = bib::files::make_path(mgvDirectory, "beds", genome + "_" + tar + ".bed");
+			if(!bfs::exists(bedFnp)){
+				extractionMessage << "No bed file for " << genome << " and " << tar << ", should found at " << bedFnp<< "\n";
+				failedREgionExtraction = true;
+			}
+		}
+	}
+	if(failedREgionExtraction){
+		throw std::runtime_error{extractionMessage.str()};
+	}
+	//check for one region only
+	for(const auto & tar : names.mips_){
+		for(const auto & genome : genomes){
+			auto bedFnp = bib::files::make_path(mgvDirectory, "beds", genome + "_" + tar + ".bed");
+			auto beds = getBed3s(bedFnp);
+			if(beds.size() != 1){
+				extractionMessage << "Was expecting only one region in " << bedFnp << " but found: " << beds.size() << "\n";
+				failedREgionExtraction = true;
+			}
+		}
+	}
+	if(failedREgionExtraction){
+		throw std::runtime_error{extractionMessage.str()};
+	}
+	for(const auto & tar : names.mips_){
+		for(const auto & genome : genomes){
+			auto bedFnp = bib::files::make_path(mgvDirectory, "beds", genome + "_" + tar + ".bed");
+			auto beds = getBeds(bedFnp);
+			auto targetRegion = GenomicRegion(*beds.front());
+			seqs[genome][tar] = gMapper.extractGenomeRegion(genome, targetRegion);
+		}
+	}
 	for (const auto & lib : libraryAbundances) {
 
-		sim::simMipLib(lib.second, mCol, regions, refDir,
+		sim::simMipLib(lib.second, mCol, regions, seqs,
 				pcrSimsDir.string(), captureEfficiency, intErrorRate,
 				finalReadAmount, pcrRounds, initialPcrRounds, numThreads,
 				setUp.pars_.verbose_);
