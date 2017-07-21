@@ -6,6 +6,7 @@
  */
 
 #include "MipsSamplesNames.hpp"
+#include "mipster/mipUtils/MipNameSorter.hpp"
 
 namespace bibseq {
 
@@ -27,13 +28,14 @@ Json::Value MipTarFamSamp::toJson() const{
 MipsSamplesNames::MipsSamplesNames(const VecStr & mips, const VecStr & samples) :
 		mips_(mips), samples_(samples) {
 	bib::sort(samples_);
-	bib::sort(mips_);
+	MipNameSorter::sort(mips_);
 	//remove blanks, this often happens because the columns are different lengths
 	removeElement(samples_, std::string(""));
 	removeElement(mips_, std::string(""));
 	//remove duplicates
 	removeDuplicates(samples_);
 	removeDuplicates(mips_);
+	MipNameSorter::sort(mips_);
 }
 MipsSamplesNames::MipsSamplesNames(const bfs::path & mipSampleFilename) {
 	table mipSampInfo(mipSampleFilename, "\t", true);

@@ -9,6 +9,6 @@
 
 
 #include "mipster/mipUtils/mipUtils.hpp"
-
+#include "mipster/mipUtils/MipNameSorter.hpp"
 
 
