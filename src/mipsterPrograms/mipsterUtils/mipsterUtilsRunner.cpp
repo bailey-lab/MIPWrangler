@@ -935,8 +935,10 @@ int mipsterUtilsRunner::createMipArmFromSelectedMips(const bib::progutils::CmdAr
 	MipsSamplesNames names(pars.mipsSamplesFile);
 	OutputStream out(outOpts);
 	out << bib::conToStr(Mip::writeInfoLineHeader(),"\t") << "\n";
-	for(const auto & mip : names.mips_){
-		mips.mips_.at(mip).writeInfoLine(out);
+	for(const auto & mipFam : names.mips_){
+		for(const auto & mip : mips.getMipsForFamily(mipFam)){
+			mips.mips_.at(mip).writeInfoLine(out);
+		}
 	}
 
 	return 0;
