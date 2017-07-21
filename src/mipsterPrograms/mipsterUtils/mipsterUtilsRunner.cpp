@@ -34,6 +34,7 @@ mipsterUtilsRunner::mipsterUtilsRunner()
 																		 addFunc("fixingMipBedFiles", fixingMipBedFiles, false),
 																		 addFunc("writeOutPossibleHaplotypes", writeOutPossibleHaplotypes, false),
 																		 addFunc("creatingSeqTableFromDirectory", creatingSeqTableFromDirectory, false),
+																		 addFunc("createMipArmFromSelectedMips", createMipArmFromSelectedMips, false),
 },
                     "mipsterUtils") {}
 
@@ -919,6 +920,28 @@ int mipsterUtilsRunner::creatingSeqTableFromDirectory(const bib::progutils::CmdA
 
 	return 0;
 }
+int mipsterUtilsRunner::createMipArmFromSelectedMips(const bib::progutils::CmdArgs & inputCommands){
+	mipCorePars pars;
+
+	OutOptions outOpts(bfs::path(""));
+	seqSetUp setUp(inputCommands);
+	pars.processDefaults(setUp);
+	setUp.processWritingOptions(outOpts);
+	setUp.finishSetUp(std::cout);
+
+
+	MipCollection mips(pars.mipArmsFileName, pars.allowableErrors);
+
+	MipsSamplesNames names(pars.mipsSamplesFile);
+	OutputStream out(outOpts);
+	out << bib::conToStr(Mip::writeInfoLineHeader(),"\t") << "\n";
+	for(const auto & mip : names.mips_){
+		mips.mips_.at(mip).writeInfoLine(out);
+	}
+
+	return 0;
+}
+
 
 
 

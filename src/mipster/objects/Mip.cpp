@@ -16,8 +16,10 @@ Mip::Mip() :
 
 Mip::Mip(uint32_t extMbLen, uint32_t ligMbLen, const std::string & ligationArm,
 		const std::string & extentionArm, const std::string & name,
-		const std::string & familyName, const std::string & locGrouping) :
+		const std::string & familyName, const std::string & locGrouping,
+		const std::string & mipSet) :
 		name_(name), familyName_(familyName),locGrouping_(locGrouping),
+		mipSet_(mipSet),
 			extBarcodeLen_(extMbLen), ligBarcodeLen_(
 				ligMbLen), ligationArm_(
 				seqUtil::reverseComplement(stringToUpperReturn(ligationArm), "DNA")), extentionArm_(
@@ -302,6 +304,25 @@ std::vector<Mip::ArmPosScore> Mip::getPossibleLigArmPos(const seqInfo & read) co
 		}
 	}
 	return ret;
+}
+
+VecStr Mip::writeInfoLineHeader(){
+	return VecStr{"mip_family","mip_id",
+		"extension_arm","ligation_arm",
+		"extension_barcode_length",
+		"ligation_barcode_length","gene_name",
+		"mipset"};
+}
+
+void Mip::writeInfoLine(std::ostream & out) const{
+	out << familyName_
+			<< "\t" << name_
+			<< "\t" << extentionArm_
+			<< "\t" << seqUtil::reverseComplement(ligationArm_, "DNA")
+			<< "\t" << extBarcodeLen_
+			<< "\t" << ligBarcodeLen_
+			<< "\t" << locGrouping_
+			<< "\t" << mipSet_ << "\n";
 }
 
 void Mip::writeOutArms(const OutOptions & opts) const{

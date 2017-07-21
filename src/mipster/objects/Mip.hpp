@@ -21,12 +21,14 @@ public:
 
 	Mip(uint32_t extMbLen, uint32_t ligBmLen, const std::string & ligationArm,
 			const std::string & extentionArm, const std::string & name,
-			const std::string & familyName, const std::string & locGrouping);
+			const std::string & familyName, const std::string & locGrouping,
+			const std::string & mipSet);
 
 	//members
 	std::string name_;
 	std::string familyName_ = "";
 	std::string locGrouping_ = "";
+	std::string mipSet_ = "";
 	uint32_t extBarcodeLen_;
 	uint32_t ligBarcodeLen_ = 0;
 	std::string ligationArm_;
@@ -71,6 +73,8 @@ public:
 
 	void writeOutArms(const OutOptions & opts) const;
 
+	static VecStr writeInfoLineHeader();
+	void writeInfoLine(std::ostream & out) const;
 
 	static uint32_t getMipNumFromName(const std::string & name);
 

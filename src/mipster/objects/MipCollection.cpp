@@ -123,7 +123,7 @@ MipCollection::MipCollection(const bfs::path & mipArmIdFile,
 	table mipInfo(mipArmIdFile.string(), "whitespace", true);
 	VecStr neededColumns = { "mip_id", "extension_arm", "ligation_arm",
 			"mip_family", "extension_barcode_length", "ligation_barcode_length",
-			"gene_name" };
+			"gene_name", "mipset"};
 	VecStr columnsNotFound;
 	for (const auto & col : neededColumns) {
 		if (!bib::in(col, mipInfo.columnNames_)) {
@@ -158,7 +158,8 @@ MipCollection::MipCollection(const bfs::path & mipArmIdFile,
 				row[mipInfo.getColPos("extension_arm")],
 				row[mipInfo.getColPos("mip_id")],
 				row[mipInfo.getColPos("mip_family")],
-				row[mipInfo.getColPos("gene_name")]);
+				row[mipInfo.getColPos("gene_name")],
+				row[mipInfo.getColPos("mipset")]);
 		mips_[row[mipInfo.getColPos("mip_id")]].setAllowableErrorInArm(allowableArmError);
 	}
 	std::set<std::string> mipFamilies;

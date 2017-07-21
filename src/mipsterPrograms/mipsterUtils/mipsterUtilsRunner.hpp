@@ -40,5 +40,8 @@ class mipsterUtilsRunner : public bib::progutils::programRunner {
 
 	static int creatingSeqTableFromDirectory(const bib::progutils::CmdArgs & inputCommands);
 
+	static int createMipArmFromSelectedMips(const bib::progutils::CmdArgs & inputCommands);
+
+
 };
 } // namespace bibseq
