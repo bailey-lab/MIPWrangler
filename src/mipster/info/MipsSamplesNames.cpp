@@ -65,13 +65,14 @@ MipsSamplesNames::MipsSamplesNames(const bfs::path & mipSampleFilename) {
 		bib::trim(s);
 	}
 	bib::sort(samples_);
-	bib::sort(mips_);
+	MipNameSorter::sort(mips_);
 	//remove blanks, this often happens because the columns are different lengths
 	removeElement(samples_, std::string(""));
 	removeElement(mips_, std::string(""));
 	//remove duplicates
 	removeDuplicates(samples_);
 	removeDuplicates(mips_);
+	MipNameSorter::sort(mips_);
 }
 
 void MipsSamplesNames::setSamples(const VecStr & samples){
@@ -81,7 +82,7 @@ void MipsSamplesNames::setSamples(const VecStr & samples){
 
 void MipsSamplesNames::setMips(const VecStr & mips){
 	mips_ = mips;
-	bib::sort(mips_);
+	MipNameSorter::sort(mips_);
 }
 
 void MipsSamplesNames::write(std::ostream & out)const{
