@@ -869,6 +869,11 @@ void MipsOnGenome::genBeds(const comparison & allowableError) {
 						ss << bedOpts.outName() << " already up to date" << "\n";
 					}else{
 						auto extractions = getPossibleGenomeExtracts(alnResultsExt, alnResultsLig, insertSizeCutoff);
+						//this sort should put the better matching extraction on top and giving them the lower extraction counts
+						bib::sort(extractions, [](const GenomeExtractResult & result1, const GenomeExtractResult & result2){
+							return result1.ext_->comp_.distances_.eventBasedIdentity_ + result1.lig_->comp_.distances_.eventBasedIdentity_ >
+										 result2.ext_->comp_.distances_.eventBasedIdentity_ + result2.lig_->comp_.distances_.eventBasedIdentity_;
+						});
 						if(extractions.empty()){
 							ss << "Failed to extract any results for " << pair.mip_ << " in " << pair.genome_ << std::endl;
 						}else{
