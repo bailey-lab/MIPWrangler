@@ -27,7 +27,8 @@ mipsterAnalysisRunner::mipsterAnalysisRunner()
 					 addFunc("mipCorrectForContamWithSameBarcodes", mipCorrectForContamWithSameBarcodes, false),
 					 addFunc("mipCorrectForContamWithSameBarcodesMultiple", mipCorrectForContamWithSameBarcodesMultiple, false),
 					 addFunc("mipSkipBarcodeCorrection", mipSkipBarcodeCorrection, false),
-					 addFunc("mipSkipBarcodeCorrectionMultiple", mipSkipBarcodeCorrectionMultiple, false)
+					 addFunc("mipSkipBarcodeCorrectionMultiple", mipSkipBarcodeCorrectionMultiple, false),
+					 addFunc("extractFromRaw", extractFromRaw, false)
            },//
           "mipsterAnalysis") {}
 /*

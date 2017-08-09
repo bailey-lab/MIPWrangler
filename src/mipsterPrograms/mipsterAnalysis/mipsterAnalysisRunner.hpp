@@ -19,6 +19,9 @@ class mipsterAnalysisRunner : public bib::progutils::programRunner {
  public:
 	mipsterAnalysisRunner();
 
+
+	static int extractFromRaw(const bib::progutils::CmdArgs & inputCommands);
+
 	static int runGzExtractStitch(const bib::progutils::CmdArgs & inputCommands);
 
 	static int mipIllumExtractByArmAndFilter(const bib::progutils::CmdArgs & inputCommands);
