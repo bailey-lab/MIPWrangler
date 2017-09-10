@@ -18,6 +18,8 @@ class mipsterAnalysisSetUp : public seqSetUp {
   // constructors
 	using seqSetUp::seqSetUp;
 
+	void setUpExtractFromRawMultiple(extractFromRawParsMultiple & pars);
+
 	void setUpRunGzExtractStitch(runGzExtractStitchPars & pars);
 
 	void setUpMipIllumArmExtraction(mipIllumArmExtractionPars & pars);

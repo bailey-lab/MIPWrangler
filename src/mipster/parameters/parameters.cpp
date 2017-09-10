@@ -57,6 +57,8 @@ void mipCorePars::copyCore(const mipCorePars & otherPars) {
 	infoFilesRequired = otherPars.infoFilesRequired;
 	logFileRequired = otherPars.logFileRequired;
 
+	verbose_ = otherPars.verbose_;
+
 }
 
 }  // namespace bibseq

@@ -28,6 +28,8 @@ struct mipCorePars{
 	bool overWriteDirs = false;
 	bool infoFilesRequired = false;
 	bool logFileRequired = true;
+	bool verbose_ = false;
+
 	void processDefaults(seqSetUp & setUp);
 
 	void addCorePathsToConfig(Json::Value & config);
@@ -35,6 +37,10 @@ struct mipCorePars{
 	void copyCore(const  mipCorePars & otherPars);
 
 };
+
+
+
+
 
 struct runGzExtractStitchPars : mipCorePars{
 	bfs::path dir = "";
@@ -48,9 +54,22 @@ struct runGzExtractStitchPars : mipCorePars{
 
 
 struct mipIllumArmExtractionPars : mipCorePars{
+	mipIllumArmExtractionPars(){
+	  //quality filtering
+	  qFilPars_.checkingQWindow = false;
+	  qFilPars_.qualWindow_ = "50,5,20";
+	  qFilPars_.qualityWindowLength_ = 50;
+	  qFilPars_.qualityWindowStep_ = 5;
+	  qFilPars_.qualityWindowThres_ = 20;
+
+	  qFilPars_.checkingQFrac_ = false;
+	  qFilPars_.qualCheck_ = 30;
+	  qFilPars_.qualCheckCutOff_ = 0.75;
+	}
 	std::string sampleName = "";
 	uint32_t minLen = 150;
   uint32_t smallFragmentLength = 50;
+  QualFilteringPars qFilPars_;
 
 
 #if defined( __APPLE__ ) || defined( __APPLE_CC__ ) || defined( macintosh ) || defined( __MACH__ )
@@ -69,12 +88,32 @@ struct mipIllumArmExtractionParsMultiple : public mipIllumArmExtractionPars {
 		ret.smallFragmentLength = smallFragmentLength;
 		ret.fileOpenLimit_ = fileOpenLimit_;
 		ret.sampleName = newSampleName;
-
+		ret.qFilPars_ = qFilPars_;
 		ret.copyCore(*this);
 		return ret;
 	}
 };
 
+
+struct extractFromRawPars : mipIllumArmExtractionPars {
+
+	bfs::path dir = "";
+};
+
+struct extractFromRawParsMultiple : public extractFromRawPars {
+
+	extractFromRawPars createForSample(const std::string & newSampleName)const{
+		extractFromRawPars ret;
+		ret.dir = dir;
+		ret.minLen = minLen;
+		ret.smallFragmentLength = smallFragmentLength;
+		ret.fileOpenLimit_ = fileOpenLimit_;
+		ret.sampleName = newSampleName;
+		ret.qFilPars_ = qFilPars_;
+		ret.copyCore(*this);
+		return ret;
+	}
+};
 
 
 struct mipBarcodeCorrectionPars : mipCorePars{

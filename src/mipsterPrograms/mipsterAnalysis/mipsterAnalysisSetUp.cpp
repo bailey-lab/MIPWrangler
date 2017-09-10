@@ -27,8 +27,51 @@ void mipsterAnalysisSetUp::processMultipleDefaults(mipCorePars & pars){
 }
 
 
+void mipsterAnalysisSetUp::setUpExtractFromRawMultiple(extractFromRawParsMultiple & pars){
+
+	pars.infoFilesRequired = true;
+	pars.logFileRequired = false;
+	pars.logFilename = "extractFromRawLog";
+	processMultipleDefaults(pars);
+	setOption(pars.dir, "--dir", "Name of raw data directory", true);
+
+	pars.qFilPars_.checkingQFrac_ = true;
+	setOption(pars.qFilPars_.qualWindow_, "--qualWindow",
+				"Sliding Quality Window, format is WindowSize,WindowStep,Threshold");
+	seqUtil::processQualityWindowString(pars.qFilPars_.qualWindow_, pars.qFilPars_.qualityWindowLength_,
+			pars.qFilPars_.qualityWindowStep_, pars.qFilPars_.qualityWindowThres_);
+	setOption(pars.qFilPars_.qualCheck_, "--qualCheck", "Qual Check Level");
+	setOption(pars.qFilPars_.qualCheckCutOff_, "--qualCheckCutOff",
+			"Cut Off for fraction of bases above qual check of "
+					+ estd::to_string(pars.qFilPars_.qualCheck_));
+	if (commands_.hasFlagCaseInsenNoDash("-qualWindow")) {
+		pars.qFilPars_.checkingQWindow = true;
+		pars.qFilPars_.checkingQFrac_ = false;
+	}
+	pars.qFilPars_.trimAtQual_ = setOption(pars.qFilPars_.trimAtQualCutOff_, "--trimAtQual",
+			"Trim Reads at first occurrence of quality score");
+	setOption(pars.allowableErrors, "--allowableErrors",
+			"Number of Errors To Allow in Arm");
+	setOption(pars.smallFragmentLength, "--smallFragmentLength",
+			"Length to consider a read to be small fragment and shouldn't be processed");
+	setOption(pars.wiggleRoom, "--wiggleRoom",
+			"Amount of bases to allow the arms including barcode to be from the front of the read");
+	setOption(pars.minLen, "--minLen", "Minimum Length of Read to Be Extracted");
+	setOption(pars.seqFileSuffix, "--seqFileSuffix", "The ending of the sequence append to sample name");
+	setOption(pars.fileOpenLimit_, "--fileOpenLimit", "Number of file allowed to open by one process");
+	pars.fileOpenLimit_ = (pars.fileOpenLimit_ - pars.numThreads) /pars.numThreads;
+	pars_.gap_ = "5,1";
+	pars_.gapRight_ = "0,0";
+	pars_.gapLeft_ = "0,0";
+	processAlignerDefualts();
+
+
+	finishSetUp(std::cout);
+}
+
 void mipsterAnalysisSetUp::setUpRunGzExtractStitch(
 		runGzExtractStitchPars & pars) {
+
 	pars.infoFilesRequired = true;
 	pars.logFileRequired = false;
 	pars.logFilename = "gzStitchLog";
@@ -52,13 +95,22 @@ void mipsterAnalysisSetUp::setUpRunGzExtractStitch(
 
 void mipsterAnalysisSetUp::setUpMipIllumArmExtractionPaired(mipIllumArmExtractionPars & pars){
 	processDefaults(pars);
-	pars_.qFilPars_.checkingQFrac_ = true;
+	pars.qFilPars_.checkingQFrac_ = true;
 	processQualityFiltering();
 	if (commands_.hasFlagCaseInsenNoDash("-qualWindow")) {
-		pars_.qFilPars_.checkingQWindow = true;
-		pars_.qFilPars_.checkingQFrac_ = false;
+		pars.qFilPars_.checkingQWindow = true;
+		pars.qFilPars_.checkingQFrac_ = false;
 	}
-	pars_.qFilPars_.trimAtQual_ = setOption(pars_.qFilPars_.trimAtQualCutOff_, "--trimAtQual",
+	setOption(pars.qFilPars_.qualWindow_, "--qualWindow",
+				"Sliding Quality Window, format is WindowSize,WindowStep,Threshold");
+	seqUtil::processQualityWindowString(pars.qFilPars_.qualWindow_, pars.qFilPars_.qualityWindowLength_,
+			pars.qFilPars_.qualityWindowStep_, pars.qFilPars_.qualityWindowThres_);
+	setOption(pars.qFilPars_.qualCheck_, "--qualCheck", "Qual Check Level");
+	setOption(pars.qFilPars_.qualCheckCutOff_, "--qualCheckCutOff",
+			"Cut Off for fraction of bases above qual check of "
+					+ estd::to_string(pars.qFilPars_.qualCheck_));
+
+	pars.qFilPars_.trimAtQual_ = setOption(pars.qFilPars_.trimAtQualCutOff_, "--trimAtQual",
 			"Trim Reads at first occurrence of quality score");
 	setOption(pars.sampleName, "--sample", "Name of the sample/sample dir to cluster", true);
 	setOption(pars.allowableErrors, "--allowableErrors",
@@ -82,13 +134,13 @@ void mipsterAnalysisSetUp::setUpMipIllumArmExtractionMultiplePaired(
 	pars.logFilename = "mipArmExtractLog";
 	pars.logFileRequired = false;
 	processMultipleDefaults(pars);
-	pars_.qFilPars_.checkingQFrac_ = true;
+	pars.qFilPars_.checkingQFrac_ = true;
 	processQualityFiltering();
 	if (commands_.hasFlagCaseInsenNoDash("-qualWindow")) {
-		pars_.qFilPars_.checkingQWindow = true;
-		pars_.qFilPars_.checkingQFrac_ = false;
+		pars.qFilPars_.checkingQWindow = true;
+		pars.qFilPars_.checkingQFrac_ = false;
 	}
-	pars_.qFilPars_.trimAtQual_ = setOption(pars_.qFilPars_.trimAtQualCutOff_, "--trimAtQual",
+	pars.qFilPars_.trimAtQual_ = setOption(pars.qFilPars_.trimAtQualCutOff_, "--trimAtQual",
 			"Trim Reads at first occurrence of quality score");
 	setOption(pars.allowableErrors, "--allowableErrors",
 			"Number of Errors To Allow in Arm");
