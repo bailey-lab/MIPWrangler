@@ -27,15 +27,21 @@ public:
 	//members
 	std::string name_;
 	std::string familyName_ = "";
-	std::string locGrouping_ = "";
+	std::string regionGroup_ = "";
 	std::string mipSet_ = "";
+
 	uint32_t extBarcodeLen_;
 	uint32_t ligBarcodeLen_ = 0;
+
 	std::string ligationArm_;
+	std::string ligationArm5_to_3prime_;
 	std::string extentionArm_;
+
 	seqInfo ligationArmObj_;
 	seqInfo extentionArmObj_;
+
 	motif ligationArmMotObj_;
+	motif igationArmMotObj5_to_3prime_;
 	motif extentionArmMotObj_;
 
 	struct ArmPosScore {
@@ -54,6 +60,7 @@ public:
 
 	std::vector<ArmPosScore> getPossibleExtArmPos(const seqInfo & read) const;
 	std::vector<ArmPosScore> getPossibleLigArmPos(const seqInfo & read) const;
+	std::vector<ArmPosScore> getPossibleLigArmPosFront(const seqInfo & read) const;
 
 	BarcodeInfo determineExtBarcodeTrim(seqInfo & read) const;
 	BarcodeInfo determineExtBarcode(const seqInfo & read) const;

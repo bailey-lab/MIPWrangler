@@ -39,20 +39,19 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 			SeqIOOptions(bib::files::make_path(filteredOffDir, "unmatchedReads").string(), sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
 	mipOuts.addReader("smallFragment",
 			SeqIOOptions(bib::files::make_path(filteredOffDir, "smallFragment").string(),  sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
-	VecStr filterOutNames = { "_failedQuality", "_failedLigation",
-			"_failedMinLen", "_containsNs" };
+	VecStr filterOutNames = { "_failedQuality", "_failedLigation", "_failedMinLen", "_containsNs" };
+
 	VecStr allMipTargets = mipMaster.getAllMipTargets();
 	for (const auto & mip : allMipTargets) {
-		mipOuts.addReader(mip, SeqIOOptions(bib::files::join(VecStr {
-			sampDirMaster.extractDir_.string(), mip, mip }), sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
-		for (const auto & outName : filterOutNames) {
-			mipOuts.addReader(mip + outName,
-					SeqIOOptions(
-							bib::files::join(
-									VecStr { sampDirMaster.extractDir_.string(), mip, mip
-											+ outName }), sampleIOOpts.front().outFormat_,
-											sampleIOOpts.front().out_) );
-		}
+		mipOuts.addReader(mip,
+				SeqIOOptions(
+						bib::files::make_path(sampDirMaster.extractDir_.string(), mip),
+						sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
+		mipOuts.addReader(mip + "_filteredOff",
+				SeqIOOptions(
+						bib::files::make_path(filteredOffDir, mip
+								+ "_filteredOff" ), sampleIOOpts.front().outFormat_,
+										sampleIOOpts.front().out_) );
 	}
 
 	MipExtractionStats allExtractStats(pars.sampleName);
@@ -80,10 +79,6 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 			bool found = false;
 			std::unordered_map<std::string, std::pair<std::vector<Mip::ArmPosScore>, std::vector<Mip::ArmPosScore>>> possibleArms;
 			std::unordered_map<std::string, std::vector<Mip::ArmPosScore>> possibleExtArms;
-
-	//		allExtractStats.increaseUnmatched();
-	//		mipOuts.add("unmatchedReads", seq);
-	//
 			for (const auto & mKey : allMipTargets) {
 				const auto & mip = mipMaster.mips_->mips_.at(mKey);
 				//check arm
@@ -111,12 +106,24 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 
 					std::string failedQaulifierName = MipExtractionStats::getNameForCase(
 							eCase);
-					//log and write read
-					if(!allExtractStats.haveStatFor(mip.name_)){
-						bib::files::makeDirP(sampDirMaster.extractDir_.string(), bib::files::MkdirPar(mip.name_));
+					if("" != failedQaulifierName){
+						MetaDataInName failedQcMeta;
+						failedQcMeta.addMeta("failed", '_' == failedQaulifierName.front()? failedQaulifierName.substr(1) : failedQaulifierName);
+						seq.seqBase_.name_.append(failedQcMeta.createMetaName());
+						seq.mateSeqBase_.name_.append(failedQcMeta.createMetaName());
+						failedQaulifierName = "_filteredOff";
+					}else{
+						BarcodeInfo barInfo = mip.determineExtBarcode(seq.seqBase_);
+						mip.determineLigBarcode(seq.mateSeqBase_, barInfo);
+						MetaDataInName barMeta;
+						barMeta.addMeta("extBar", barInfo.extBar_);
+						barMeta.addMeta("ligBar", barInfo.ligBar_);
+						barMeta.addMeta("fullBar_", barInfo.fullBar_);
+						seq.seqBase_.name_.append(barMeta.createMetaName());
+						seq.mateSeqBase_.name_.append(barMeta.createMetaName());
 					}
+					//log and write read
 					mipOuts.add(mip.name_ + failedQaulifierName, seq);
-					//mipOuts.add("unmatchedReads", seq);
 					allExtractStats.increaseCount(mip.name_, eCase);
 				}else{
 					const auto & mip = mipMaster.mips_->mips_.at(possibleExtArms.begin()->first);
@@ -126,30 +133,53 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 
 					std::string failedQaulifierName = MipExtractionStats::getNameForCase(
 							eCase);
-					//log and write read
-					if(!allExtractStats.haveStatFor(currentMip.name_)){
-						bib::files::makeDirP(sampDirMaster.extractDir_.string(), bib::files::MkdirPar(currentMip.name_));
+					if("" != failedQaulifierName){
+						MetaDataInName failedQcMeta;
+						failedQcMeta.addMeta("failed", '_' == failedQaulifierName.front()? failedQaulifierName.substr(1) : failedQaulifierName);
+						seq.seqBase_.name_.append(failedQcMeta.createMetaName());
+						seq.mateSeqBase_.name_.append(failedQcMeta.createMetaName());
+						failedQaulifierName = "_filteredOff";
+					}else{
+						BarcodeInfo barInfo = mip.determineExtBarcode(seq.seqBase_);
+						mip.determineLigBarcode(seq.mateSeqBase_, barInfo);
+						MetaDataInName barMeta;
+						barMeta.addMeta("extBar", barInfo.extBar_);
+						barMeta.addMeta("ligBar", barInfo.ligBar_);
+						barMeta.addMeta("fullBar", barInfo.fullBar_);
+						seq.seqBase_.name_.append(barMeta.createMetaName());
+						seq.mateSeqBase_.name_.append(barMeta.createMetaName());
 					}
+					//log and write read
 					mipOuts.add(currentMip.name_ + failedQaulifierName, seq);
-					//mipOuts.add("unmatchedReads", seq);
 					allExtractStats.increaseCount(currentMip.name_, eCase);
 				}
-			}else if(1 == possibleArms.size()){
+			} else if (1 == possibleArms.size()) {
 				//only one possible match
 				const auto & mip = mipMaster.mips_->mips_.at(possibleArms.begin()->first);
 				//quality control
 				SinlgeMipExtractInfo::extractCase eCase = mip.checkRead(seq, pars.qFilPars_);
 
-				std::string failedQaulifierName = MipExtractionStats::getNameForCase(
-						eCase);
-				//log and write read
-				if(!allExtractStats.haveStatFor(mip.name_)){
-					bib::files::makeDirP(sampDirMaster.extractDir_.string(), bib::files::MkdirPar(mip.name_));
+				std::string failedQaulifierName = MipExtractionStats::getNameForCase(eCase);
+				if("" != failedQaulifierName){
+					MetaDataInName failedQcMeta;
+					failedQcMeta.addMeta("failed", '_' == failedQaulifierName.front()? failedQaulifierName.substr(1) : failedQaulifierName);
+					seq.seqBase_.name_.append(failedQcMeta.createMetaName());
+					seq.mateSeqBase_.name_.append(failedQcMeta.createMetaName());
+					failedQaulifierName = "_filteredOff";
+				}else{
+					BarcodeInfo barInfo = mip.determineExtBarcode(seq.seqBase_);
+					mip.determineLigBarcode(seq.mateSeqBase_, barInfo);
+					MetaDataInName barMeta;
+					barMeta.addMeta("extBar", barInfo.extBar_);
+					barMeta.addMeta("ligBar", barInfo.ligBar_);
+					barMeta.addMeta("fullBar_", barInfo.fullBar_);
+					seq.seqBase_.name_.append(barMeta.createMetaName());
+					seq.mateSeqBase_.name_.append(barMeta.createMetaName());
 				}
+				//log and write read
 				mipOuts.add(mip.name_ + failedQaulifierName, seq);
-				//mipOuts.add("unmatchedReads", seq);
 				allExtractStats.increaseCount(mip.name_, eCase);
-			}else{
+			} else {
 				//multiple possible matches
 				uint32_t bestScore = 0;
 				std::vector<std::string> bestMips;
@@ -181,23 +211,31 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 					//quality control
 					SinlgeMipExtractInfo::extractCase eCase = mip.checkRead(seq, pars.qFilPars_);
 
-					std::string failedQaulifierName = MipExtractionStats::getNameForCase(
-							eCase);
-					//log and write read
-					if(!allExtractStats.haveStatFor(mip.name_)){
-						bib::files::makeDirP(sampDirMaster.extractDir_.string(), bib::files::MkdirPar(mip.name_));
+					std::string failedQaulifierName = MipExtractionStats::getNameForCase(eCase);
+					if("" != failedQaulifierName){
+						MetaDataInName failedQcMeta;
+						failedQcMeta.addMeta("failed", '_' == failedQaulifierName.front()? failedQaulifierName.substr(1) : failedQaulifierName);
+						seq.seqBase_.name_.append(failedQcMeta.createMetaName());
+						seq.mateSeqBase_.name_.append(failedQcMeta.createMetaName());
+						failedQaulifierName = "_filteredOff";
+					}else{
+						BarcodeInfo barInfo = mip.determineExtBarcode(seq.seqBase_);
+						mip.determineLigBarcode(seq.mateSeqBase_, barInfo);
+						MetaDataInName barMeta;
+						barMeta.addMeta("extBar", barInfo.extBar_);
+						barMeta.addMeta("ligBar", barInfo.ligBar_);
+						barMeta.addMeta("fullBar_", barInfo.fullBar_);
+						seq.seqBase_.name_.append(barMeta.createMetaName());
+						seq.mateSeqBase_.name_.append(barMeta.createMetaName());
 					}
+					//log and write read
 					mipOuts.add(mip.name_ + failedQaulifierName, seq);
-					//mipOuts.add("unmatchedReads", seq);
 					allExtractStats.increaseCount(mip.name_, eCase);
-
 				}else if(bestMips.size() > 1){
-					//no matches found
-
+					//too many matches found
 					allExtractStats.increaseIndeterminate();
-
-					std::stringstream appName;
-					appName << "[";
+					MetaDataInName indeterminateMeta;
+					uint32_t bestCount = 0;
 					for(const auto & best : bestMips){
 						const auto & possible = possibleArms.at(best);
 						uint32_t bestExtScore = 0;
@@ -213,15 +251,14 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 								bestLigScore = lig.score_;
 							}
 						}
-						appName << "name=" << best << ";"
-								<< "extScore=" << bestExtScore << ";"
-								<< "ligScore=" << bestLigScore << ";";
+						indeterminateMeta.addMeta("match_" + estd::to_string(bestCount)+ "_name",     best);
+						indeterminateMeta.addMeta("match_" + estd::to_string(bestCount)+ "_extScore", bestExtScore);
+						indeterminateMeta.addMeta("match_" + estd::to_string(bestCount)+ "_ligScore", bestLigScore);
+						++bestCount;
 					}
-					appName << "]";
-					seq.seqBase_.name_.append(appName.str());
-					seq.mateSeqBase_.name_.append(appName.str());
+					seq.seqBase_.name_.append(indeterminateMeta.createMetaName() );
+					seq.mateSeqBase_.name_.append(indeterminateMeta.createMetaName() );
 					mipOuts.add("indeterminate", seq);
-					//mipOuts.add("unmatchedReads", seq);
 				}else{
 					std::stringstream ss;
 					ss << __PRETTY_FUNCTION__ << std::endl;

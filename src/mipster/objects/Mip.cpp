@@ -10,7 +10,7 @@
 namespace bibseq {
 
 Mip::Mip() :
-		extBarcodeLen_(0), ligationArmMotObj_(""), extentionArmMotObj_("") {
+		extBarcodeLen_(0), ligationArmMotObj_(""), igationArmMotObj5_to_3prime_(""), extentionArmMotObj_("") {
 }
 
 
@@ -18,15 +18,20 @@ Mip::Mip(uint32_t extMbLen, uint32_t ligMbLen, const std::string & ligationArm,
 		const std::string & extentionArm, const std::string & name,
 		const std::string & familyName, const std::string & locGrouping,
 		const std::string & mipSet) :
-		name_(name), familyName_(familyName),locGrouping_(locGrouping),
+		name_(name),
+		familyName_(familyName),
+		regionGroup_(locGrouping),
 		mipSet_(mipSet),
-			extBarcodeLen_(extMbLen), ligBarcodeLen_(
-				ligMbLen), ligationArm_(
-				seqUtil::reverseComplement(stringToUpperReturn(ligationArm), "DNA")), extentionArm_(
-				stringToUpperReturn(extentionArm)), ligationArmObj_(
-				seqInfo("ligationArm", ligationArm_)), extentionArmObj_(
-				seqInfo("extentionArm", extentionArm_)), ligationArmMotObj_(
-				ligationArm_), extentionArmMotObj_(extentionArm_) {
+		extBarcodeLen_(extMbLen),
+		ligBarcodeLen_(ligMbLen),
+		ligationArm_(seqUtil::reverseComplement(stringToUpperReturn(ligationArm), "DNA")),
+		ligationArm5_to_3prime_(stringToUpperReturn(ligationArm)),
+		extentionArm_(stringToUpperReturn(extentionArm)),
+		ligationArmObj_(seqInfo("ligationArm", ligationArm_)),
+		extentionArmObj_(seqInfo("extentionArm", extentionArm_)),
+		ligationArmMotObj_(ligationArm_),
+		igationArmMotObj5_to_3prime_(stringToUpperReturn(ligationArm)),
+		extentionArmMotObj_(extentionArm_) {
 	//check for names
 
 	std::regex namePat{".*_mip([0-9]+)[_]*.*$"};
@@ -306,6 +311,21 @@ std::vector<Mip::ArmPosScore> Mip::getPossibleLigArmPos(const seqInfo & read) co
 	return ret;
 }
 
+std::vector<Mip::ArmPosScore> Mip::getPossibleLigArmPosFront(const seqInfo & read) const {
+
+	std::vector<Mip::ArmPosScore> ret;
+	auto positions = igationArmMotObj5_to_3prime_.findPositionsFull(read.seq_, allowableErrors_, ligBarcodeLen_ + wiggleRoomArm_,
+			ligBarcodeLen_ + wiggleRoomArm_ + ligationArm5_to_3prime_.size());
+	for(const auto pos : positions){
+		auto score = igationArmMotObj5_to_3prime_.scoreMotif(read.seq_.begin() + pos, read.seq_.begin() + pos + igationArmMotObj5_to_3prime_.size());
+		ret.emplace_back(Mip::ArmPosScore{pos, score});
+	}
+	return ret;
+}
+
+
+
+
 VecStr Mip::writeInfoLineHeader(){
 	return VecStr{"mip_family","mip_id",
 		"extension_arm","ligation_arm",
@@ -321,7 +341,7 @@ void Mip::writeInfoLine(std::ostream & out) const{
 			<< "\t" << seqUtil::reverseComplement(ligationArm_, "DNA")
 			<< "\t" << extBarcodeLen_
 			<< "\t" << ligBarcodeLen_
-			<< "\t" << locGrouping_
+			<< "\t" << regionGroup_
 			<< "\t" << mipSet_ << "\n";
 }
 

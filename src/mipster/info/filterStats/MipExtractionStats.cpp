@@ -9,7 +9,7 @@
 
 
 #include "MipExtractionStats.hpp"
-
+#include "mipster/mipUtils/MipNameSorter.hpp"
 
 namespace bibseq {
 MipExtractionStats::MipExtractionStats(const std::string & sampName):sampName_(sampName){
@@ -54,7 +54,7 @@ std::vector<VecStr> MipExtractionStats::outputContents(const MipCollection & mip
 		const std::string & delim) {
 	std::vector<VecStr> ret;
 	auto statKeys = getVectorOfMapKeys(stats_);
-	bib::sort(statKeys);
+	MipNameSorter::sort(statKeys);
 	SinlgeMipExtractInfo total;
 	for (const auto & k : statKeys) {
 		total.good_ += stats_[k].good_;

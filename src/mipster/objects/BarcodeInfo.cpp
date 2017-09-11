@@ -27,7 +27,17 @@ void BarcodeInfo::setFullBar() {
 	fullBar_ = extBar_ + ligBar_;
 }
 
+Json::Value BarcodeInfo::toJson() const{
+	Json::Value ret;
+	ret["class"] = bib::json::toJson(bib::getTypeName(*this));
 
+	ret["fullBar_"] = bib::json::toJson(fullBar_);
+	ret["extBar_"] = bib::json::toJson(extBar_);
+	ret["ligBar_"] = bib::json::toJson(ligBar_);
+	ret["mipId_"] = bib::json::toJson(mipId_);
+
+	return ret;
+}
 
 
 

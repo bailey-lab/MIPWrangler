@@ -181,8 +181,10 @@ int mipsterAnalysisRunner::extractFromRaw(const bib::progutils::CmdArgs & inputC
 						currentSamplesExtracted.emplace_back(key);
 						auto samplePars = pars.createForSample(key);
 						MipExtractor mExtractor(pars.verbose_);
-						mExtractor.extractFilterSampleForMipsPaired(sampleOpts, mipMaster, *alignerObjForFamilyDet,
-																samplePars);
+						mExtractor.extractFilterSampleForMipsPaired(sampleOpts,
+								mipMaster,
+								*alignerObjForFamilyDet,
+								samplePars);
 					}
 					log["sample"] = key;
 					log["time"] = watch.totalTime();

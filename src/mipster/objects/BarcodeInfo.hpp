@@ -22,10 +22,13 @@ public:
 	BarcodeInfo(const std::string & mipId, const std::string & extBar);
 	void setFullBar();
 
-	std::string mipId_;
-	std::string extBar_;
-	std::string ligBar_;
-	std::string fullBar_;
+	std::string mipId_;   /**< the mip id the barcode belongs to */
+	std::string extBar_;  /**< the extension barcode */
+	std::string ligBar_;  /**< the ligation barcode */
+	std::string fullBar_; /** the ext and lig barcode pasted together to create just one object to reference as a barcode*/
+
+	Json::Value toJson() const;
+
 };
 
 

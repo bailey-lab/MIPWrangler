@@ -42,7 +42,7 @@ VecStr MipCollection::getMipsForFamily(const VecStr & families) const{
 VecStr MipCollection::getMipFamsForRegion(const std::string & region) const{
 	std::set<std::string> retSet;
 	for(const auto & m : mips_){
-		if(region  == m.second.locGrouping_){
+		if(region  == m.second.regionGroup_){
 			retSet.insert(m.second.familyName_);
 		}
 	}
@@ -55,7 +55,7 @@ VecStr MipCollection::getMipFamsForRegion(const std::string & region) const{
 VecStr MipCollection::getMipTarsForRegion(const std::string & region) const{
 	VecStr ret;
 	for(const auto & m : mips_){
-		if(region  == m.second.locGrouping_){
+		if(region  == m.second.regionGroup_){
 			ret.emplace_back(m.first);
 		}
 	}
@@ -91,7 +91,7 @@ VecStr MipCollection::getMipTars() const{
 VecStr MipCollection::getMipRegions() const {
 	std::set<std::string> locSet;
 	for (const auto & m : mips_) {
-		locSet.insert(m.second.locGrouping_);
+		locSet.insert(m.second.regionGroup_);
 	}
 	VecStr ret { locSet.begin(), locSet.end() };
 	MipNameSorter::sortByRegion(ret);
@@ -108,7 +108,7 @@ VecStr MipCollection::getMipRegionsForFams(const VecStr & mipFams) const{
 	std::set<std::string> locSet;
 	for (const auto & m : mips_) {
 		if(bib::in(m.second.familyName_, mipFams)){
-			locSet.insert(m.second.locGrouping_);
+			locSet.insert(m.second.regionGroup_);
 		}
 	}
 	VecStr ret{ locSet.begin(), locSet.end() };

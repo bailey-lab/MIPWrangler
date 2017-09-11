@@ -550,7 +550,7 @@ table MipsOnGenome::getGenomeLocsForGenome(const std::string & genome) const {
 						seqsByName[genome]->condensedSeqCount);
 			}
 			while (bedReader.readNextRecord(bedCore)) {
-				locs.addRow(genome, mipArms_->mips_.at(tar).locGrouping_, tar,
+				locs.addRow(genome, mipArms_->mips_.at(tar).regionGroup_, tar,
 						bedCore.chrom_, bedCore.chromStart_, bedCore.chromEnd_,
 						bedCore.strand_, bedCore.length(), gcContent, longestHomopolymer);
 			}
@@ -662,7 +662,7 @@ table MipsOnGenome::getMipTarStatsForGenomes(const VecStr & genomes,
 //						}
 //					}
 				}
-				ret.addRow(mipArms_->mips_[mipTar].locGrouping_,
+				ret.addRow(mipArms_->mips_[mipTar].regionGroup_,
 									mipTar, genome, extractionNumber,
 									bedCore.chrom_, bedCore.chromStart_, bedCore.chromEnd_,
 									bedCore.strand_, bedCore.length(),
@@ -783,7 +783,7 @@ table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
 					}
 				}
 			}
-			ret.addRow(mipArms_->mips_[mipTar].locGrouping_, mipTar, genome, extractionNumber,
+			ret.addRow(mipArms_->mips_[mipTar].regionGroup_, mipTar, genome, extractionNumber,
 					bedCore.chrom_, bedCore.chromStart_, bedCore.chromEnd_,
 					bedCore.strand_, bedCore.length(), containsTandems ? "yes" : "no",
 					lengthVariation ? "yes" : "no", hapNum, totalHapsPossible,
