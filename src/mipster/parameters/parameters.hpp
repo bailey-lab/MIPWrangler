@@ -170,6 +170,7 @@ struct mipPopulationClusteringPars : mipCorePars{
 
 	bfs::path parameters = "";
 	uint32_t cutOff = 1;
+	uint32_t sampleMinTotalCount = 0;
 	double fracCutoff = 0.005;
 	uint32_t runsRequired = 1;
 	bool keepChimeras = false;

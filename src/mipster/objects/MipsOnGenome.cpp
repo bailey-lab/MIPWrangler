@@ -12,6 +12,9 @@
 #include <elucidator/seqToolsUtils.h>
 #include <TwoBit.h>
 
+
+
+
 namespace bibseq {
 
 
@@ -24,7 +27,6 @@ MipsOnGenome::MipsOnGenome(const pars & inputParameters) :inputParameters_(input
 	infoDir_ = bib::files::make_path(mainInputDir_, "info");
 	mipArmsFnp_ = inputParameters.mipArmsFnp != "" ? inputParameters.mipArmsFnp : bib::files::make_path(infoDir_, "mip_arms.tab.txt");
 	bib::files::makeDirP(bib::files::MkdirPar { mainDir_ });
-
 	mapDir_ = bib::files::makeDirP(mainDir_, bib::files::MkdirPar("mapped"));
 	bedsDir_ = bib::files::makeDirP(mainDir_, bib::files::MkdirPar("beds"));
 	fastaDir_ = bib::files::makeDirP(mainDir_, bib::files::MkdirPar("fastas"));
@@ -40,6 +42,7 @@ MipsOnGenome::MipsOnGenome(const pars & inputParameters) :inputParameters_(input
 	checkInputThrow();
 
 	requireExternalProgramThrow("bowtie2");
+
 
 }
 
@@ -130,6 +133,7 @@ void MipsOnGenome::loadInGenomes(){
 	}
 	setPrimaryGenome(inputParameters_.primaryGenome);
 }
+
 void MipsOnGenome::setUpGenomes(){
 
 	auto genomeNames = getVectorOfMapKeys(genomes_);
@@ -157,10 +161,12 @@ void MipsOnGenome::setUpGenomes(){
 void MipsOnGenome::loadInArms(){
 	mipArms_ = std::make_unique<MipCollection>(mipArmsFnp_, 6);
 }
+
 void MipsOnGenome::createArmFiles(){
 	OutOptions opts(armsDir_);
 	bib::files::makeDirP(bib::files::MkdirPar(bib::files::make_path(armsDir_, "md5s")));
 	opts.overWriteFile_ = true;
+
 	for(const auto & m : mipArms_->mips_){
 		if(!opts.outExists()){
 			m.second.writeOutArms(opts);
@@ -184,6 +190,7 @@ void MipsOnGenome::createArmFiles(){
 		}
 	}
 }
+
 std::string MipsOnGenome::GenomeMip::uid(const std::string & sep) const {
 	return genome_ + sep + mip_;
 }
@@ -280,6 +287,7 @@ void MipsOnGenome::mapArmsToGenomes() {
 
 
 void MipsOnGenome::genFastas() {
+
 	const VecStr mips = bib::getVecOfMapKeys( mipArms_->mips_);
 	const VecStr genomes = bib::getVecOfMapKeys( genomes_	);
 	bib::concurrent::LockableQueue<std::string> mipQueue(mips);
@@ -319,9 +327,10 @@ void MipsOnGenome::genFastas() {
 					std::vector<seqInfo> trimmedSeqs;
 					for(const auto & bedOpt : bedOpts){
 						const std::string genome = bedOpt.first;
-						auto regions =    bedPtrsToGenomicRegs(getBeds(bedOpt.second->inFilename_.string()));
-						auto extRegions = bedPtrsToGenomicRegs(getBeds(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-ext.bed")));
-						auto ligRegions = bedPtrsToGenomicRegs(getBeds(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-lig.bed")));
+
+						std::vector<GenomicRegion> regions =    bedPtrsToGenomicRegs(getBeds(bedOpt.second->inFilename_.string()));
+						std::vector<GenomicRegion> extRegions = bedPtrsToGenomicRegs(getBeds(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-ext.bed")));
+						std::vector<GenomicRegion> ligRegions = bedPtrsToGenomicRegs(getBeds(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-lig.bed")));
 						if(regions.empty()){
 							succes = false;
 							ss << "Error in parsing " << bedOpt.second->inFilename_ << ", it was empty\n";

@@ -73,7 +73,8 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 	collapse::SampleCollapseCollection sampColl(genOpts, pars.masterDir,
 			mipFamilyDir,
 			PopNamesInfo(pars.mipName, foundSamples),
-			pars.cutOff);
+			pars.cutOff,
+			pars.sampleMinTotalCount);
 
 	if("" != pars.sampleMetaFnp){
 		sampColl.addGroupMetaData(pars.sampleMetaFnp);
