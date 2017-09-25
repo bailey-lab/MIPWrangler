@@ -385,8 +385,7 @@ void mgv::getMipSeqsHandler(std::shared_ptr<restbed::Session> session) {
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	const auto request = session->get_request();
 	auto heads = request->get_headers();
-	size_t content_length = 0;
-	request->get_header("Content-Length", content_length);
+	size_t content_length = request->get_header("Content-Length", 0);
 	session->fetch(content_length,
 			std::function<
 					void(std::shared_ptr<restbed::Session>, const restbed::Bytes & body)>(
@@ -456,8 +455,7 @@ void mgv::getGenomeLensHandler(std::shared_ptr<restbed::Session> session) {
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	const auto request = session->get_request();
 	auto heads = request->get_headers();
-	size_t content_length = 0;
-	request->get_header("Content-Length", content_length);
+	size_t content_length = request->get_header("Content-Length", 0);
 	session->fetch(content_length,
 			std::function<
 					void(std::shared_ptr<restbed::Session>, const restbed::Bytes & body)>(
@@ -504,8 +502,7 @@ void mgv::getMipRegionInfoForGenomeHandler(std::shared_ptr<restbed::Session> ses
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	const auto request = session->get_request();
 	auto heads = request->get_headers();
-	size_t content_length  = 0;
-	request->get_header( "Content-Length", content_length );
+	size_t content_length = request->get_header("Content-Length", 0);
 	session->fetch(content_length,
 			std::function<
 					void(std::shared_ptr<restbed::Session>, const restbed::Bytes & body)>(
@@ -547,8 +544,7 @@ void mgv::getMipTarInfoForGenomeHandler(
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	const auto request = session->get_request();
 	auto heads = request->get_headers();
-	size_t content_length = 0;
-	request->get_header("Content-Length", content_length);
+	size_t content_length = request->get_header("Content-Length", 0);
 	session->fetch(content_length,
 			std::function<
 					void(std::shared_ptr<restbed::Session>, const restbed::Bytes & body)>(
