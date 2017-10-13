@@ -43,5 +43,7 @@ class mipsterUtilsRunner : public bib::progutils::programRunner {
 	static int createMipArmFromSelectedMips(const bib::progutils::CmdArgs & inputCommands);
 
 
+	static int typeFinalHaplotypes(const bib::progutils::CmdArgs & inputCommands);
+
 };
 } // namespace bibseq

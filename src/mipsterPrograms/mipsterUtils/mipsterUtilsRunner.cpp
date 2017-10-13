@@ -35,6 +35,7 @@ mipsterUtilsRunner::mipsterUtilsRunner()
 																		 addFunc("writeOutPossibleHaplotypes", writeOutPossibleHaplotypes, false),
 																		 addFunc("creatingSeqTableFromDirectory", creatingSeqTableFromDirectory, false),
 																		 addFunc("createMipArmFromSelectedMips", createMipArmFromSelectedMips, false),
+																		 addFunc("typeFinalHaplotypes", typeFinalHaplotypes, false),
 },
                     "mipsterUtils") {}
 

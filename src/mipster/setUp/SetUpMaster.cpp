@@ -858,6 +858,10 @@ bfs::path SetUpMaster::pathMipSampExtractDir(const MipTarFamSamp & mipTarSampNam
 	return bib::files::make_path(directoryMaster_.masterDir_, mipTarSampName.mipFamSamp_.samp_, mipTarSampName.mipTar_);
 }
 
+bfs::path SetUpMaster::pathToAllPopInfo() const{
+	return bib::files::make_path(directoryMaster_.populationClusteringDir_, "allInfo.tab.txt");
+}
+
 void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 	auto warnings = checkDirStruct();
 	if (!warnings.empty()) {

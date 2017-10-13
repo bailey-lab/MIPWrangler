@@ -108,6 +108,8 @@ public:
 	bfs::path pathMipSampClusDir(const MipFamSamp & mipSampName) const;
 	bfs::path pathMipSampBarCorDir(const MipFamSamp & mipSampName) const;
 
+	bfs::path pathToAllPopInfo() const;
+
 	void prepareMipAnalysisServer(uint32_t numThreads) const;
 	table gatherExtractStats(const std::vector<MipFamSamp> & samplesExtracted,
 			uint32_t numThreads) const;
