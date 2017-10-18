@@ -11,7 +11,7 @@
 namespace bibseq {
 
 mipsterSetUpRunner::mipsterSetUpRunner()
-    : bib::progutils::programRunner({
+    : bib::progutils::ProgramRunner({
 																		 addFunc("makeMipPopClusDirectories", makeMipPopClusDirectories, false),
 																		 addFunc("checkDirectoryStructure", checkDirectoryStructure, false),
 																		 addFunc("createSkeletonDirectoryStructure", createSkeletonDirectoryStructure, false),

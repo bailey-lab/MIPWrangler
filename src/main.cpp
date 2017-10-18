@@ -5,12 +5,12 @@
 
 namespace bibseq {
 
-class mipsterRunner: public bib::progutils::oneRing {
+class mipsterRunner: public bib::progutils::OneRing {
 public:
 	mipsterRunner();
 };
 mipsterRunner::mipsterRunner() :
-		bib::progutils::oneRing(
+		bib::progutils::OneRing(
 				{ addRing<mipsterAnalysisRunner>(),
 					addRing<mipsterServerRunner>(),
 					addRing<mipsterUtilsRunner>(),

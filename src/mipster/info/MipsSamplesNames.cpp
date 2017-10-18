@@ -138,9 +138,8 @@ bool MipsSamplesNames::hasMip(const std::string & mip) const {
 
 
 void printMipSampVec(const std::vector<MipFamSamp> & mipSamps, std::ostream & out){
-	Json::FastWriter fWriter;
 	for(const auto & mipSamp : mipSamps){
-		out << fWriter.write(bib::json::toJson(mipSamp));
+		out << bib::json::writeAsOneLine(bib::json::toJson(mipSamp));
 	}
 }
 
@@ -164,15 +163,12 @@ std::vector<MipFamSamp> parseJsonForMipSamps(const std::string & str){
 
 std::vector<MipFamSamp> parseJsonForMipSamps(std::istream & is){
 	std::vector<MipFamSamp> ret;
-	Json::Reader jReader;
-	Json::Value root;
-	jReader.parse(is, root);
+	Json::Value root = bib::json::parseStream(is);
 	return parseJsonForMipSamps(root);
 }
 
 std::string toJsonStr(const std::vector<MipFamSamp> & mipSamps){
-	Json::FastWriter fWriter;
-	return fWriter.write(bib::json::toJson(mipSamps));
+	return bib::json::writeAsOneLine(bib::json::toJson(mipSamps));
 }
 
 }  // namespace bibseq

@@ -11,7 +11,7 @@
 namespace bibseq {
 
 mipsterAnalysisRunner::mipsterAnalysisRunner()
-    : bib::progutils::programRunner(
+    : bib::progutils::ProgramRunner(
     		{
 	 	 	 	   addFunc("runGzExtractStitch", runGzExtractStitch, false),
 					 addFunc("mipIllumExtractByArmAndFilter", mipIllumExtractByArmAndFilter, false),

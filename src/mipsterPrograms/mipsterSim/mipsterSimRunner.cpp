@@ -17,7 +17,7 @@
 namespace bibseq {
 
 mipsterSimRunner::mipsterSimRunner()
-    : bib::progutils::programRunner({
+    : bib::progutils::ProgramRunner({
 		addFunc("extractMipCaptureSequence", extractMipCaptureSequence, false),
 		addFunc("simMips", simMips, false),
 		addFunc("createArmFastaFiles", createArmFastaFiles, false),

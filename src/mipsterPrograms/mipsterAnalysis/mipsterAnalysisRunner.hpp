@@ -15,7 +15,7 @@
 namespace bibseq {
 
 
-class mipsterAnalysisRunner : public bib::progutils::programRunner {
+class mipsterAnalysisRunner : public bib::progutils::ProgramRunner {
  public:
 	mipsterAnalysisRunner();
 

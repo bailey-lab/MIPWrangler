@@ -20,7 +20,7 @@ namespace bibseq {
 
 
 mipsterUtilsRunner::mipsterUtilsRunner()
-    : bib::progutils::programRunner({addFunc("alignTarget", alignTargets, false),
+    : bib::progutils::ProgramRunner({addFunc("alignTarget", alignTargets, false),
 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 addFunc("processProcessedMips", processProcessedMips, false),
 																		 addFunc("scanForContam", scanForContam, false),
 																		 addFunc("processMipOverlapGraph", processMipOverlapGraph, false),
@@ -395,9 +395,8 @@ int mipsterUtilsRunner::processMipOverlapGraphSingle(const bib::progutils::CmdAr
 	}
 	std::ofstream outFile;
 	openTextFile(outFile, setUp.pars_.ioOptions_.out_);
-	Json::FastWriter jWriter;
 	auto graphJson = mog.genOverlapJson();
-	outFile << jWriter.write(graphJson) << std::endl;
+	outFile << bib::json::writeAsOneLine(graphJson) << std::endl;
 	alignerObj.processAlnInfoOutput(setUp.pars_.alnInfoDirName_,
 			setUp.pars_.verbose_);
 	return 0;

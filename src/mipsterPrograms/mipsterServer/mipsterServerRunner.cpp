@@ -12,7 +12,7 @@
 namespace bibseq {
 
 mipsterServerRunner::mipsterServerRunner()
-    : bib::progutils::programRunner({addFunc("mipServerSetUp", mipServerSetUp, false),
+    : bib::progutils::ProgramRunner({addFunc("mipServerSetUp", mipServerSetUp, false),
 																		 addFunc("mipAnalysisServerSetUp", mipAnalysisServerSetUp, false),
 																		 addFunc("mav", mavRunner, false)},
                     "mipsterServer") {}//

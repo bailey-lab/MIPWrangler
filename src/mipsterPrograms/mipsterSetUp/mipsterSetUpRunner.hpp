@@ -11,7 +11,7 @@
 #include "mipster.h"
 namespace bibseq {
 
-class mipsterSetUpRunner : public bib::progutils::programRunner {
+class mipsterSetUpRunner : public bib::progutils::ProgramRunner {
  public:
   mipsterSetUpRunner();
   

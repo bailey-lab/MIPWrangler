@@ -12,7 +12,7 @@
 namespace bibseq {
 
 mipsterMipExplorerRunner::mipsterMipExplorerRunner() :
-		bib::progutils::programRunner(
+		bib::progutils::ProgramRunner(
 				{ addFunc("viewMipsOnGenome", viewMipsOnGenome, false),
 					addFunc("setUpViewMipsOnGenome", setUpViewMipsOnGenome, false),
 					addFunc("mipsAgainstHaplotypes", mipsAgainstHaplotypes, false),

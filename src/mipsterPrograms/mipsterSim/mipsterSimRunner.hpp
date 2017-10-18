@@ -11,7 +11,7 @@
 #include "mipster.h"
 namespace bibseq {
 
-class mipsterSimRunner : public bib::progutils::programRunner {
+class mipsterSimRunner : public bib::progutils::ProgramRunner {
  public:
   mipsterSimRunner();
   static int createArmFastaFiles(const bib::progutils::CmdArgs & inputCommands);

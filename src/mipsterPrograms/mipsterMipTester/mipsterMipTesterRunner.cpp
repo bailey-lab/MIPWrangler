@@ -14,7 +14,7 @@
 namespace bibseq {
 
 mipsterMipTesterRunner::mipsterMipTesterRunner() :
-		bib::progutils::programRunner(
+		bib::progutils::ProgramRunner(
 				{
 					addFunc("callMircosateliteSizes", callMircosateliteSizes, false)
 				},

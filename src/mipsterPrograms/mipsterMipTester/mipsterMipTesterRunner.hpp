@@ -11,7 +11,7 @@
 #include "mipster.h"
 namespace bibseq {
 
-class mipsterMipTesterRunner : public bib::progutils::programRunner {
+class mipsterMipTesterRunner : public bib::progutils::ProgramRunner {
  public:
   mipsterMipTesterRunner();
   
