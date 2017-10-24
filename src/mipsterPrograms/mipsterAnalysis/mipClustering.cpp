@@ -36,6 +36,125 @@ std::vector<std::shared_ptr<readObject>> getBeginningClusters(
 
 
 
+std::vector<identicalCluster> collapseIdenticalReadsForBarCorrectedReads(
+     const std::vector<std::shared_ptr<readObject>> &reads,
+		const std::string &repQual){
+  std::vector<identicalCluster> ret;
+  uint32_t count = 0;
+  for (const auto &read : reads) {
+  	if(!getSeqBase(read).on_){
+  		continue;
+  	}
+    ++count;
+    if (count == 1) {
+    	ret.emplace_back(getSeqBase(read));
+      continue;
+    }
+    bool foundMatch = false;
+    for (auto &clusterIter : ret) {
+      if (getSeqBase(read).seq_ == clusterIter.seqBase_.seq_) {
+        clusterIter.addRead(getSeqBase(read));
+        foundMatch = true;
+        break;
+      }
+    }
+    if (!foundMatch) {
+    	ret.emplace_back(getSeqBase(read));
+    }
+  }
+
+
+	if ("median" == repQual || "mean" == repQual || "average" == repQual) {
+		std::function<uint32_t(std::vector<uint32_t>&)> qualCalcFunc =
+				[](std::vector<uint32_t> & quals) {
+					return round(vectorMean(quals));
+				};
+		if ("median" == repQual) {
+			qualCalcFunc = [](std::vector<uint32_t> & quals) {
+				return round(vectorMedianRef(quals));
+			};
+		}
+		for(auto & seq : ret){
+			std::vector<uint32_t> readCountsPerReads;
+			uint32_t readTotal = 0;
+			for(const auto & subSeq : seq.reads_){
+				MetaDataInName subSeqMeta(subSeq->seqBase_.name_);
+				readCountsPerReads.emplace_back(subSeqMeta.getMeta<uint32_t>("readCnt"));
+				readTotal+= readCountsPerReads.back();
+			}
+			for(const auto & qualPos : iter::range(seq.seqBase_.qual_.size())){
+				std::vector<uint32_t> quals;
+				quals.reserve(readTotal);
+				for(const auto & subSeqPos : iter::range(seq.reads_.size())){
+					addOtherVec(quals, std::vector<uint32_t>(readCountsPerReads[subSeqPos], seq.reads_[subSeqPos]->seqBase_.qual_[qualPos]));
+				}
+				seq.seqBase_.qual_[qualPos] = qualCalcFunc(quals);
+			}
+		}
+	} else if (repQual == "bestSeq") {
+		for(auto & seq : ret){
+			std::vector<uint32_t> readCountsPerReads;
+			uint32_t readTotal = 0;
+			std::vector<uint32_t> bestSeqPositions;
+			uint32_t maxReadCount = 0;
+			for(const auto & subSeqPos : iter::range(seq.reads_.size())){
+				const auto & subSeq = seq.reads_[subSeqPos];
+				MetaDataInName subSeqMeta(subSeq->seqBase_.name_);
+				readCountsPerReads.emplace_back(subSeqMeta.getMeta<uint32_t>("readCnt"));
+				readTotal+= readCountsPerReads.back();
+				if(maxReadCount > readCountsPerReads.back()){
+					maxReadCount = readCountsPerReads.back();
+					bestSeqPositions.clear();
+					bestSeqPositions.emplace_back(subSeqPos);
+				}else if(maxReadCount == readCountsPerReads.back()){
+					bestSeqPositions.emplace_back(subSeqPos);
+				}
+			}
+			if(bestSeqPositions.size() == 1){
+				seq.seqBase_.qual_ = seq.reads_[bestSeqPositions.front()]->seqBase_.qual_;
+			}else{
+				std::vector<std::shared_ptr<readObject>> bestSeqs;
+				for(const auto & best : bestSeqPositions){
+					bestSeqs.push_back(seq.reads_[best]);
+				}
+				readVec::allSetQualCheck(bestSeqs, 30);
+				readVecSorter::sortByQualCheck(bestSeqs, true);
+				seq.seqBase_.qual_ = bestSeqs.front()->seqBase_.qual_;
+			}
+		}
+	} else if (repQual == "bestQual") {
+		for(auto & seq : ret){
+			std::vector<uint32_t> readCountsPerReads;
+			uint32_t readTotal = 0;
+			for(const auto & subSeq : seq.reads_){
+				MetaDataInName subSeqMeta(subSeq->seqBase_.name_);
+				readCountsPerReads.emplace_back(subSeqMeta.getMeta<uint32_t>("readCnt"));
+				readTotal+= readCountsPerReads.back();
+			}
+			for(const auto & qualPos : iter::range(seq.seqBase_.qual_.size())){
+				std::vector<uint32_t> quals;
+				quals.reserve(readTotal);
+				for(const auto & subSeqPos : iter::range(seq.reads_.size())){
+					quals.emplace_back(seq.reads_[subSeqPos]->seqBase_.qual_[qualPos]);
+				}
+				seq.seqBase_.qual_[qualPos] = vectorMaximum(quals);
+			}
+		}
+	} else {
+		std::stringstream ss;
+		ss << "Unrecognized qualRep: " << repQual << std::endl;
+		ss << "Needs to be median, average, bestSeq, bestQual, or worst"
+				<< std::endl;
+		throw std::runtime_error { ss.str() };
+	}
+  //identicalCluster::setIdneticalClusterQual(ret, repQual);
+  readVec::allSetLetterCount(ret);
+  readVec::allUpdateName(ret);
+  return ret;
+}
+
+
+
 void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 		const SampleDirectoryMaster & sampDirMaster,
 		const mipClusteringPars & pars,
@@ -60,8 +179,8 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 			}
 		}
 		//now to cluster these all the barcode corrected reads;
-		auto identicalClusters = clusterCollapser::collapseIdenticalReads(allReads,
-				"median");
+		auto identicalClusters = collapseIdenticalReadsForBarCorrectedReads(allReads, pars.qualRep);
+
 		//now check to see if there are any reads to cluster
 		//if all of them were contamination this should be zero
 		if(!identicalClusters.empty()){

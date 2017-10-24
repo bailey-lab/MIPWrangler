@@ -71,7 +71,7 @@ std::shared_ptr<MippedRead> filterWithBarcodeCoverage(
 		}
 		//first collapse on simply string comparison, just an identical match collapse
 		auto identicalClusters = clusterCollapser::collapseIdenticalReads(
-				barReads, "median");
+				barReads, pars.qualRep); //median
 		std::vector<cluster> clusters =
 				baseCluster::convertVectorToClusterVector<cluster>(
 						identicalClusters);

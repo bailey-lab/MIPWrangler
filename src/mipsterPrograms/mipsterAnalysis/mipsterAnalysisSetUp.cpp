@@ -222,6 +222,7 @@ void mipsterAnalysisSetUp::setUpMipBarcodeCorrection(mipBarcodeCorrectionPars & 
 	setOption(pars.wiggleRoom, "--wiggleRoom",
 			"Amount of bases to allow the arms to be from the front of the read, should be the same as was set for extraction");
 	setOption(pars.barcodeIdentity, "--barcodeIdentity", "The amount of identity between reads to allow for same barcode clustering");
+	setOption(pars.qualRep, "--qualCalculation", "How to calculate the per base quality scores");
 	processAlignerDefualts();
 	finishSetUp(std::cout);
 }
@@ -238,6 +239,7 @@ void mipsterAnalysisSetUp::setUpMipBarcodeCorrectionMultiple(mipBarcodeCorrectio
 	setOption(pars.wiggleRoom, "--wiggleRoom",
 			"Amount of bases to allow the arms to be from the front of the read, should be the same as was set for extraction");
 	setOption(pars.barcodeIdentity, "--barcodeIdentity", "The amount of identity between reads to allow for same barcode clustering");
+	setOption(pars.qualRep, "--qualCalculation", "How to calculate the per base quality scores");
 	processAlignerDefualts();
 	finishSetUp(std::cout);
 }
@@ -247,6 +249,7 @@ void mipsterAnalysisSetUp::setUpMipClustering(mipClusteringPars & pars) {
 	setOption(pars.sampleName, "--sample", "Name of the sample/sample dir to cluster", true);
 	setOption(pars.parameterFile, "--par", "Name of the parameters file for the clustering");
 	setOption(pars.useReadLen, "--useReadLen", "Use Read Length large differences to skip alignment comparison");
+	setOption(pars.qualRep, "--qualCalculation", "How to calculate the per base quality scores");
 	pars_.gap_ = "5,1";
 	pars_.gapRight_ = "5,1";
 	pars_.gapLeft_ = "5,1";
@@ -271,6 +274,7 @@ void mipsterAnalysisSetUp::setUpMipClusteringMultiple(mipClusteringParsMultiple 
 	processMultipleDefaults(pars);
 	setOption(pars.parameterFile, "--par", "Name of the parameters file for the clustering");
 	setOption(pars.useReadLen, "--useReadLen", "Use Read Length large differences to skip alignment comparison");
+	setOption(pars.qualRep, "--qualCalculation", "How to calculate the per base quality scores");
 	pars_.gap_ = "5,1";
 	pars_.gapRight_ = "5,1";
 	pars_.gapLeft_ = "5,1";

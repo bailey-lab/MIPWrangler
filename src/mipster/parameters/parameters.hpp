@@ -125,6 +125,8 @@ struct mipBarcodeCorrectionPars : mipCorePars{
 
 	bool writeExtra = false;
 
+	std::string qualRep = "median";
+
 };
 
 struct mipBarcodeCorrectionParsMultiple : public mipBarcodeCorrectionPars  {
@@ -136,7 +138,9 @@ struct mipBarcodeCorrectionParsMultiple : public mipBarcodeCorrectionPars  {
 		ret.readlenDiff = readlenDiff;
 		ret.barcodeIdentity = barcodeIdentity;
 		ret.writeExtra = writeExtra;
+		ret.qualRep = qualRep;
 		ret.sampleName = newSampleName;
+
 
 		ret.copyCore(*this);
 		return ret;
@@ -148,6 +152,7 @@ struct mipClusteringPars : mipCorePars{
   bool useReadLen = false;
   uint32_t readlenDiff = 15;
   CollapseIterations iterMap;
+  std::string qualRep = "median";
 	std::string sampleName = "";
 
 };
@@ -159,6 +164,7 @@ struct mipClusteringParsMultiple : mipClusteringPars{
 		ret.readlenDiff = readlenDiff;
 		ret.parameterFile = parameterFile;
 		ret.iterMap = iterMap;
+		ret.qualRep = qualRep;
 		ret.sampleName = newSampleName;
 
 		ret.copyCore(*this);
