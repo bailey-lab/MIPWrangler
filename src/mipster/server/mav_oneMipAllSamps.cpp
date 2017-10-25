@@ -110,7 +110,9 @@ void mav::getOneMipPopSeqsPostHandler(
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	auto request = session->get_request();
 	auto mipFam = request->get_path_parameter("mipFam");
+	std::cout << std::string(body.begin(), body.end()) << std::endl;
 	const auto postData = bib::json::parse(std::string(body.begin(), body.end()));
+	std::cout << std::string(body.begin(), body.end()) << std::endl;
 	bib::json::MemberChecker checker(postData);
 	Json::Value ret;
 	if (checker.failMemberCheck( { "popUIDs" }, __PRETTY_FUNCTION__)) {

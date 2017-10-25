@@ -242,6 +242,7 @@ void mipsterAnalysisSetUp::setUpMipBarcodeCorrectionMultiple(mipBarcodeCorrectio
 	setOption(pars.qualRep, "--qualCalculation", "How to calculate the per base quality scores");
 	processAlignerDefualts();
 	finishSetUp(std::cout);
+	//getOneMipPopSeqsPostHandler
 }
 
 void mipsterAnalysisSetUp::setUpMipClustering(mipClusteringPars & pars) {
