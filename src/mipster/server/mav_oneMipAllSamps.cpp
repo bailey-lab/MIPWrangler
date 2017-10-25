@@ -110,9 +110,7 @@ void mav::getOneMipPopSeqsPostHandler(
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	auto request = session->get_request();
 	auto mipFam = request->get_path_parameter("mipFam");
-	std::cout << std::string(body.begin(), body.end()) << std::endl;
 	const auto postData = bib::json::parse(std::string(body.begin(), body.end()));
-	std::cout << std::string(body.begin(), body.end()) << std::endl;
 	bib::json::MemberChecker checker(postData);
 	Json::Value ret;
 	if (checker.failMemberCheck( { "popUIDs" }, __PRETTY_FUNCTION__)) {
@@ -149,8 +147,7 @@ void mav::getOneMipPopSeqsHandler(
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	const auto request = session->get_request();
 	auto heads = request->get_headers();
-	size_t content_length = 0;
-	request->get_header("Content-Length", content_length);
+	size_t content_length = request->get_header("Content-Length", 0);
 	session->fetch(content_length,
 			std::function<
 					void(std::shared_ptr<restbed::Session>, const restbed::Bytes & body)>(
@@ -205,8 +202,8 @@ void mav::getOneMipAllSampsPopDataHandler(
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	const auto request = session->get_request();
 	auto heads = request->get_headers();
-	size_t content_length = 0;
-	request->get_header("Content-Length", content_length);
+	size_t content_length = request->get_header("Content-Length", 0);
+	//get_header("Content-Length", content_length)
 	session->fetch(content_length,
 			std::function<
 					void(std::shared_ptr<restbed::Session>, const restbed::Bytes & body)>(
