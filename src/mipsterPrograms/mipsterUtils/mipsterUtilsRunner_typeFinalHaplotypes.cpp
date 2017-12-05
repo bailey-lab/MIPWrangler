@@ -218,22 +218,22 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 	OutOptions outOpts(bib::files::make_path(geneInfoDir, "gene"));
 
 	std::unordered_map<std::string, VecStr> idToTranscriptName;
-	std::unordered_map<std::string, GeneFromGffs> genes = GeneFromGffs::getGenesFromGffForIds(gffFnp, ids);
+	auto genes = GeneFromGffs::getGenesFromGffForIds(gffFnp, ids);
 	std::unordered_map<std::string, std::shared_ptr<GeneSeqInfo>> geneInfos;
 	OutOptions geneIdsOpts(bib::files::make_path(geneInfoDir, "geneIds.txt"));
 	OutputStream geneIdsOut(geneIdsOpts);
 	uint64_t proteinMaxLen = 0;
-	std::unordered_map<std::string, std::unordered_map<std::string, GeneFromGffs>> genesByChrom;
+	std::unordered_map<std::string, std::unordered_map<std::string, std::shared_ptr<GeneFromGffs>>> genesByChrom;
 
 	for(const auto & gene : genes){
-		genesByChrom[gene.second.gene_->seqid_].emplace(gene.first, gene.second);
+		genesByChrom[gene.second->gene_->seqid_].emplace(gene.first, gene.second);
 		geneIdsOut << gene.first << std::endl;
-		for(const auto & transcript : gene.second.mRNAs_){
-			idToTranscriptName[gene.second.gene_->getIDAttr()].emplace_back(transcript->getIDAttr());
+		for(const auto & transcript : gene.second->mRNAs_){
+			idToTranscriptName[gene.second->gene_->getIDAttr()].emplace_back(transcript->getIDAttr());
 		}
-		geneInfos[gene.first] = gene.second.generateGeneSeqInfo(tReader, false);
+		geneInfos[gene.first] = gene.second->generateGeneSeqInfo(tReader, false);
 		readVec::getMaxLength(geneInfos[gene.first]->protein_, proteinMaxLen);
-		gene.second.writeOutGeneInfo(tReader, outOpts);
+		gene.second->writeOutGeneInfo(tReader, outOpts);
 	}
 	bool failed = false;
 	VecStr idsWithMoreThanOneTranscript;
@@ -287,7 +287,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 	std::unordered_map<std::string, std::vector<std::string>> alnRegionToGeneIds;
 	for(const auto & gCount : gCounter.counts_){
 		for (const auto & g : genesByChrom[gCount.second.region_.chrom_]) {
-			if (gCount.second.region_.overlaps(*g.second.gene_)) {
+			if (gCount.second.region_.overlaps(*g.second->gene_)) {
 				alnRegionToGeneIds[gCount.second.region_.createUidFromCoords()].emplace_back(g.first);
 			}
 		}
@@ -332,10 +332,10 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 					std::unordered_map<size_t, alnInfoLocal> balnAlnInfo =
 							bamAlnToAlnInfoLocal(bAln);
 					auto genePosInfoByGDna = geneInfos[g]->getInfosByGDNAPos();
-					const auto & transcript = currentGene.mRNAs_.front();
+					const auto & transcript = currentGene->mRNAs_.front();
 					seqInfo balnSeq(bAln.Name);
 					std::vector<GFFCore> cDNAIntersectedWith;
-					for (const auto & cDna : currentGene.CDS_.at(transcript->getIDAttr())) {
+					for (const auto & cDna : currentGene->CDS_.at(transcript->getIDAttr())) {
 						if (results->gRegion_.overlaps(*cDna)) {
 							cDNAIntersectedWith.emplace_back(*cDna);
 						}
@@ -345,7 +345,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 									>= cDNAIntersectedWith.front().start_ - 1
 							&& results->gRegion_.end_ <= cDNAIntersectedWith.front().end_) {
 						balnSeq = *(results->alnSeq_);
-						if (currentGene.gene_->isReverseStrand()) {
+						if (currentGene->gene_->isReverseStrand()) {
 							if (genePosInfoByGDna.at(results->gRegion_.start_).cDNAPos_
 									== geneInfos.at(g)->cDna_.seq_.size() - 1) {
 								endsAtStopCodon = true;
@@ -379,7 +379,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 									return false;
 								});
 
-						if (currentGene.gene_->isReverseStrand()) {
+						if (currentGene->gene_->isReverseStrand()) {
 							auto cDnaStop = cDNAIntersectedWith.back().end_;
 							uint32_t gPos = std::min(cDnaStop, results->gRegion_.end_) - 1;
 							auto codon = genePosInfoByGDna.at(gPos).codonPos_;
@@ -419,7 +419,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 						uint32_t cDnaStart = *std::min_element(starts.begin(),
 								starts.end());
 						uint32_t cDnaStop = *std::max_element(ends.begin(), ends.end());
-						if (currentGene.gene_->isReverseStrand()) {
+						if (currentGene->gene_->isReverseStrand()) {
 							if (genePosInfoByGDna.at(cDnaStart).cDNAPos_
 									== geneInfos.at(g)->cDna_.seq_.size() - 1) {
 								endsAtStopCodon = true;
@@ -432,7 +432,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 						}
 						balnSeq.removeGaps();
 					}
-					if (currentGene.gene_->isReverseStrand()) {
+					if (currentGene->gene_->isReverseStrand()) {
 						balnSeq.reverseComplementRead(false, true);
 					}
 					auto balnSeqTrans = balnSeq.translateRet(false, false, transStart);
