@@ -404,7 +404,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 					if (!aminoTyping.empty() && bib::in(g, aminoPositionsForTyping)) {
 						popHapsTyped[bAln.Name].emplace(g,
 								GeneAminoTyperInfo(g, aminoTyping));
-						auto typeMeta = mapToMeta(aminoTyping);
+						auto typeMeta = MetaDataInName::mapToMeta(aminoTyping);
 						alignObj.alignObjectB_.seqBase_.name_.append(
 								typeMeta.createMetaName());
 					}
