@@ -9,7 +9,7 @@ def main():
     name = "MIPWrangler"
     libs = "elucidator:develop"
     args = genHelper.parseNjhConfigureArgs()
-    cmd = genHelper.mkConfigCmd(name, libs, sys.argv)
+    cmd = genHelper.mkConfigCmd(name, libs, sys.argv, private = True)
     Utils.run(cmd)
     
 main()
