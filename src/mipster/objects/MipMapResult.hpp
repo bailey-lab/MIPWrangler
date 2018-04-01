@@ -9,7 +9,7 @@
 
 
 #include "mipster/common.h"
-#include <elucidator/objects/BioDataObject/GenomicRegion.hpp>
+#include <bibseq/objects/BioDataObject/GenomicRegion.hpp>
 
 namespace bibseq {
 
