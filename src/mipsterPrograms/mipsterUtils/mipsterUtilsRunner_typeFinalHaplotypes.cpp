@@ -83,6 +83,9 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 						bib::StrToNumConverter::stoToNum<uint32_t>(
 								row[proteinMutantTypingTab.getColPos("AAPosition")]) - 1);
 	}
+	for(auto & positions : aminoPositionsForTyping){
+		bib::sort(positions.second);
+	}
 
 	auto idsVec = proteinMutantTypingTab.getColumnLevels("ID");
 	std::set<std::string> ids(idsVec.begin(), idsVec.end());
@@ -231,12 +234,12 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 
 		BamTools::BamAlignment bAln;
 		auto refData = bReader.GetReferenceData();
-		OutOptions proteinOpts(bfs::path("protein_temp.fasta"));
-		proteinOpts.overWriteFile_ = true;
-		OutputStream proteinOut(proteinOpts);
-		OutOptions cdnaOpts(bfs::path("cDna_temp.fasta"));
-		cdnaOpts.overWriteFile_ = true;
-		OutputStream cdnaOut(cdnaOpts);
+//		OutOptions proteinOpts(bfs::path("protein_temp.fasta"));
+//		proteinOpts.overWriteFile_ = true;
+//		OutputStream proteinOut(proteinOpts);
+//		OutOptions cdnaOpts(bfs::path("cDna_temp.fasta"));
+//		cdnaOpts.overWriteFile_ = true;
+//		OutputStream cdnaOut(cdnaOpts);
 		MultiSeqOutCache<seqInfo> proteinSeqOuts;
 		for(const auto & g :genes){
 			proteinSeqOuts.addReader(g.first, SeqIOOptions::genFastaOut(bib::files::make_path(setUp.pars_.directoryName_, g.first)));
@@ -415,12 +418,14 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 		}
 	}
 
+
+
 	TableReader allInfoReader(TableIOOpts::genTabFileIn(mipMaster.pathToAllPopInfo()));
 	VecStr row;
 	std::unordered_map<std::string, std::unique_ptr<OutputStream>> outputs;
 //	;
-	VecStr cols{"s_Sample", "p_geneName","p_targetName","h_popUID", "s_usedTotalClusterCnt","s_usedTotalBarcodeCnt","c_barcodeCnt","c_barcodeFrac"};
-	VecStr renamedCols{"GeneID", "Sample", "Region","TargetName","h_popUID", "COI","TotalBarcodes","Barcodes","BarcodesFraction"};
+	VecStr cols       {            "s_Sample",  "p_geneName",  "p_targetName","h_popUID", "s_usedTotalClusterCnt","s_usedTotalBarcodeCnt","c_barcodeCnt","c_barcodeFrac"};
+	VecStr renamedCols{"GeneID",   "Sample",    "Region",      "TargetName",  "h_popUID", "COI",                  "TotalBarcodes",        "Barcodes",    "BarcodesFraction"};
 	std::vector<uint32_t> colPos;
 	for(const auto & col : cols){
 		colPos.emplace_back(allInfoReader.header_.getColPos(col));
