@@ -446,7 +446,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 								alignObj.alignObjectA_.seqBase_.seq_, proteinAlnStop);
 
 						for (const auto & pos : aminoPositionsForTyping[g]) {
-							if (pos < proteinStart | pos > proteinStop) {
+							if (pos < proteinStart || pos > proteinStop) {
 								if (!zeroBased) {
 									aminoTyping[pos + 1] = ' ';
 								} else {
