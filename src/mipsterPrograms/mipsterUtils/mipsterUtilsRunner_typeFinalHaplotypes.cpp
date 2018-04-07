@@ -27,11 +27,12 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 	bfs::path gffFnp = "";
 	bfs::path proteinMutantTypingFnp = "";
 	bool zeroBased = false;
+	//bool onlyInput = false;
 	mipsterUtilsSetUp setUp(inputCommands);
 	pars.processDefaults(setUp);
 	setUp.processDebug();
 	setUp.processVerbose();
-
+	//setUp.setOption(onlyInput, "--onlyInput", "Output information only on the input amino acid");
 	setUp.setOption(proteinMutantTypingFnp, "--proteinMutantTypingFnp", "Protein Mutant Typing Fnp, columns should be ID=gene id in gff, AAPosition=amino acid position", true);
 	setUp.setOption(zeroBased, "--zeroBased", "If the positions in the proteinMutantTypingFnp are zero based");
 	setUp.setOption(genomeFnp, "--genomeFnp", "Genome to align to", true);
@@ -71,18 +72,55 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 	TwoBit::TwoBitFile tReader(twoBitFnp);
 
 	table proteinMutantTypingTab(proteinMutantTypingFnp, "\t", true);
-	proteinMutantTypingTab.checkForColumnsThrow(VecStr { "ID", "AAPosition" },
-			__PRETTY_FUNCTION__);
+	proteinMutantTypingTab.checkForColumnsThrow(VecStr { "ID", "AAPosition" }, __PRETTY_FUNCTION__);
+
+	struct GeneAminoTyperInfo {
+		GeneAminoTyperInfo(const std::string & geneId) :
+				geneId_(geneId), altId_(geneId) {
+		}
+		GeneAminoTyperInfo(const std::string & geneId,
+				const std::map<uint32_t, char> & aminos) :
+				geneId_(geneId), altId_(geneId), aminos_(aminos) {
+		}
+		std::string geneId_;
+		std::string altId_;
+		std::map<uint32_t, char> aminos_;
+	};
 
 	std::unordered_map<std::string, std::vector<uint32_t>> aminoPositionsForTyping;
+	std::unordered_map<std::string, std::set<std::string>> altNamesForIds;
+	std::unordered_map<std::string, GeneAminoTyperInfo> aminoPositionsForTypingWithInfo;
+
 	for (const auto & row : proteinMutantTypingTab.content_) {
+		uint32_t aaPos = zeroBased ?
+				bib::StrToNumConverter::stoToNum<uint32_t>(
+						row[proteinMutantTypingTab.getColPos("AAPosition")]) :
+				bib::StrToNumConverter::stoToNum<uint32_t>(
+						row[proteinMutantTypingTab.getColPos("AAPosition")]) - 1;
+		if(bib::in(aaPos, aminoPositionsForTyping[row[proteinMutantTypingTab.getColPos("ID")]])){
+			std::stringstream ss;
+			ss << __PRETTY_FUNCTION__ << ", error in reading in "
+					<< proteinMutantTypingFnp << " gene id " << row[proteinMutantTypingTab.getColPos("ID")]
+					<< " already has position: " << aaPos  << "\n";
+			throw std::runtime_error { ss.str() };
+		}
 		aminoPositionsForTyping[row[proteinMutantTypingTab.getColPos("ID")]].emplace_back(
-				zeroBased ?
-						bib::StrToNumConverter::stoToNum<uint32_t>(
-								row[proteinMutantTypingTab.getColPos("AAPosition")]) :
-						bib::StrToNumConverter::stoToNum<uint32_t>(
-								row[proteinMutantTypingTab.getColPos("AAPosition")]) - 1);
+				aaPos);
+		if(proteinMutantTypingTab.containsColumn("Gene")){
+			altNamesForIds[row[proteinMutantTypingTab.getColPos("ID")]].emplace(row[proteinMutantTypingTab.getColPos("Gene")]);
+		}
 	}
+	for (const auto & geneId : aminoPositionsForTyping) {
+		if (altNamesForIds[geneId.first].size() > 1) {
+			std::stringstream ss;
+			ss << __PRETTY_FUNCTION__ << ", error in reading in "
+					<< proteinMutantTypingFnp << " gene id " << geneId.first
+					<< " had more than one alternative ID in Gene column, found: "
+					<< bib::conToStr(altNamesForIds[geneId.first], ", ") << "\n";
+			throw std::runtime_error { ss.str() };
+		}
+	}
+
 	for(auto & positions : aminoPositionsForTyping){
 		bib::sort(positions.second);
 	}
@@ -152,7 +190,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 	OutOptions outOpts(bib::files::make_path(geneInfoDir, "gene"));
 
 	std::unordered_map<std::string, VecStr> idToTranscriptName;
-	auto genes = GeneFromGffs::getGenesFromGffForIds(gffFnp, ids);
+	std::unordered_map<std::string, std::shared_ptr<GeneFromGffs>> genes = GeneFromGffs::getGenesFromGffForIds(gffFnp, ids);
 	std::unordered_map<std::string, std::shared_ptr<GeneSeqInfo>> geneInfos;
 	OutOptions geneIdsOpts(bib::files::make_path(geneInfoDir, "geneIds.txt"));
 	OutputStream geneIdsOut(geneIdsOpts);
@@ -165,10 +203,11 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 		for(const auto & transcript : gene.second->mRNAs_){
 			idToTranscriptName[gene.second->gene_->getIDAttr()].emplace_back(transcript->getIDAttr());
 		}
-		geneInfos[gene.first] = gene.second->generateGeneSeqInfo(tReader, false);
+		geneInfos[gene.first] = gene.second->generateGeneSeqInfo(tReader, false).begin()->second;
 		readVec::getMaxLength(geneInfos[gene.first]->protein_, proteinMaxLen);
 		gene.second->writeOutGeneInfo(tReader, outOpts);
 	}
+
 	bool failed = false;
 	VecStr idsWithMoreThanOneTranscript;
 	for(const auto & idTrans : idToTranscriptName){
@@ -202,23 +241,45 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 		ss << "ids: " << bib::conToStr(idsMissing, ", ") << "\n";
 		throw std::runtime_error { ss.str() };
 	}
+	bool failedPosition = false;
+	std::stringstream ssAminoAcidPosCheck;
+	ssAminoAcidPosCheck << __PRETTY_FUNCTION__ <<  "\n" ;
+	for (const auto & geneId : aminoPositionsForTyping) {
+		std::unordered_map<std::string, std::shared_ptr<GeneSeqInfo>> gsInfos = genes[geneId.first]->generateGeneSeqInfo(tReader, false);
+		auto gsInfo = gsInfos.begin()->second;
+		std::map<uint32_t, char> refAminoAcids;
+		for (const auto & aaPos : geneId.second) {
+			if (aaPos >= gsInfo->protein_.seq_.size()) {
+				ssAminoAcidPosCheck << "amino acid position "
+						<< (zeroBased ? aaPos : aaPos + 1)
+						<< " is out of range of the gene id " << geneId.first
+						<< ", max position: "
+						<< (zeroBased ?
+								gsInfo->protein_.seq_.size() - 1 : gsInfo->protein_.seq_.size())
+						<< '\n';
+			} else {
+				refAminoAcids[aaPos] = gsInfo->protein_.seq_[aaPos];
+			}
+		}
+		aminoPositionsForTypingWithInfo.emplace(geneId.first, GeneAminoTyperInfo(geneId.first, refAminoAcids));
+		if(altNamesForIds[geneId.first].size() == 1){
+			aminoPositionsForTypingWithInfo.at(geneId.first).altId_ = *altNamesForIds[geneId.first].begin();
+		}
+	}
+
+	if(failedPosition){
+		throw std::runtime_error{ssAminoAcidPosCheck.str()};
+	}
 
 	aligner alignObj(proteinMaxLen, gapScoringParameters(5,1,0,0,0,0), substituteMatrix(1,-1));
-	struct GeneAminoTyperInfo{
-		GeneAminoTyperInfo(const std::string & geneId):geneId_(geneId){
 
-		}
-		GeneAminoTyperInfo(const std::string & geneId,
-				const std::map<uint32_t, char> & aminos):geneId_(geneId),
-						aminos_(aminos){
 
-		}
-		std::string geneId_;
-		std::map<uint32_t, char> aminos_;
-	};
-	std::unordered_map<std::string, std::unordered_map<std::string,GeneAminoTyperInfo>> popHapsTyped;
+	std::unordered_map<std::string, std::unordered_map<std::string, GeneAminoTyperInfo>> popHapsTyped;
 	std::unordered_map<std::string, std::set<std::string>> regionsToGeneIds;
+	//targetName, GeneID, AA Position
+	std::unordered_map<std::string, std::unordered_map<std::string, std::set<uint32_t>>> targetNameToAminoAcidPositions;
 	std::unordered_map<std::string, std::vector<std::string>> alnRegionToGeneIds;
+
 	for(const auto & gCount : gCounter.counts_){
 		for (const auto & g : genesByChrom[gCount.second.region_.chrom_]) {
 			if (gCount.second.region_.overlaps(*g.second->gene_)) {
@@ -241,16 +302,16 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 //		cdnaOpts.overWriteFile_ = true;
 //		OutputStream cdnaOut(cdnaOpts);
 		MultiSeqOutCache<seqInfo> proteinSeqOuts;
+
 		for(const auto & g :genes){
 			proteinSeqOuts.addReader(g.first, SeqIOOptions::genFastaOut(bib::files::make_path(setUp.pars_.directoryName_, g.first)));
 		}
+
 		while (bReader.GetNextAlignment(bAln)) {
 			if (bAln.IsMapped()) {
 				auto results = std::make_shared<AlignmentResults>(bAln, refData, true);
-
 				if (setUp.pars_.verbose_) {
-					std::cout << results->gRegion_.genBedRecordCore().toDelimStr()
-							<< std::endl;
+					std::cout << results->gRegion_.genBedRecordCore().toDelimStr() << std::endl;
 				}
 				results->setRefSeq(tReader);
 				results->setComparison(true);
@@ -261,10 +322,10 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 					auto targetName = bAln.Name.substr(0, bAln.Name.find("."));
 					auto regionName = mipMaster.getGroupForMipFam(targetName);
 					regionsToGeneIds[regionName].emplace(g);
+
 					bool endsAtStopCodon = false;
 					uint32_t transStart = 0;
-					std::unordered_map<size_t, alnInfoLocal> balnAlnInfo =
-							bamAlnToAlnInfoLocal(bAln);
+					std::unordered_map<size_t, alnInfoLocal> balnAlnInfo = bamAlnToAlnInfoLocal(bAln);
 					auto genePosInfoByGDna = geneInfos[g]->getInfosByGDNAPos();
 					const auto & transcript = currentGene->mRNAs_.front();
 					seqInfo balnSeq(bAln.Name);
@@ -383,6 +444,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 								alignObj.alignObjectA_.seqBase_.seq_, proteinAlnStart);
 						uint32_t proteinStop = getRealPosForAlnPos(
 								alignObj.alignObjectA_.seqBase_.seq_, proteinAlnStop);
+
 						for (const auto & pos : aminoPositionsForTyping[g]) {
 							if (pos < proteinStart | pos > proteinStop) {
 								if (!zeroBased) {
@@ -394,38 +456,54 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 								auto posAln = getAlnPosForRealPos(
 										alignObj.alignObjectA_.seqBase_.seq_, pos);
 								if (!zeroBased) {
+									targetNameToAminoAcidPositions[targetName][g].emplace(pos + 1);
 									aminoTyping[pos + 1] =
 											alignObj.alignObjectB_.seqBase_.seq_[posAln];
 								} else {
+									targetNameToAminoAcidPositions[targetName][g].emplace(pos);
 									aminoTyping[pos] =
 											alignObj.alignObjectB_.seqBase_.seq_[posAln];
 								}
 							}
 						}
 					}
-
 					if (!aminoTyping.empty() && bib::in(g, aminoPositionsForTyping)) {
-						popHapsTyped[bAln.Name].emplace(g,
-								GeneAminoTyperInfo(g, aminoTyping));
+						popHapsTyped[bAln.Name].emplace(g, GeneAminoTyperInfo(g, aminoTyping));
 						auto typeMeta = MetaDataInName::mapToMeta(aminoTyping);
-						alignObj.alignObjectB_.seqBase_.name_.append(
-								typeMeta.createMetaName());
+						alignObj.alignObjectB_.seqBase_.name_.append(typeMeta.createMetaName());
 					}
-					proteinSeqOuts.add(g, alignObj.alignObjectA_.seqBase_);
-					proteinSeqOuts.add(g, alignObj.alignObjectB_.seqBase_);
+					if(setUp.pars_.debug_){
+						proteinSeqOuts.add(g, alignObj.alignObjectA_.seqBase_);
+						proteinSeqOuts.add(g, alignObj.alignObjectB_.seqBase_);
+					}
 				}
 			}
 		}
 	}
 
+	OutOptions targetToAminoAcidsCoveredOpt(bib::files::make_path(setUp.pars_.directoryName_, "targetToAminoAcidsCovered"));
+	OutputStream targetToAminoAcidsCoveredOut(targetToAminoAcidsCoveredOpt);
+	targetToAminoAcidsCoveredOut << "targetName\tGeneID\taltName\taminoAcidPosition\trefAminoAcid" << std::endl;
+	for(const auto & tar : targetNameToAminoAcidPositions){
 
+		for(const auto & gId : tar.second){
+			for(const auto & pos : gId.second){
+				targetToAminoAcidsCoveredOut << tar.first
+						<< "\t" << gId.first
+						<< "\t" << aminoPositionsForTypingWithInfo.at(gId.first).altId_
+						<< "\t" << pos
+						<< "\t" << aminoPositionsForTypingWithInfo.at(gId.first).aminos_.at(pos)
+						<< std::endl;
+			}
+		}
+	}
 
 	TableReader allInfoReader(TableIOOpts::genTabFileIn(mipMaster.pathToAllPopInfo()));
 	VecStr row;
 	std::unordered_map<std::string, std::unique_ptr<OutputStream>> outputs;
-//	;
-	VecStr cols       {            "s_Sample",  "p_geneName",  "p_targetName","h_popUID", "s_usedTotalClusterCnt","s_usedTotalBarcodeCnt","c_barcodeCnt","c_barcodeFrac"};
-	VecStr renamedCols{"GeneID",   "Sample",    "Region",      "TargetName",  "h_popUID", "COI",                  "TotalBarcodes",        "Barcodes",    "BarcodesFraction"};
+
+	VecStr cols       {            "s_Sample",  "p_geneName",   "p_targetName","h_popUID", "s_usedTotalClusterCnt","s_usedTotalBarcodeCnt","c_barcodeCnt","c_barcodeFrac"};
+	VecStr renamedCols{"GeneID",   "Sample",    "GenomicRegion","TargetName",  "h_popUID", "TargetCOI",            "TotalBarcodes",        "Barcodes",    "BarcodesFraction"};
 	std::vector<uint32_t> colPos;
 	for(const auto & col : cols){
 		colPos.emplace_back(allInfoReader.header_.getColPos(col));
@@ -434,71 +512,81 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 		auto metaFields = getVectorOfMapKeys(mipMaster.meta_->groupData_);
 		addOtherVec(renamedCols, metaFields);
 	}
+
+
+
 	while(allInfoReader.getNextRow(row)){
 		auto outRow = getTargetsAtPositions(row, colPos);
+		auto sample =     outRow[0];
 		auto regionName = outRow[1];
-		auto popName = outRow[3];
-		auto sample = outRow[0];
-		if(!bib::in(regionName, outputs)){
-			outputs.emplace(regionName, std::make_unique<OutputStream>(OutOptions(bib::files::make_path(setUp.pars_.directoryName_, regionName + ".tab.txt"))));
-			(*outputs.at(regionName)) << bib::conToStr(renamedCols, "\t");
+		auto targetName = outRow[2];
+		auto popName =    outRow[3];
+		std::string outPutName = "others";
+		if (bib::in(regionName, regionsToGeneIds)) {
+			outPutName = regionName + "-" + targetName;
+		}
+		if(!bib::in(outPutName, outputs)){
+			outputs.emplace(outPutName, std::make_unique<OutputStream>(OutOptions(bib::files::make_path(setUp.pars_.directoryName_, outPutName + ".tab.txt"))));
+			(*outputs.at(outPutName)) << bib::conToStr(renamedCols, "\t");
 			if(bib::in(regionName, regionsToGeneIds)){
 				VecStr additionalColumns;
 				for(const auto & g : regionsToGeneIds.at(regionName)){
 					if(bib::in(g, aminoPositionsForTyping)){
 						for(const auto & aaPos : aminoPositionsForTyping.at(g)){
-							additionalColumns.emplace_back(bib::pasteAsStr(g, "-", aaPos));
+							if(bib::in(aaPos, targetNameToAminoAcidPositions[targetName][g])){
+								additionalColumns.emplace_back(bib::pasteAsStr(g, "-", aaPos));
+							}
 						}
 					}
 				}
 				if(!additionalColumns.empty()){
-					(*outputs.at(regionName)) << "\t"<< bib::conToStr(additionalColumns, "\t");
+					(*outputs.at(outPutName)) << "\t"<< bib::conToStr(additionalColumns, "\t");
 				}
-				(*outputs.at(regionName)) << std::endl;
+				(*outputs.at(outPutName)) << std::endl;
 			}else{
-				(*outputs.at(regionName)) << "\t" << bib::conToStr(renamedCols, "\t") << std::endl;
+				(*outputs.at(outPutName)) << "\t" << bib::conToStr(renamedCols, "\t") << std::endl;
 			}
 		}
 		if(bib::in(regionName, regionsToGeneIds)){
-			(*outputs.at(regionName)) << bib::conToStr(regionsToGeneIds.at(regionName), ",") << "\t"<< bib::conToStr(outRow, "\t");
+			(*outputs.at(outPutName)) << bib::conToStr(regionsToGeneIds.at(regionName), ",") << "\t"<< bib::conToStr(outRow, "\t");
 			VecStr additionalColumns;
-
 			for(const auto & g : regionsToGeneIds.at(regionName)){
 				if(bib::in(g, aminoPositionsForTyping)){
 					for(const auto & aaPos : aminoPositionsForTyping.at(g)){
-						if(bib::in(popName, popHapsTyped)){
-							if(bib::in(g, popHapsTyped[popName])){
-								additionalColumns.emplace_back(std::string(1, popHapsTyped[popName].at(g).aminos_[zeroBased ? aaPos : aaPos + 1]));
+						if(bib::in(aaPos, targetNameToAminoAcidPositions[targetName][g])){
+							if(bib::in(popName, popHapsTyped)){
+								if(bib::in(g, popHapsTyped[popName])){
+									additionalColumns.emplace_back(std::string(1, popHapsTyped[popName].at(g).aminos_[zeroBased ? aaPos : aaPos + 1]));
+								}else{
+									additionalColumns.emplace_back("");
+								}
 							}else{
 								additionalColumns.emplace_back("");
 							}
-						}else{
-							additionalColumns.emplace_back("");
 						}
 					}
 				}
 			}
 			if(nullptr != mipMaster.meta_){
 				for(const auto & group : mipMaster.meta_->groupData_){
-					(*outputs.at(regionName)) << "\t" << group.second->getGroupForSample(sample);
+					(*outputs.at(outPutName)) << "\t" << group.second->getGroupForSample(sample);
 				}
 			}
 			if(!additionalColumns.empty()){
-				(*outputs.at(regionName)) << "\t"<< bib::conToStr(additionalColumns, "\t");
+				(*outputs.at(outPutName)) << "\t"<< bib::conToStr(additionalColumns, "\t");
 			}
 
-			(*outputs.at(regionName)) << std::endl;
+			(*outputs.at(outPutName)) << std::endl;
 		}else{
-			(*outputs.at(regionName)) << "\t" << bib::conToStr(outRow, "\t");
+			(*outputs.at(outPutName)) << "\t" << bib::conToStr(outRow, "\t");
 			if(nullptr != mipMaster.meta_){
 				for(const auto & group : mipMaster.meta_->groupData_){
-					(*outputs.at(regionName)) << "\t" << group.second->getGroupForSample(sample);
+					(*outputs.at(outPutName)) << "\t" << group.second->getGroupForSample(sample);
 				}
 			}
-			(*outputs.at(regionName)) << std::endl;
+			(*outputs.at(outPutName)) << std::endl;
 		}
 	}
-
 	return 0;
 }
 
