@@ -292,194 +292,238 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 		BamTools::BamReader bReader;
 		bReader.Open(alignOpts.out_.outName().string());
 		checkBamOpenThrow(bReader, alignOpts.out_.outName());
-
-		BamTools::BamAlignment bAln;
 		auto refData = bReader.GetReferenceData();
-//		OutOptions proteinOpts(bfs::path("protein_temp.fasta"));
-//		proteinOpts.overWriteFile_ = true;
-//		OutputStream proteinOut(proteinOpts);
-//		OutOptions cdnaOpts(bfs::path("cDna_temp.fasta"));
-//		cdnaOpts.overWriteFile_ = true;
-//		OutputStream cdnaOut(cdnaOpts);
-		MultiSeqOutCache<seqInfo> proteinSeqOuts;
 
+		uint32_t numOfThreadsToUse = std::min<uint32_t>(refData.size(), pars.numThreads);
+		//create bam readers
+		concurrent::BamReaderPool bamPool(alignOpts.out_.outName(), numOfThreadsToUse);
+		bamPool.closeBamFile();
+		//create alingers
+		concurrent::AlignerPool alnPool(alignObj, numOfThreadsToUse);
+		alnPool.initAligners();
+
+		MultiSeqOutCache<seqInfo> proteinSeqOuts;
 		for(const auto & g :genes){
 			proteinSeqOuts.addReader(g.first, SeqIOOptions::genFastaOut(bib::files::make_path(setUp.pars_.directoryName_, g.first)));
 		}
+		std::mutex proteinSeqOutsMut;
+		std::mutex transferInfoMut;
+		auto chromRegions = genGenRegionsFromRefData(refData);
+		bib::concurrent::LockableVec<GenomicRegion> chromRegionsVec(chromRegions);
 
-		while (bReader.GetNextAlignment(bAln)) {
-			if (bAln.IsMapped()) {
-				auto results = std::make_shared<AlignmentResults>(bAln, refData, true);
-				if (setUp.pars_.verbose_) {
-					std::cout << results->gRegion_.genBedRecordCore().toDelimStr() << std::endl;
-				}
-				results->setRefSeq(tReader);
-				results->setComparison(true);
+		auto typeOnChrom = [&bamPool,&alnPool,&proteinSeqOuts,&proteinSeqOutsMut,
+												&chromRegionsVec,&refData,&mipMaster,&genes,
+												&geneInfos,&alnRegionToGeneIds,&transferInfoMut,
+												&setUp,&twoBitFnp,&zeroBased,&aminoPositionsForTyping,
+												&targetNameToAminoAcidPositions,&popHapsTyped,&regionsToGeneIds](){
+			GenomicRegion currentChrom;
+			auto curAligner = alnPool.popAligner();
+			auto curBReader = bamPool.popReader();
+			TwoBit::TwoBitFile tReader(twoBitFnp);
+			BamTools::BamAlignment bAln;
 
-				for (const auto & g : alnRegionToGeneIds[results->gRegion_.createUidFromCoords()]) {
-					const auto & currentGene = genes.at(g);
-					bAln.Name = bAln.Name.substr(0, bAln.Name.rfind("_f"));
-					auto targetName = bAln.Name.substr(0, bAln.Name.find("."));
-					auto regionName = mipMaster.getGroupForMipFam(targetName);
-					regionsToGeneIds[regionName].emplace(g);
+			std::unordered_map<std::string, std::unordered_map<std::string, GeneAminoTyperInfo>> currentPopHapsTyped;
+			//targetName, GeneID, AA Position
+			std::unordered_map<std::string, std::unordered_map<std::string, std::set<uint32_t>>> currentTargetNameToAminoAcidPositions;
+			std::unordered_map<std::string, std::set<std::string>> currentRegionsToGeneIds;
 
-					bool endsAtStopCodon = false;
-					uint32_t transStart = 0;
-					std::unordered_map<size_t, alnInfoLocal> balnAlnInfo = bamAlnToAlnInfoLocal(bAln);
-					auto genePosInfoByGDna = geneInfos[g]->getInfosByGDNAPos();
-					const auto & transcript = currentGene->mRNAs_.front();
-					seqInfo balnSeq(bAln.Name);
-					std::vector<GFFCore> cDNAIntersectedWith;
-					for (const auto & cDna : currentGene->CDS_.at(transcript->getIDAttr())) {
-						if (results->gRegion_.overlaps(*cDna)) {
-							cDNAIntersectedWith.emplace_back(*cDna);
+			while(chromRegionsVec.getVal(currentChrom)){
+				setBamFileRegionThrow(*curBReader, currentChrom);
+				while (curBReader->GetNextAlignment(bAln)) {
+					if (bAln.IsMapped()) {
+						auto results = std::make_shared<AlignmentResults>(bAln, refData, true);
+						if (setUp.pars_.verbose_) {
+							std::cout << results->gRegion_.genBedRecordCore().toDelimStr() << std::endl;
 						}
-					}
-					if (cDNAIntersectedWith.size() == 1
-							&& results->gRegion_.start_
-									>= cDNAIntersectedWith.front().start_ - 1
-							&& results->gRegion_.end_ <= cDNAIntersectedWith.front().end_) {
-						balnSeq = *(results->alnSeq_);
-						if (currentGene->gene_->isReverseStrand()) {
-							if (genePosInfoByGDna.at(results->gRegion_.start_).cDNAPos_
-									== geneInfos.at(g)->cDna_.seq_.size() - 1) {
-								endsAtStopCodon = true;
+						results->setRefSeq(tReader);
+						results->setComparison(true);
+
+						for (const auto & g : alnRegionToGeneIds.at(results->gRegion_.createUidFromCoords())) {
+							const auto & currentGene = genes.at(g);
+							bAln.Name = bAln.Name.substr(0, bAln.Name.rfind("_f"));
+							auto targetName = bAln.Name.substr(0, bAln.Name.find("."));
+							auto regionName = mipMaster.getGroupForMipFam(targetName);
+							currentRegionsToGeneIds[regionName].emplace(g);
+
+							bool endsAtStopCodon = false;
+							uint32_t transStart = 0;
+							std::unordered_map<size_t, alnInfoLocal> balnAlnInfo = bamAlnToAlnInfoLocal(bAln);
+							auto genePosInfoByGDna = geneInfos.at(g)->getInfosByGDNAPos();
+							const auto & transcript = currentGene->mRNAs_.front();
+							seqInfo balnSeq(bAln.Name);
+							std::vector<GFFCore> cDNAIntersectedWith;
+							for (const auto & cDna : currentGene->CDS_.at(transcript->getIDAttr())) {
+								if (results->gRegion_.overlaps(*cDna)) {
+									cDNAIntersectedWith.emplace_back(*cDna);
+								}
 							}
-							uint32_t gPos = results->gRegion_.end_ - 1;
-							auto codon = genePosInfoByGDna.at(gPos).codonPos_;
-							while (0 != codon) {
-								--gPos;
-								codon = genePosInfoByGDna.at(gPos).codonPos_;
-								++transStart;
-							}
-						} else {
-							if (genePosInfoByGDna.at(results->gRegion_.end_ - 1).cDNAPos_
-									== geneInfos.at(g)->cDna_.seq_.size() - 1) {
-								endsAtStopCodon = true;
-							}
-							uint32_t gPos = results->gRegion_.start_;
-							uint32_t codon = genePosInfoByGDna.at(gPos).codonPos_;
-							while (0 != codon) {
-								++gPos;
-								codon = genePosInfoByGDna.at(gPos).codonPos_;
-								++transStart;
-							}
-						}
-					} else {
-						bib::sort(cDNAIntersectedWith,
-								[](const GenomicRegion & reg1, const GenomicRegion & reg2) {
-									if(reg1.start_ < reg2.start_) {
-										return true;
+							if (cDNAIntersectedWith.size() == 1
+									&& results->gRegion_.start_
+											>= cDNAIntersectedWith.front().start_ - 1
+									&& results->gRegion_.end_ <= cDNAIntersectedWith.front().end_) {
+								balnSeq = *(results->alnSeq_);
+								if (currentGene->gene_->isReverseStrand()) {
+									if (genePosInfoByGDna.at(results->gRegion_.start_).cDNAPos_
+											== geneInfos.at(g)->cDna_.seq_.size() - 1) {
+										endsAtStopCodon = true;
 									}
-									return false;
-								});
-
-						if (currentGene->gene_->isReverseStrand()) {
-							auto cDnaStop = cDNAIntersectedWith.back().end_;
-							uint32_t gPos = std::min(cDnaStop, results->gRegion_.end_) - 1;
-							auto codon = genePosInfoByGDna.at(gPos).codonPos_;
-							while (0 != codon) {
-								--gPos;
-								codon = genePosInfoByGDna.at(gPos).codonPos_;
-								++transStart;
-							}
-						} else {
-							auto cDnaStart = cDNAIntersectedWith.front().start_ - 1;
-							uint32_t gPos = std::max(cDnaStart, results->gRegion_.start_);
-							uint32_t codon = genePosInfoByGDna.at(gPos).codonPos_;
-							while (0 != codon) {
-								++gPos;
-								codon = genePosInfoByGDna.at(gPos).codonPos_;
-								++transStart;
-							}
-						}
-						std::vector<uint32_t> starts;
-						std::vector<uint32_t> ends;
-						for (const auto & cDna : cDNAIntersectedWith) {
-							auto cDnaStart = cDna.start_ - 1;
-							auto detStart = std::max(cDnaStart, results->gRegion_.start_);
-							auto detStop = std::min(cDna.end_, results->gRegion_.end_);
-							ends.emplace_back(detStop);
-							starts.emplace_back(detStart);
-							detStart -= results->gRegion_.start_;
-							detStop -= results->gRegion_.start_;
-							auto alnStart = getAlnPosForRealPos(results->refSeqAligned_->seq_,
-									detStart);
-							auto alnStop = getAlnPosForRealPos(results->refSeqAligned_->seq_,
-									detStop - 1);
-							balnSeq.append(
-									results->alnSeqAligned_->getSubRead(alnStart,
-											alnStop - alnStart + 1));
-						}
-						uint32_t cDnaStart = *std::min_element(starts.begin(),
-								starts.end());
-						uint32_t cDnaStop = *std::max_element(ends.begin(), ends.end());
-						if (currentGene->gene_->isReverseStrand()) {
-							if (genePosInfoByGDna.at(cDnaStart).cDNAPos_
-									== geneInfos.at(g)->cDna_.seq_.size() - 1) {
-								endsAtStopCodon = true;
-							}
-						} else {
-							if (genePosInfoByGDna.at(cDnaStop - 1).cDNAPos_
-									== geneInfos.at(g)->cDna_.seq_.size() - 1) {
-								endsAtStopCodon = true;
-							}
-						}
-						balnSeq.removeGaps();
-					}
-					if (currentGene->gene_->isReverseStrand()) {
-						balnSeq.reverseComplementRead(false, true);
-					}
-					auto balnSeqTrans = balnSeq.translateRet(false, false, transStart);
-					alignObj.alignCacheGlobal(geneInfos.at(g)->protein_, balnSeqTrans);
-					alignObj.profilePrimerAlignment(geneInfos.at(g)->protein_,
-							balnSeqTrans);
-					std::map<uint32_t, char> aminoTyping;
-					if (bib::in(g, aminoPositionsForTyping)) {
-						uint32_t proteinAlnStart =
-								alignObj.alignObjectB_.seqBase_.seq_.find_first_not_of('-');
-						uint32_t proteinAlnStop =
-								alignObj.alignObjectB_.seqBase_.seq_.find_last_not_of('-');
-						uint32_t proteinStart = getRealPosForAlnPos(
-								alignObj.alignObjectA_.seqBase_.seq_, proteinAlnStart);
-						uint32_t proteinStop = getRealPosForAlnPos(
-								alignObj.alignObjectA_.seqBase_.seq_, proteinAlnStop);
-
-						for (const auto & pos : aminoPositionsForTyping[g]) {
-							if (pos < proteinStart || pos > proteinStop) {
-								if (!zeroBased) {
-									aminoTyping[pos + 1] = ' ';
+									uint32_t gPos = results->gRegion_.end_ - 1;
+									auto codon = genePosInfoByGDna.at(gPos).codonPos_;
+									while (0 != codon) {
+										--gPos;
+										codon = genePosInfoByGDna.at(gPos).codonPos_;
+										++transStart;
+									}
 								} else {
-									aminoTyping[pos] = ' ';
+									if (genePosInfoByGDna.at(results->gRegion_.end_ - 1).cDNAPos_
+											== geneInfos.at(g)->cDna_.seq_.size() - 1) {
+										endsAtStopCodon = true;
+									}
+									uint32_t gPos = results->gRegion_.start_;
+									uint32_t codon = genePosInfoByGDna.at(gPos).codonPos_;
+									while (0 != codon) {
+										++gPos;
+										codon = genePosInfoByGDna.at(gPos).codonPos_;
+										++transStart;
+									}
 								}
 							} else {
-								auto posAln = getAlnPosForRealPos(
-										alignObj.alignObjectA_.seqBase_.seq_, pos);
-								if (!zeroBased) {
-									targetNameToAminoAcidPositions[targetName][g].emplace(pos + 1);
-									aminoTyping[pos + 1] =
-											alignObj.alignObjectB_.seqBase_.seq_[posAln];
+								bib::sort(cDNAIntersectedWith,
+										[](const GenomicRegion & reg1, const GenomicRegion & reg2) {
+											if(reg1.start_ < reg2.start_) {
+												return true;
+											}
+											return false;
+										});
+
+								if (currentGene->gene_->isReverseStrand()) {
+									auto cDnaStop = cDNAIntersectedWith.back().end_;
+									uint32_t gPos = std::min(cDnaStop, results->gRegion_.end_) - 1;
+									auto codon = genePosInfoByGDna.at(gPos).codonPos_;
+									while (0 != codon) {
+										--gPos;
+										codon = genePosInfoByGDna.at(gPos).codonPos_;
+										++transStart;
+									}
 								} else {
-									targetNameToAminoAcidPositions[targetName][g].emplace(pos);
-									aminoTyping[pos] =
-											alignObj.alignObjectB_.seqBase_.seq_[posAln];
+									auto cDnaStart = cDNAIntersectedWith.front().start_ - 1;
+									uint32_t gPos = std::max(cDnaStart, results->gRegion_.start_);
+									uint32_t codon = genePosInfoByGDna.at(gPos).codonPos_;
+									while (0 != codon) {
+										++gPos;
+										codon = genePosInfoByGDna.at(gPos).codonPos_;
+										++transStart;
+									}
 								}
+								std::vector<uint32_t> starts;
+								std::vector<uint32_t> ends;
+								for (const auto & cDna : cDNAIntersectedWith) {
+									auto cDnaStart = cDna.start_ - 1;
+									auto detStart = std::max(cDnaStart, results->gRegion_.start_);
+									auto detStop = std::min(cDna.end_, results->gRegion_.end_);
+									ends.emplace_back(detStop);
+									starts.emplace_back(detStart);
+									detStart -= results->gRegion_.start_;
+									detStop -= results->gRegion_.start_;
+									auto alnStart = getAlnPosForRealPos(results->refSeqAligned_->seq_,
+											detStart);
+									auto alnStop = getAlnPosForRealPos(results->refSeqAligned_->seq_,
+											detStop - 1);
+									balnSeq.append(
+											results->alnSeqAligned_->getSubRead(alnStart,
+													alnStop - alnStart + 1));
+								}
+								uint32_t cDnaStart = *std::min_element(starts.begin(),
+										starts.end());
+								uint32_t cDnaStop = *std::max_element(ends.begin(), ends.end());
+								if (currentGene->gene_->isReverseStrand()) {
+									if (genePosInfoByGDna.at(cDnaStart).cDNAPos_
+											== geneInfos.at(g)->cDna_.seq_.size() - 1) {
+										endsAtStopCodon = true;
+									}
+								} else {
+									if (genePosInfoByGDna.at(cDnaStop - 1).cDNAPos_
+											== geneInfos.at(g)->cDna_.seq_.size() - 1) {
+										endsAtStopCodon = true;
+									}
+								}
+								balnSeq.removeGaps();
+							}
+							if (currentGene->gene_->isReverseStrand()) {
+								balnSeq.reverseComplementRead(false, true);
+							}
+							auto balnSeqTrans = balnSeq.translateRet(false, false, transStart);
+							curAligner->alignCacheGlobal(geneInfos.at(g)->protein_, balnSeqTrans);
+							curAligner->profilePrimerAlignment(geneInfos.at(g)->protein_,
+									balnSeqTrans);
+							std::map<uint32_t, char> aminoTyping;
+							if (bib::in(g, aminoPositionsForTyping)) {
+								uint32_t proteinAlnStart =
+										curAligner->alignObjectB_.seqBase_.seq_.find_first_not_of('-');
+								uint32_t proteinAlnStop =
+										curAligner->alignObjectB_.seqBase_.seq_.find_last_not_of('-');
+								uint32_t proteinStart = getRealPosForAlnPos(
+										curAligner->alignObjectA_.seqBase_.seq_, proteinAlnStart);
+								uint32_t proteinStop = getRealPosForAlnPos(
+										curAligner->alignObjectA_.seqBase_.seq_, proteinAlnStop);
+
+								for (const auto & pos : aminoPositionsForTyping.at(g)) {
+									if (pos < proteinStart || pos > proteinStop) {
+										if (!zeroBased) {
+											aminoTyping[pos + 1] = ' ';
+										} else {
+											aminoTyping[pos] = ' ';
+										}
+									} else {
+										auto posAln = getAlnPosForRealPos(
+												curAligner->alignObjectA_.seqBase_.seq_, pos);
+										if (!zeroBased) {
+											currentTargetNameToAminoAcidPositions[targetName][g].emplace(pos + 1);
+											aminoTyping[pos + 1] =
+													curAligner->alignObjectB_.seqBase_.seq_[posAln];
+										} else {
+											currentTargetNameToAminoAcidPositions[targetName][g].emplace(pos);
+											aminoTyping[pos] =
+													curAligner->alignObjectB_.seqBase_.seq_[posAln];
+										}
+									}
+								}
+							}
+							if (!aminoTyping.empty() && bib::in(g, aminoPositionsForTyping)) {
+								currentPopHapsTyped[bAln.Name].emplace(g, GeneAminoTyperInfo(g, aminoTyping));
+								auto typeMeta = MetaDataInName::mapToMeta(aminoTyping);
+								curAligner->alignObjectB_.seqBase_.name_.append(typeMeta.createMetaName());
+							}
+							if(setUp.pars_.debug_){
+								std::lock_guard<std::mutex> lock(proteinSeqOutsMut);
+								proteinSeqOuts.add(g, curAligner->alignObjectA_.seqBase_);
+								proteinSeqOuts.add(g, curAligner->alignObjectB_.seqBase_);
 							}
 						}
 					}
-					if (!aminoTyping.empty() && bib::in(g, aminoPositionsForTyping)) {
-						popHapsTyped[bAln.Name].emplace(g, GeneAminoTyperInfo(g, aminoTyping));
-						auto typeMeta = MetaDataInName::mapToMeta(aminoTyping);
-						alignObj.alignObjectB_.seqBase_.name_.append(typeMeta.createMetaName());
+				}
+				{
+					std::lock_guard<std::mutex> lock(transferInfoMut);
+					for(const auto & tar : currentTargetNameToAminoAcidPositions){
+						targetNameToAminoAcidPositions.emplace(tar.first, tar.second);
 					}
-					if(setUp.pars_.debug_){
-						proteinSeqOuts.add(g, alignObj.alignObjectA_.seqBase_);
-						proteinSeqOuts.add(g, alignObj.alignObjectB_.seqBase_);
+					for(const auto & popHapTyped : currentPopHapsTyped){
+						popHapsTyped.emplace(popHapTyped.first, popHapTyped.second);
+					}
+					for(const auto & regionToGeneId : currentRegionsToGeneIds){
+						regionsToGeneIds.emplace(regionToGeneId.first, regionToGeneId.second);
 					}
 				}
 			}
+		};
+
+		std::vector<std::thread> threads;
+		for(uint32_t t = 0; t < numOfThreadsToUse; ++t){
+			threads.emplace_back(typeOnChrom);
 		}
+		bib::concurrent::joinAllJoinableThreads(threads);
 	}
+
 
 	OutOptions targetToAminoAcidsCoveredOpt(bib::files::make_path(setUp.pars_.directoryName_, "targetToAminoAcidsCovered"));
 	OutputStream targetToAminoAcidsCoveredOut(targetToAminoAcidsCoveredOpt);
@@ -522,13 +566,18 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 		auto targetName = outRow[2];
 		auto popName =    outRow[3];
 		std::string outPutName = "others";
-		if (bib::in(regionName, regionsToGeneIds)) {
+		bool aminoPosTyping = bib::in(regionName, regionsToGeneIds) &&
+				std::any_of(regionsToGeneIds[regionName].begin(),
+										regionsToGeneIds[regionName].end(), [&aminoPositionsForTypingWithInfo](const std::string & gId){
+									return bib::in(gId, aminoPositionsForTypingWithInfo);
+								});
+		if (aminoPosTyping) {
 			outPutName = regionName + "-" + targetName;
 		}
 		if(!bib::in(outPutName, outputs)){
 			outputs.emplace(outPutName, std::make_unique<OutputStream>(OutOptions(bib::files::make_path(setUp.pars_.directoryName_, outPutName + ".tab.txt"))));
 			(*outputs.at(outPutName)) << bib::conToStr(renamedCols, "\t");
-			if(bib::in(regionName, regionsToGeneIds)){
+			if(aminoPosTyping){
 				VecStr additionalColumns;
 				for(const auto & g : regionsToGeneIds.at(regionName)){
 					if(bib::in(g, aminoPositionsForTyping)){
@@ -547,7 +596,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 				(*outputs.at(outPutName)) << "\t" << bib::conToStr(renamedCols, "\t") << std::endl;
 			}
 		}
-		if(bib::in(regionName, regionsToGeneIds)){
+		if(aminoPosTyping){
 			(*outputs.at(outPutName)) << bib::conToStr(regionsToGeneIds.at(regionName), ",") << "\t"<< bib::conToStr(outRow, "\t");
 			VecStr additionalColumns;
 			for(const auto & g : regionsToGeneIds.at(regionName)){
@@ -575,7 +624,6 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 			if(!additionalColumns.empty()){
 				(*outputs.at(outPutName)) << "\t"<< bib::conToStr(additionalColumns, "\t");
 			}
-
 			(*outputs.at(outPutName)) << std::endl;
 		}else{
 			(*outputs.at(outPutName)) << "\t" << bib::conToStr(outRow, "\t");
