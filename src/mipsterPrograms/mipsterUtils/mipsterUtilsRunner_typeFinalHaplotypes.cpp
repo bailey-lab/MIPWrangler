@@ -492,7 +492,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 						<< "\t" << gId.first
 						<< "\t" << aminoPositionsForTypingWithInfo.at(gId.first).altId_
 						<< "\t" << pos
-						<< "\t" << aminoPositionsForTypingWithInfo.at(gId.first).aminos_.at(pos)
+						<< "\t" << aminoPositionsForTypingWithInfo.at(gId.first).aminos_.at(zeroBased ? pos : pos - 1)
 						<< std::endl;
 			}
 		}
