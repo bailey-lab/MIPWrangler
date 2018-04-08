@@ -277,9 +277,8 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 	std::unordered_map<std::string, std::unordered_map<std::string, GeneAminoTyperInfo>> popHapsTyped;
 	std::unordered_map<std::string, std::set<std::string>> regionsToGeneIds;
 	//targetName, GeneID, AA Position
-	std::unordered_map<std::string, std::unordered_map<std::string, std::set<uint32_t>>> targetNameToAminoAcidPositions;
+	std::map<std::string, std::map<std::string, std::set<uint32_t>>> targetNameToAminoAcidPositions;
 	std::unordered_map<std::string, std::vector<std::string>> alnRegionToGeneIds;
-
 	for(const auto & gCount : gCounter.counts_){
 		for (const auto & g : genesByChrom[gCount.second.region_.chrom_]) {
 			if (gCount.second.region_.overlaps(*g.second->gene_)) {
@@ -297,7 +296,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 		uint32_t numOfThreadsToUse = std::min<uint32_t>(refData.size(), pars.numThreads);
 		//create bam readers
 		concurrent::BamReaderPool bamPool(alignOpts.out_.outName(), numOfThreadsToUse);
-		bamPool.closeBamFile();
+		bamPool.openBamFile();
 		//create alingers
 		concurrent::AlignerPool alnPool(alignObj, numOfThreadsToUse);
 		alnPool.initAligners();
@@ -324,7 +323,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 
 			std::unordered_map<std::string, std::unordered_map<std::string, GeneAminoTyperInfo>> currentPopHapsTyped;
 			//targetName, GeneID, AA Position
-			std::unordered_map<std::string, std::unordered_map<std::string, std::set<uint32_t>>> currentTargetNameToAminoAcidPositions;
+			std::map<std::string, std::map<std::string, std::set<uint32_t>>> currentTargetNameToAminoAcidPositions;
 			std::unordered_map<std::string, std::set<std::string>> currentRegionsToGeneIds;
 
 			while(chromRegionsVec.getVal(currentChrom)){
@@ -334,6 +333,9 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 						auto results = std::make_shared<AlignmentResults>(bAln, refData, true);
 						if (setUp.pars_.verbose_) {
 							std::cout << results->gRegion_.genBedRecordCore().toDelimStr() << std::endl;
+						}
+						if(!bib::in(results->gRegion_.createUidFromCoords(), alnRegionToGeneIds)){
+							continue;
 						}
 						results->setRefSeq(tReader);
 						results->setComparison(true);
@@ -523,13 +525,13 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 		}
 		bib::concurrent::joinAllJoinableThreads(threads);
 	}
+	//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 
-
-	OutOptions targetToAminoAcidsCoveredOpt(bib::files::make_path(setUp.pars_.directoryName_, "targetToAminoAcidsCovered"));
+	OutOptions targetToAminoAcidsCoveredOpt(bib::files::make_path(setUp.pars_.directoryName_, "targetToAminoAcidsCovered.tab.txt"));
 	OutputStream targetToAminoAcidsCoveredOut(targetToAminoAcidsCoveredOpt);
 	targetToAminoAcidsCoveredOut << "targetName\tGeneID\taltName\taminoAcidPosition\trefAminoAcid" << std::endl;
-	for(const auto & tar : targetNameToAminoAcidPositions){
 
+	for(const auto & tar : targetNameToAminoAcidPositions){
 		for(const auto & gId : tar.second){
 			for(const auto & pos : gId.second){
 				targetToAminoAcidsCoveredOut << tar.first
@@ -582,8 +584,9 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 				for(const auto & g : regionsToGeneIds.at(regionName)){
 					if(bib::in(g, aminoPositionsForTyping)){
 						for(const auto & aaPos : aminoPositionsForTyping.at(g)){
-							if(bib::in(aaPos, targetNameToAminoAcidPositions[targetName][g])){
-								additionalColumns.emplace_back(bib::pasteAsStr(g, "-", aaPos));
+							uint32_t currentPos = zeroBased ? aaPos : aaPos + 1;
+							if(bib::in(currentPos, targetNameToAminoAcidPositions[targetName][g])){
+								additionalColumns.emplace_back(bib::pasteAsStr(g, "-", currentPos));
 							}
 						}
 					}
@@ -602,10 +605,11 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 			for(const auto & g : regionsToGeneIds.at(regionName)){
 				if(bib::in(g, aminoPositionsForTyping)){
 					for(const auto & aaPos : aminoPositionsForTyping.at(g)){
-						if(bib::in(aaPos, targetNameToAminoAcidPositions[targetName][g])){
+						uint32_t currentPos = zeroBased ? aaPos : aaPos + 1;
+						if(bib::in(currentPos, targetNameToAminoAcidPositions[targetName][g])){
 							if(bib::in(popName, popHapsTyped)){
 								if(bib::in(g, popHapsTyped[popName])){
-									additionalColumns.emplace_back(std::string(1, popHapsTyped[popName].at(g).aminos_[zeroBased ? aaPos : aaPos + 1]));
+									additionalColumns.emplace_back(std::string(1, popHapsTyped[popName].at(g).aminos_[currentPos]));
 								}else{
 									additionalColumns.emplace_back("");
 								}
@@ -625,11 +629,17 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 				(*outputs.at(outPutName)) << "\t"<< bib::conToStr(additionalColumns, "\t");
 			}
 			(*outputs.at(outPutName)) << std::endl;
-		}else{
-			(*outputs.at(outPutName)) << "\t" << bib::conToStr(outRow, "\t");
+		} else {
+			std::string geneId = "";
+			if(bib::in(regionName, regionsToGeneIds)){
+				geneId = *regionsToGeneIds.at(regionName).begin();
+			}
+			(*outputs.at(outPutName)) << geneId
+					<< "\t" << bib::conToStr(outRow, "\t");
 			if(nullptr != mipMaster.meta_){
 				for(const auto & group : mipMaster.meta_->groupData_){
-					(*outputs.at(outPutName)) << "\t" << group.second->getGroupForSample(sample);
+					(*outputs.at(outPutName))
+							<< "\t" << group.second->getGroupForSample(sample);
 				}
 			}
 			(*outputs.at(outPutName)) << std::endl;
