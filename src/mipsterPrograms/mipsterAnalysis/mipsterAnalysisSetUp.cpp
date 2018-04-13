@@ -250,6 +250,8 @@ void mipsterAnalysisSetUp::setUpMipClustering(mipClusteringPars & pars) {
 	setOption(pars.sampleName, "--sample", "Name of the sample/sample dir to cluster", true);
 	setOption(pars.parameterFile, "--par", "Name of the parameters file for the clustering");
 	setOption(pars.useReadLen, "--useReadLen", "Use Read Length large differences to skip alignment comparison");
+	setOption(pars.writeOutClusters, "--writeOutClusters", "Write out the sequences that make up the final clusters");
+	setOption(pars.cacheAlignments,  "--cacheAlignments", "Cache alignments so if the analysis is re-ran it will be much quicker");
 	setOption(pars.qualRep, "--qualCalculation", "How to calculate the per base quality scores");
 	pars_.gap_ = "5,1";
 	pars_.gapRight_ = "5,1";
@@ -276,6 +278,8 @@ void mipsterAnalysisSetUp::setUpMipClusteringMultiple(mipClusteringParsMultiple 
 	setOption(pars.parameterFile, "--par", "Name of the parameters file for the clustering");
 	setOption(pars.useReadLen, "--useReadLen", "Use Read Length large differences to skip alignment comparison");
 	setOption(pars.qualRep, "--qualCalculation", "How to calculate the per base quality scores");
+	setOption(pars.writeOutClusters, "--writeOutClusters", "Write out the sequences that make up the final clusters");
+	setOption(pars.cacheAlignments,  "--cacheAlignments", "Cache alignments so if the analysis is re-ran it will be much quicker");
 	pars_.gap_ = "5,1";
 	pars_.gapRight_ = "5,1";
 	pars_.gapLeft_ = "5,1";

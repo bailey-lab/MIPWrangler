@@ -594,10 +594,8 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 				if(!additionalColumns.empty()){
 					(*outputs.at(outPutName)) << "\t"<< bib::conToStr(additionalColumns, "\t");
 				}
-				(*outputs.at(outPutName)) << std::endl;
-			}else{
-				(*outputs.at(outPutName)) << "\t" << bib::conToStr(renamedCols, "\t") << std::endl;
 			}
+			(*outputs.at(outPutName)) << std::endl;
 		}
 		if(aminoPosTyping){
 			(*outputs.at(outPutName)) << bib::conToStr(regionsToGeneIds.at(regionName), ",") << "\t"<< bib::conToStr(outRow, "\t");

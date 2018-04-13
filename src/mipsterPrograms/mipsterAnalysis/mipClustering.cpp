@@ -187,12 +187,12 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 			bfs::path mipFamilyDir = bib::files::makeDir(
 					sampDirMaster.clusDir_.string(), bib::files::MkdirPar(mipSampName.mipFam_,
 					pars.overWriteDirs));
-			alignerObj.resetAlnCache();
-			alignerObj.processAlnInfoInputNoCheck(
-					bib::files::join(sampDirMaster.clusAlnCacheDir_.string(),
-							mipSampName.mipFam_).string(),seqPars.debug_);
+			if(pars.cacheAlignments){
+				alignerObj.resetAlnCache();
+				alignerObj.processAlnInfoInputNoCheck(
+						bib::files::join(sampDirMaster.clusAlnCacheDir_.string(), mipSampName.mipFam_).string(),seqPars.debug_);
+			}
 			alignerObj.numberOfAlingmentsDone_ = 0;
-
 			std::unordered_map<std::string, uint32_t> idenToIndex;
 			for (const auto & iPos : iter::range(identicalClusters.size())) {
 				idenToIndex[identicalClusters[iPos].getStubName(true)] = iPos;
@@ -226,17 +226,21 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 											seqPars.refIoOptions_, SnapShotsOpts(false, ""));
 				}
 			}
-			alignerObj.processAlnInfoOutputNoCheck(
-					bib::files::join(sampDirMaster.clusAlnCacheDir_.string(),
-							mipSampName.mipFam_).string(), seqPars.debug_);
+			if(pars.cacheAlignments){
+				alignerObj.processAlnInfoOutputNoCheck(
+						bib::files::join(sampDirMaster.clusAlnCacheDir_.string(),
+								mipSampName.mipFam_).string(), seqPars.debug_);
+			}
 			SeqIOOptions opts = SeqIOOptions::genFastqOut(
 					bib::files::make_path(mipFamilyDir,  mipSampName.mipFam_).string() + "_clustered");
 
 			renameReadNames(clusters, "[samp=" + mipSampName.samp_ + ";" + "mipFam=" + mipSampName.mipFam_ +"]",
 					true, true, true);
+			bfs::path mipFamilyAllClustersDir = "";
+			if(pars.writeOutClusters){
+				mipFamilyAllClustersDir = bib::files::makeDir(mipFamilyDir, bib::files::MkdirPar("allInputClusters"));
+			}
 
-			auto mipFamilyAllClustersDir = bib::files::makeDir(mipFamilyDir,
-					bib::files::MkdirPar("allInputClusters"));
 			std::ofstream outInfoFile;
 			openTextFile(outInfoFile, OutOptions(bib::files::make_path(mipFamilyDir,"info.tab.txt")));
 			outInfoFile
@@ -260,10 +264,12 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 				meta.addMeta("barcodeCnt", clus.seqBase_.cnt_, true);
 				meta.resetMetaInName(clus.seqBase_.name_);
 				readAmounts[clus.seqBase_.name_] = readAmount;
-				SeqIOOptions outOpts = opts;
-				outOpts.out_.outFilename_ = mipFamilyAllClustersDir.string() + clus.seqBase_.name_;
-				SeqOutput clusWriter(outOpts);
-				clusWriter.openWrite(begReads);
+				if(pars.writeOutClusters){
+					SeqIOOptions outOpts = opts;
+					outOpts.out_.outFilename_ = bib::files::make_path(mipFamilyAllClustersDir, clus.seqBase_.name_);
+					SeqOutput clusWriter(outOpts);
+					clusWriter.openWrite(begReads);
+				}
 			}
 			for (auto & clus : clusters) {
 				outInfoFile << clus.seqBase_.name_
@@ -274,13 +280,14 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 						<< std::endl;
 			}
 			SeqOutput::write(clusters, opts);
-			auto mipFamilyClustersDir = bib::files::makeDir(mipFamilyDir, bib::files::MkdirPar("clusters"));
-			clusterVec::allWriteClustersInDir(clusters, mipFamilyClustersDir.string(), opts);
+			if(pars.writeOutClusters){
+				auto mipFamilyClustersDir = bib::files::makeDir(mipFamilyDir, bib::files::MkdirPar("clusters"));
+				clusterVec::allWriteClustersInDir(clusters, mipFamilyClustersDir.string(), opts);
+			}
 			std::ofstream logfile;
 			openTextFile(logfile, OutOptions(bib::files::make_path(mipFamilyDir,"log.txt")));
 			logfile << "Ran on: " << bib::getCurrentDate() << std::endl;
-			logfile << "Number of Alignments Done: "
-					<< alignerObj.numberOfAlingmentsDone_ << "\n";
+			logfile << "Number of Alignments Done: " << alignerObj.numberOfAlingmentsDone_ << "\n";
 			logfile << "Run Length: " << watch.totalTimeFormatted(6) << std::endl;
 		}
 	}
