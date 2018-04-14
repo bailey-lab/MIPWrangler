@@ -187,8 +187,8 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 			bfs::path mipFamilyDir = bib::files::makeDir(
 					sampDirMaster.clusDir_.string(), bib::files::MkdirPar(mipSampName.mipFam_,
 					pars.overWriteDirs));
+			alignerObj.resetAlnCache();
 			if(pars.cacheAlignments){
-				alignerObj.resetAlnCache();
 				alignerObj.processAlnInfoInputNoCheck(
 						bib::files::join(sampDirMaster.clusAlnCacheDir_.string(), mipSampName.mipFam_).string(),seqPars.debug_);
 			}
