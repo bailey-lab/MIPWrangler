@@ -241,8 +241,7 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 				mipFamilyAllClustersDir = bib::files::makeDir(mipFamilyDir, bib::files::MkdirPar("allInputClusters"));
 			}
 
-			std::ofstream outInfoFile;
-			openTextFile(outInfoFile, OutOptions(bib::files::make_path(mipFamilyDir,"info.tab.txt")));
+			OutputStream outInfoFile(OutOptions(bib::files::make_path(mipFamilyDir,"info.tab.txt")));
 			outInfoFile
 					<< "clusterName\tbarcodes\tbarcodeFraction\treads\treadsFraction"
 					<< std::endl;
@@ -284,8 +283,7 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 				auto mipFamilyClustersDir = bib::files::makeDir(mipFamilyDir, bib::files::MkdirPar("clusters"));
 				clusterVec::allWriteClustersInDir(clusters, mipFamilyClustersDir.string(), opts);
 			}
-			std::ofstream logfile;
-			openTextFile(logfile, OutOptions(bib::files::make_path(mipFamilyDir,"log.txt")));
+			OutputStream logfile(OutOptions(bib::files::make_path(mipFamilyDir, "log.txt")));
 			logfile << "Ran on: " << bib::getCurrentDate() << std::endl;
 			logfile << "Number of Alignments Done: " << alignerObj.numberOfAlingmentsDone_ << "\n";
 			logfile << "Run Length: " << watch.totalTimeFormatted(6) << std::endl;
@@ -375,8 +373,12 @@ int mipsterAnalysisRunner::mipClusteringMultiple(const bib::progutils::CmdArgs &
 	std::mutex logMut;
 	auto runMipSamp = [&alnPool,&pairQueue,&pars,&setUp,&logMut,&pairingLog,&collapserObj](const SetUpMaster & mipMaster){
 		MipFamSamp mipSamp("", "");
+		std::cout << std::this_thread::get_id() << " " << __LINE__ << std::endl;
+
 		auto curAlignerObj = alnPool.popAligner();
 		Json::Value currrentPairingLog;
+		std::cout << std::this_thread::get_id() << " " << __LINE__ << std::endl;
+
 		while(pairQueue.getVal(mipSamp)){
 			bib::stopWatch watch;
 			auto sampPars = pars.createForSample(mipSamp.samp_);
@@ -388,10 +390,13 @@ int mipsterAnalysisRunner::mipClusteringMultiple(const bib::progutils::CmdArgs &
 			currentPair["mip"] = mipSamp.mipFam_;
 			currentPair["runTime"] = watch.totalTimeFormatted(6);
 		}
+		std::cout << std::this_thread::get_id() << " " << __LINE__ << std::endl;
 		{
 			std::lock_guard<std::mutex> logLock(logMut);
 			pairingLog.append(currrentPairingLog);
 		}
+		std::cout << std::this_thread::get_id() << " " << __LINE__ << std::endl;
+
 	};
 
 	std::vector<std::thread> threads;
