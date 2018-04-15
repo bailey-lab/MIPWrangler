@@ -373,14 +373,14 @@ int mipsterAnalysisRunner::mipClusteringMultiple(const bib::progutils::CmdArgs &
 	std::mutex logMut;
 	auto runMipSamp = [&alnPool,&pairQueue,&pars,&setUp,&logMut,&pairingLog,&collapserObj](const SetUpMaster & mipMaster){
 		MipFamSamp mipSamp("", "");
-		std::cout << std::this_thread::get_id() << " " << __LINE__ << std::endl;
+		//std::cout << std::this_thread::get_id() << " " << __LINE__ << std::endl;
 
 		auto curAlignerObj = alnPool.popAligner();
 		Json::Value currrentPairingLog;
-		std::cout << std::this_thread::get_id() << " " << __LINE__ << std::endl;
+//		std::cout << std::this_thread::get_id() << " " << __LINE__ << std::endl;
 
 		while(pairQueue.getVal(mipSamp)){
-			std::cout << std::this_thread::get_id() << " samp: " << mipSamp.samp_ << " mipFam: " << mipSamp.mipFam_  << __LINE__ << std::endl;
+//			std::cout << std::this_thread::get_id() << " samp: " << mipSamp.samp_ << " mipFam: " << mipSamp.mipFam_  << __LINE__ << std::endl;
 			bib::stopWatch watch;
 			auto sampPars = pars.createForSample(mipSamp.samp_);
 			SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, mipSamp);
@@ -390,14 +390,14 @@ int mipsterAnalysisRunner::mipClusteringMultiple(const bib::progutils::CmdArgs &
 			currentPair["sample"] = mipSamp.samp_;
 			currentPair["mip"] = mipSamp.mipFam_;
 			currentPair["runTime"] = watch.totalTimeFormatted(6);
-			std::cout << std::this_thread::get_id() << " samp: " << mipSamp.samp_ << " mipFam: " << mipSamp.mipFam_  << __LINE__ << std::endl;
+//			std::cout << std::this_thread::get_id() << " samp: " << mipSamp.samp_ << " mipFam: " << mipSamp.mipFam_  << __LINE__ << std::endl;
 		}
-		std::cout << std::this_thread::get_id() << " " << __LINE__ << std::endl;
+//		std::cout << std::this_thread::get_id() << " " << __LINE__ << std::endl;
 		{
 			std::lock_guard<std::mutex> logLock(logMut);
 			pairingLog.append(currrentPairingLog);
 		}
-		std::cout << std::this_thread::get_id() << " " << __LINE__ << std::endl;
+//		std::cout << std::this_thread::get_id() << " " << __LINE__ << std::endl;
 
 	};
 
