@@ -476,6 +476,13 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithClustered(uint32_t numThreads)c
 	for(auto & t : threads){
 		t.join();
 	}
+	bib::sort(pairs, [](const MipFamSamp & pair1, const MipFamSamp & pair2){
+		if(pair1.samp_ == pair2.samp_){
+			return MipNameSorter::compareNames(pair1.mipFam_, pair2.mipFam_, MipNameSorter::mipNamePat, MipNameSorter::regionNamePat);
+		}else{
+			return pair1.samp_ < pair2.samp_;
+		}
+	});
 	return pairs;
 }
 
@@ -522,6 +529,13 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithPopClustered(uint32_t numThread
 	for(auto & t : threads){
 		t.join();
 	}
+	bib::sort(pairs, [](const MipFamSamp & pair1, const MipFamSamp & pair2){
+		if(pair1.samp_ == pair2.samp_){
+			return MipNameSorter::compareNames(pair1.mipFam_, pair2.mipFam_, MipNameSorter::mipNamePat, MipNameSorter::regionNamePat);
+		}else{
+			return pair1.samp_ < pair2.samp_;
+		}
+	});
 	return pairs;
 }
 
@@ -559,6 +573,13 @@ std::vector<MipFamSamp> SetUpMaster::getMipFamsWithPopClustered(uint32_t numThre
 	for(auto & t : threads){
 		t.join();
 	}
+	bib::sort(pairs, [](const MipFamSamp & pair1, const MipFamSamp & pair2){
+		if(pair1.samp_ == pair2.samp_){
+			return MipNameSorter::compareNames(pair1.mipFam_, pair2.mipFam_, MipNameSorter::mipNamePat, MipNameSorter::regionNamePat);
+		}else{
+			return pair1.samp_ < pair2.samp_;
+		}
+	});
 	return pairs;
 }
 
@@ -600,6 +621,13 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithBarCor(uint32_t numThreads)cons
 	for(auto & t : threads){
 		t.join();
 	}
+	bib::sort(pairs, [](const MipFamSamp & pair1, const MipFamSamp & pair2){
+		if(pair1.samp_ == pair2.samp_){
+			return MipNameSorter::compareNames(pair1.mipFam_, pair2.mipFam_, MipNameSorter::mipNamePat, MipNameSorter::regionNamePat);
+		}else{
+			return pair1.samp_ < pair2.samp_;
+		}
+	});
 	return pairs;
 }
 
@@ -649,6 +677,13 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithExtracted(uint32_t numThreads) 
 	for(auto & t : threads){
 		t.join();
 	}
+	bib::sort(pairs, [](const MipFamSamp & pair1, const MipFamSamp & pair2){
+		if(pair1.samp_ == pair2.samp_){
+			return MipNameSorter::compareNames(pair1.mipFam_, pair2.mipFam_, MipNameSorter::mipNamePat, MipNameSorter::regionNamePat);
+		}else{
+			return pair1.samp_ < pair2.samp_;
+		}
+	});
 	return pairs;
 }
 

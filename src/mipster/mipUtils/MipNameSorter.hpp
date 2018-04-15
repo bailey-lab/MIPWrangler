@@ -11,7 +11,7 @@
 namespace bibseq {
 
 class MipNameSorter{
-
+public:
 	static bool compareNames(const std::string & name1,
 			const std::string & name2, const std::regex & namePat);
 
@@ -19,7 +19,7 @@ class MipNameSorter{
 			const std::string & name2,
 			const std::regex & namePat,
 			const std::regex & secondaryPat);
-public:
+
 
 	static const std::regex mipNamePat;
 	static const std::regex regionNamePat;
