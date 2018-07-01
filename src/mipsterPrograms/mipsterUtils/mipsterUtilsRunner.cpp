@@ -36,6 +36,7 @@ mipsterUtilsRunner::mipsterUtilsRunner()
 																		 addFunc("creatingSeqTableFromDirectory", creatingSeqTableFromDirectory, false),
 																		 addFunc("createMipArmFromSelectedMips", createMipArmFromSelectedMips, false),
 																		 addFunc("typeFinalHaplotypes", typeFinalHaplotypes, false),
+																		 addFunc("createPrimerFileFromArmFile", createPrimerFileFromArmFile, false),
 },
                     "mipsterUtils") {}
 
@@ -65,6 +66,32 @@ mipsterUtilsRunner::mipsterUtilsRunner()
 //	return ret;
 //}
 
+
+
+
+int mipsterUtilsRunner::createPrimerFileFromArmFile(
+		const bib::progutils::CmdArgs & inputCommands) {
+	bfs::path mipArmsFnp;
+	OutOptions outOpts(bfs::path(""));
+	mipsterUtilsSetUp setUp(inputCommands);
+	setUp.setOption(mipArmsFnp, "--mipArmsFilename",
+				"Name of the mip arms file", true);
+	setUp.processWritingOptions(outOpts);
+	setUp.finishSetUp(std::cout);
+
+	MipCollection mips(mipArmsFnp, 6);
+	OutputStream out(outOpts);
+	out << "target\tforward\treverse" << std::endl;
+	auto tarNames = mips.getMipTars();
+	for(const auto & mipName : tarNames){
+
+		out << mipName
+				<< "\t" << mips.mips_[mipName].extentionArm_
+				<< "\t" << mips.mips_[mipName].ligationArm5_to_3prime_ << std::endl;
+	}
+
+	return 0;
+}
 int mipsterUtilsRunner::writeOutPossibleHaplotypes(
 		const bib::progutils::CmdArgs & inputCommands) {
 	double freqCutOff = 0;
