@@ -9,7 +9,7 @@
 #include "mipsterUtilsRunner.hpp"
 #include <elucidator/seqToolsUtils.h>
 #include <elucidator/objects/BioDataObject.h>
-#include <elucidator/objects/Gene/GeneFromGffs.hpp>
+#include <bibseq/objects/Gene/GeneFromGffs.hpp>
 #include <elucidator/BamToolsUtils.h>
 
 #include <TwoBit.h>
