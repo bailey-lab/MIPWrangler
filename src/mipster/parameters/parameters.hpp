@@ -16,7 +16,7 @@ struct mipCorePars{
 	bfs::path masterDir = "";
 	bfs::path mipsSamplesFile = "";
 	bfs::path sampleMetaFnp = "";
-	uint32_t allowableErrors = 0;
+	uint32_t allowableErrors = 6;
 	uint32_t wiggleRoom = 0;
 
 	std::string seqFileSuffix = ".extendedFrags.fastq";
