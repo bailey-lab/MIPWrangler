@@ -19,6 +19,7 @@ public:
 	bfs::path serResourceDir_;
 	bfs::path populationClusteringDir_;
 	bfs::path logsDir_;
+	bfs::path scriptsDir_;
 
 	static std::string initMipAnalysisDirectoryStructure(const bfs::path & masterDirPath);
 

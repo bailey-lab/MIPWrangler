@@ -360,6 +360,7 @@ int mavRunner(const bib::progutils::CmdArgs & inputCommands){
 
   //prepare servers
   mipMaster.prepareMipAnalysisServer(mipCorepars.numThreads);
+
   //collect master table info for all extraction info
   auto samplesExtracted = mipMaster.getPairsWithExtracted(mipCorepars.numThreads);
   auto mipFamsPopClustered = mipMaster.getMipFamsWithPopClustered(mipCorepars.numThreads);

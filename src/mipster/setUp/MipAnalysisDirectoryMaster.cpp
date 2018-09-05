@@ -13,11 +13,17 @@
 namespace bibseq {
 MipAnalysisDirectoryMaster::MipAnalysisDirectoryMaster(
 		const bfs::path & masterDir) :
-		masterDir_(bib::appendAsNeededRet(masterDir.string(), "/")), resourceDir_(
-				bib::files::join(masterDir.string(), "resources/")), serResourceDir_(
-				bib::files::join(masterDir.string(), "serverResources/")), populationClusteringDir_(
-				bib::files::join(masterDir.string(), "populationClustering/")), logsDir_(
-				bib::files::join(masterDir.string(), "logs/")) {
+		masterDir_(bib::appendAsNeededRet(masterDir.string(), "/")),
+				resourceDir_(
+				bib::files::join(masterDir.string(), "resources/")),
+				serResourceDir_(
+				bib::files::join(masterDir.string(), "serverResources/")),
+				populationClusteringDir_(
+				bib::files::join(masterDir.string(), "populationClustering/")),
+				logsDir_(
+				bib::files::join(masterDir.string(), "logs/")),
+				scriptsDir_(
+				bib::files::join(masterDir.string(), "scripts/")){
 
 	//checkForDirectoriesThrow();
 }
@@ -44,6 +50,9 @@ std::string MipAnalysisDirectoryMaster::initMipAnalysisDirectoryStructure(const 
 	bib::files::makeDir(masterDirPath.string(), bib::files::MkdirPar("serverResources/"));
 	bib::files::makeDir(masterDirPath.string(), bib::files::MkdirPar("populationClustering/"));
 	bib::files::makeDir(masterDirPath.string(), bib::files::MkdirPar("logs/"));
+	bib::files::makeDir(masterDirPath.string(), bib::files::MkdirPar("scripts/"));
+
+
 	return bib::appendAsNeededRet(masterDirPath.string(), "/");
 }
 

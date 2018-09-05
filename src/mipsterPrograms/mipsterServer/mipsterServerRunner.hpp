@@ -15,7 +15,6 @@ class mipsterServerRunner : public bib::progutils::ProgramRunner {
  public:
   mipsterServerRunner();
   
-	static int mipServerSetUp(const bib::progutils::CmdArgs & inputCommands);
 	static int mipAnalysisServerSetUp(const bib::progutils::CmdArgs & inputCommands);
 
 };

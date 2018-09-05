@@ -73,6 +73,8 @@ struct mipIllumArmExtractionPars : mipCorePars{
   QualFilteringPars qFilPars_;
 	bool cacheAlignments = false;
 
+	bfs::path refDir = "";
+
 	PairedReadProcessor::ProcessParams processPairPars_;
 
 
@@ -96,6 +98,7 @@ struct mipIllumArmExtractionParsMultiple : public mipIllumArmExtractionPars {
 		ret.qFilPars_ = qFilPars_;
 		ret.cacheAlignments = cacheAlignments;
 		ret.processPairPars_ = processPairPars_;
+		ret.refDir = refDir;
 		ret.copyCore(*this);
 		return ret;
 	}
@@ -120,6 +123,7 @@ struct extractFromRawParsMultiple : public extractFromRawPars {
 		ret.qFilPars_ = qFilPars_;
 		ret.cacheAlignments = cacheAlignments;
 		ret.processPairPars_ = processPairPars_;
+		ret.refDir = refDir;
 		ret.copyCore(*this);
 		return ret;
 	}

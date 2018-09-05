@@ -11,8 +11,12 @@
 namespace bibseq {
 
 int mipsterAnalysisRunner::mipSetupAndExtractByArm(const bib::progutils::CmdArgs & inputCommands) {
-	mipsterAnalysisSetUp setUp(inputCommands);
 	extractFromRawParsMultiple pars;
+	std::string mipServerName = "";
+	bool runRest = false;
+	mipsterAnalysisSetUp setUp(inputCommands);
+	setUp.setOption(runRest, "--runRest", "Run the rest of the analysis as well with defaults");
+	setUp.setOption(mipServerName, "--mipServerNumber", "Name of the mip server, e.g. 1", true);
 	setUp.setUpExtractFromRawMultiple(pars);
 
 	//check for required external programs
@@ -22,6 +26,7 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const bib::progutils::CmdArgs
 	mipMaster.setMipArmFnp(pars.mipArmsFileName);
 	mipMaster.setMipsSampsNamesFnp(pars.mipsSamplesFile);
 	mipMaster.loadMipsSampsInfo(pars.allowableErrors);
+	mipMaster.setServerName(bib::pasteAsStr("mip", mipServerName));
 	mipMaster.mips_->setAllMinimumExpectedLen(pars.minLen);
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 
@@ -260,6 +265,110 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const bib::progutils::CmdArgs
 				bib::files::make_path(mipMaster.directoryMaster_.masterDir_,
 						"resources", "samplesMeta.tab.txt"));
 	}
+
+	// set up scripts
+
+	// run barcode correction, mipBarcodeCorrectionMultiple
+	{
+		OutOptions mipScriptOpts(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipBarcodeCorrectionMultiple.sh"));
+		std::ofstream mipScriptOut;
+		mipScriptOpts.openExecutableFile(mipScriptOut);
+		mipScriptOut << "#!/usr/bin/env bash" << "\n";
+		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipBarcodeCorrectionMultiple --masterDir "
+				<< bib::files::normalize(mipMaster.directoryMaster_.masterDir_)
+		<< " --numThreads " << pars.numThreads
+		<< " --logFile mipBarcodeCorrecting_run1" << std::endl;
+	}
+	// run clustering step, mipClusteringMultiple
+	{
+		OutOptions mipScriptOpts(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipClusteringMultiple.sh"));
+		std::ofstream mipScriptOut;
+		mipScriptOpts.openExecutableFile(mipScriptOut);
+		mipScriptOut << "#!/usr/bin/env bash" << "\n";
+		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipClusteringMultiple --masterDir "
+				<< bib::files::normalize(mipMaster.directoryMaster_.masterDir_)
+		<< " --numThreads " << pars.numThreads
+		<< " --logFile mipClustering_run1" << std::endl;
+	}
+	// run population clustering, mipPopulationClusteringMultiple
+	{
+		OutOptions mipScriptOpts(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipPopulationClusteringMultiple.sh"));
+		std::ofstream mipScriptOut;
+		mipScriptOpts.openExecutableFile(mipScriptOut);
+		mipScriptOut << "#!/usr/bin/env bash" << "\n";
+		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipPopulationClusteringMultiple --masterDir "
+				<< bib::files::normalize(mipMaster.directoryMaster_.masterDir_)
+		<< " --numThreads " << pars.numThreads
+		<< " --logFile mipPopClustering_run1";
+		if("" != pars.refDir){
+			mipScriptOut << " --refDir " << bib::files::normalize(pars.refDir);
+		}
+		mipScriptOut << std::endl;
+	}
+	// run setup for viewer, mipAnalysisServerSetUp
+	{
+		OutOptions mipScriptOpts(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipAnalysisServerSetUp.sh"));
+		std::ofstream mipScriptOut;
+		mipScriptOpts.openExecutableFile(mipScriptOut);
+		mipScriptOut << "#!/usr/bin/env bash" << "\n";
+		mipScriptOut << R"(if [[ $# -ne 1 ]]; then 
+    echo "Illegal number of parameters, needs 1 argument, 1) name of mip server number"
+    exit
+fi
+)";
+
+		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipAnalysisServerSetUp --masterDir "
+				<< bib::files::normalize(mipMaster.directoryMaster_.masterDir_)
+		<< " --numThreads " << pars.numThreads
+		<< " --name mip$1 --verbose &";
+		mipScriptOut << std::endl;
+	}
+	// run viewer, mav
+	{
+		OutOptions mipScriptOpts(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_viewer.sh"));
+		std::ofstream mipScriptOut;
+		mipScriptOpts.openExecutableFile(mipScriptOut);
+		mipScriptOut << "#!/usr/bin/env bash" << "\n";
+		mipScriptOut << R"(if [[ $# -ne 1 ]]; then 
+    echo "Illegal number of parameters, needs 1 argument, 1) name of mip server number"
+    exit
+fi
+)";
+
+		mipScriptOut << "nohup " << setUp.commands_.masterProgramRaw_ << " mav --masterDir "
+				<< bib::files::normalize(mipMaster.directoryMaster_.masterDir_)
+		<< " --numThreads " << pars.numThreads
+		<< " --port $((10000+$1)) --name mip$1 --verbose &";
+		mipScriptOut << std::endl;
+	}
+
+	{
+		OutOptions mipScriptOpts(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_restOfAnalysis.sh"));
+		std::ofstream mipScriptOut;
+		mipScriptOpts.openExecutableFile(mipScriptOut);
+		mipScriptOut << "#!/usr/bin/env bash" << "\n";
+		mipScriptOut << R"(if [[ $# -ne 1 ]]; then 
+    echo "Illegal number of parameters, needs 1 argument, 1) name of mip server number"
+    exit
+fi
+)";
+		mipScriptOut << bib::files::normalize(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipBarcodeCorrectionMultiple.sh")) << std::endl;
+		mipScriptOut << bib::files::normalize(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipClusteringMultiple.sh")) << std::endl;
+		mipScriptOut << bib::files::normalize(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipPopulationClusteringMultiple.sh")) << std::endl;
+		mipScriptOut << bib::files::normalize(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipAnalysisServerSetUp.sh")) << " " << mipServerName << std::endl;
+		mipScriptOut << std::endl;
+	}
+
+	if(runRest){
+		std::stringstream cmdSs;
+		cmdSs << bib::files::normalize(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_restOfAnalysis.sh")) << " " << mipServerName << std::endl;
+		auto runLog = bib::sys::run(VecStr{cmdSs.str()});
+		OutOptions restOfAnalysisRunLogOpts(bib::files::make_path(mipMaster.directoryMaster_.logsDir_, "run_restOfAnalysis_log.json"));
+		OutputStream restOfAnalysisRunLogOut(restOfAnalysisRunLogOpts);
+		restOfAnalysisRunLogOut << runLog.toJson() << std::endl;
+	}
+
+
 
 	return 0;
 }

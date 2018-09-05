@@ -59,6 +59,8 @@ void mipsterAnalysisSetUp::setUpExtractFromRawMultiple(extractFromRawParsMultipl
 	setOption(pars.minLen, "--minLen", "Minimum Length of Read to Be Extracted");
 	setOption(pars.seqFileSuffix, "--seqFileSuffix", "The ending of the sequence append to sample name");
 	setOption(pars.fileOpenLimit_, "--fileOpenLimit", "Number of file allowed to open by one process");
+	setOption(pars.refDir, "--refDir", "Directory with possible reference sequence to rename popUIDs to");
+
 	pars.fileOpenLimit_ = (pars.fileOpenLimit_ - pars.numThreads) /pars.numThreads;
 	pars_.gap_ = "5,1";
 	pars_.gapRight_ = "0,0";
