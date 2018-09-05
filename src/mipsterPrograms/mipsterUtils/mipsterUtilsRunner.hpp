@@ -46,5 +46,7 @@ class mipsterUtilsRunner : public bib::progutils::ProgramRunner {
 
 	static int typeFinalHaplotypes(const bib::progutils::CmdArgs & inputCommands);
 
+	static int ExtractTargetsFromGenomes(const bib::progutils::CmdArgs & inputCommands);
+
 };
 } // namespace bibseq

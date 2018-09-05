@@ -39,6 +39,12 @@ public:
 			aligner & alignerObjForFamilyDet,
 			const mipIllumArmExtractionPars & pars);
 
+	void extractFilterSampleForMipsPairedStitch(const std::vector<SeqIOOptions> & sampleIOOpts,
+			const SetUpMaster & mipMaster,
+			aligner & alignerObjForFamilyDet,
+			aligner & alignerObjForStitching,
+			const mipIllumArmExtractionPars & pars);
+
 };
 
 } /* namespace bibseq */

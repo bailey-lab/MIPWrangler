@@ -8,6 +8,7 @@
 
 
 #include "mipster/common.h"
+#include <SeekDeep/objects/PairedReadProcessor.hpp>
 
 namespace bibseq {
 
@@ -70,6 +71,10 @@ struct mipIllumArmExtractionPars : mipCorePars{
 	uint32_t minLen = 150;
   uint32_t smallFragmentLength = 50;
   QualFilteringPars qFilPars_;
+	bool cacheAlignments = false;
+
+	PairedReadProcessor::ProcessParams processPairPars_;
+
 
 
 #if defined( __APPLE__ ) || defined( __APPLE_CC__ ) || defined( macintosh ) || defined( __MACH__ )
@@ -89,6 +94,8 @@ struct mipIllumArmExtractionParsMultiple : public mipIllumArmExtractionPars {
 		ret.fileOpenLimit_ = fileOpenLimit_;
 		ret.sampleName = newSampleName;
 		ret.qFilPars_ = qFilPars_;
+		ret.cacheAlignments = cacheAlignments;
+		ret.processPairPars_ = processPairPars_;
 		ret.copyCore(*this);
 		return ret;
 	}
@@ -98,6 +105,7 @@ struct mipIllumArmExtractionParsMultiple : public mipIllumArmExtractionPars {
 struct extractFromRawPars : mipIllumArmExtractionPars {
 
 	bfs::path dir = "";
+
 };
 
 struct extractFromRawParsMultiple : public extractFromRawPars {
@@ -110,6 +118,8 @@ struct extractFromRawParsMultiple : public extractFromRawPars {
 		ret.fileOpenLimit_ = fileOpenLimit_;
 		ret.sampleName = newSampleName;
 		ret.qFilPars_ = qFilPars_;
+		ret.cacheAlignments = cacheAlignments;
+		ret.processPairPars_ = processPairPars_;
 		ret.copyCore(*this);
 		return ret;
 	}
@@ -178,8 +188,8 @@ struct mipClusteringParsMultiple : mipClusteringPars{
 struct mipPopulationClusteringPars : mipCorePars{
 
 	bfs::path parameters = "";
-	uint32_t cutOff = 1;
-	uint32_t sampleMinTotalCount = 0;
+	collapse::SampleCollapseCollection::PreFilteringCutOffs clusteringCutOffs;
+
 	double fracCutoff = 0.005;
 	uint32_t runsRequired = 1;
 	bool keepChimeras = false;
@@ -200,7 +210,7 @@ struct mipPopulationClusteringParsMultiple : public mipPopulationClusteringPars{
 	mipPopulationClusteringPars createForMip(const std::string & newMipName)const{
 		mipPopulationClusteringPars ret;
 		ret.parameters = parameters;
-		ret.cutOff = cutOff;
+		ret.clusteringCutOffs = clusteringCutOffs;
 		ret.fracCutoff = fracCutoff;
 		ret.runsRequired = runsRequired;
 		ret.keepChimeras = keepChimeras;

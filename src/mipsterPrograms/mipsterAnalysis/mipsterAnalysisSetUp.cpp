@@ -317,9 +317,7 @@ void mipsterAnalysisSetUp::setUpMipPopulationClustering(
 
 	processComparison(pars.previousPopErrors, "previousPop");
   setOption(pars.runsRequired, "-runsRequired", "runsRequired");
-  setOption(pars.cutOff, "-cutoff", "FractionCutoff");
-
-
+  setOption(pars.clusteringCutOffs.clusterSizeCutOff, "--minimumBarcodeCutOff,-cutoff", "The Minimum molecular Barcode count Cut Off to be inlcuded in final analysis");
   setOption(pars.fracCutoff, "-fraccutoff", "PopulationClusteringFractionCutoff");
   pars.differentPar = setOption(pars.parametersPopulation, "--popPar",
       "ParametersForPopulationCollapse");
@@ -377,7 +375,7 @@ void mipsterAnalysisSetUp::setUpMipPopulationClusteringMultiple(
 
 	processComparison(pars.previousPopErrors, "previousPop");
   setOption(pars.runsRequired, "-runsRequired", "runsRequired");
-  setOption(pars.cutOff, "-cutoff", "FractionCutoff");
+  setOption(pars.clusteringCutOffs.clusterSizeCutOff, "--minimumBarcodeCutOff,-cutoff", "The Minimum molecular Barcode count Cut Off to be inlcuded in final analysis");
 
 
   setOption(pars.fracCutoff, "-fraccutoff", "PopulationClusteringFractionCutoff");

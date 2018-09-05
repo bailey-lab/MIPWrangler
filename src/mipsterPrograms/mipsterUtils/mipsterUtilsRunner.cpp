@@ -37,6 +37,7 @@ mipsterUtilsRunner::mipsterUtilsRunner()
 																		 addFunc("createMipArmFromSelectedMips", createMipArmFromSelectedMips, false),
 																		 addFunc("typeFinalHaplotypes", typeFinalHaplotypes, false),
 																		 addFunc("createPrimerFileFromArmFile", createPrimerFileFromArmFile, false),
+																		 addFunc("ExtractTargetsFromGenomes", ExtractTargetsFromGenomes, false),
 },
                     "mipsterUtils") {}
 

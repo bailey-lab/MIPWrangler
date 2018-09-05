@@ -30,6 +30,9 @@ void SinlgeMipExtractInfo::increaseCount(extractCase eCase) {
 	case extractCase::CONTAINSNS:
 		++containsNs_;
 		break;
+	case extractCase::BADSTITCH:
+		++badStitch_;
+		break;
 	case extractCase::NONE:
 		ss << __PRETTY_FUNCTION__ << ": Error, no case set" << std::endl;
 		throw std::runtime_error { ss.str() };
@@ -60,6 +63,9 @@ std::string SinlgeMipExtractInfo::getNameForCase(extractCase eCase) {
 	case extractCase::CONTAINSNS:
 		ret = "_containsNs";
 		break;
+	case extractCase::BADSTITCH:
+		ret = "_badStitch";
+		break;
 	case extractCase::NONE:
 		ss << __PRETTY_FUNCTION__ << ": Error, no case set" << std::endl;
 		throw std::runtime_error { ss.str() };
@@ -81,10 +87,11 @@ VecStr SinlgeMipExtractInfo::toVecStr() const {
 			getPercentageString(failedLig_, total),
 			getPercentageString(failedMinLen_, total),
 			getPercentageString(failedQual_, total),
-			getPercentageString(containsNs_, total));
+			getPercentageString(containsNs_, total),
+			getPercentageString(badStitch_, total));
 }
 uint32_t SinlgeMipExtractInfo::getTotal() const {
-	return good_ + failedLig_ + failedMinLen_ + failedQual_ + containsNs_;
+	return good_ + failedLig_ + failedMinLen_ + failedQual_ + containsNs_ + badStitch_;
 }
 
 }

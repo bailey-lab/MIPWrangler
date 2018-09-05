@@ -62,6 +62,7 @@ std::vector<VecStr> MipExtractionStats::outputContents(const MipCollection & mip
 		total.failedQual_ += stats_[k].failedQual_;
 		total.failedMinLen_ += stats_[k].failedMinLen_;
 		total.containsNs_ += stats_[k].containsNs_;
+		total.badStitch_ += stats_[k].badStitch_;
 		ret.emplace_back(
 				concatVecs(VecStr {sampName_, k, mips.getFamilyForTarget(k) },
 						stats_[k].toVecStr()));
@@ -69,20 +70,21 @@ std::vector<VecStr> MipExtractionStats::outputContents(const MipCollection & mip
 	uint32_t grandTotal = total.getTotal() + totalUnmatched_
 			+ smallFragmentCount_ + indeterminate_;
 	ret.emplace_back(concatVecs(VecStr { sampName_,"indeterminate", "indeterminate" }, VecStr {
-			getPercentageString(indeterminate_, grandTotal), "0", "0", "0", "0", "0" }));
+			getPercentageString(indeterminate_, grandTotal), "0", "0", "0", "0", "0", "0"  }));
 	ret.emplace_back(concatVecs(VecStr { sampName_,"unmatched", "unmatched" }, VecStr {
-			getPercentageString(totalUnmatched_, grandTotal), "0", "0", "0", "0", "0" }));
+			getPercentageString(totalUnmatched_, grandTotal), "0", "0", "0", "0", "0", "0"  }));
 	ret.emplace_back(
 			concatVecs(VecStr { sampName_,"smallFragment", "smallFragment" }, VecStr {
 					getPercentageString(smallFragmentCount_, grandTotal), "0", "0", "0", "0",
-					"0" }));
+					"0", "0"  }));
 	ret.emplace_back(
 			concatVecs(VecStr { sampName_,"total", "total" },
 					toVecStr(grandTotal, getPercentageString(total.good_, grandTotal),
 							getPercentageString(total.failedLig_, grandTotal),
 							getPercentageString(total.failedMinLen_, grandTotal),
 							getPercentageString(total.failedQual_, grandTotal),
-							getPercentageString(total.containsNs_, grandTotal))));
+							getPercentageString(total.containsNs_, grandTotal),
+							getPercentageString(total.badStitch_, grandTotal))));
 	return ret;
 }
 

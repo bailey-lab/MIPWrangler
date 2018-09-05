@@ -20,6 +20,7 @@ class SinlgeMipExtractInfo {
 	uint32_t failedQual_ = 0;
 	uint32_t failedLig_ = 0;
 	uint32_t containsNs_ = 0;
+	uint32_t badStitch_ = 0;
 public:
 	friend class MipExtractionStats;
 	enum class extractCase {
@@ -30,6 +31,7 @@ public:
 		MAXLENBAD,
 		QUALITYFAILED,
 		CONTAMINATION,
+		BADSTITCH,
 		NONE
 	};
 

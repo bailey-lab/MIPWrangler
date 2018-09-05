@@ -311,7 +311,8 @@ void extractMultiSamplesPaired(const SetUpMaster & mipMaster,
 	std::string sampleName = "";
 	auto alignerObjForFamilyDet = aligners.popAligner();
 	while (sampsQueue.getVal(sampleName)) {
-		SeqIOOptions sampOpts = SeqIOOptions::genPairedIn(mipMaster.pathSampleRawDataFirstRead(MipFamSamp("", sampleName)),
+		SeqIOOptions sampOpts = SeqIOOptions::genPairedIn(
+				mipMaster.pathSampleRawDataFirstRead(MipFamSamp("", sampleName)),
 				mipMaster.pathSampleRawDataSecondRead(MipFamSamp("", sampleName)));
 		sampOpts.revComplMate_ = true;
 		mipIllumArmExtractionPars samplePars = pars.createForSample(sampleName);
