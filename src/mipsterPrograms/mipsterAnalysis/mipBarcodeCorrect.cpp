@@ -239,6 +239,7 @@ int mipsterAnalysisRunner::mipBarcodeCorrection(const bib::progutils::CmdArgs & 
 	MasterTableCache masterBarFilterTab(barFilOpts, sampDirMaster.barCorDir_.string(), true,
 			2, std::regex(".*barcodeFilterStats.tab.txt"));
 	masterBarFilterTab.writeTab();
+
 	return 0;
 }
 
@@ -333,7 +334,7 @@ int mipsterAnalysisRunner::mipBarcodeCorrectionMultiple(const bib::progutils::Cm
 
 	//std::unordered_map<std::string, MasterTableCache> sampleExtractTables;
 	for(const auto & samp : mipMaster.names_->samples_){
-		bfs::path sampBarCorDir = bib::files::join(VecStr{samp, samp + "_mipBarcodeCorrection/"});
+		bfs::path sampBarCorDir = bib::files::make_path(mipMaster.directoryMaster_.masterDir_,samp, samp + "_mipBarcodeCorrection/");
 		TableIOOpts barFilOpts = TableIOOpts(OutOptions(bib::files::make_path(
 				sampBarCorDir, "barcodeFilterStats.tab.txt"), ".tab.txt", "tab",
 				false,true, false), "\t", true);
