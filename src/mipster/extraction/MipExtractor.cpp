@@ -99,6 +99,8 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 		}
 		PairedRead seq;
 		uint32_t readCount = 1;
+		////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+
 		while (readerOpt.readNextRead(seq)) {
 			if (readCount % 100 == 0 && verbose_) {
 				std::cout << "\r" << "currently on " << readCount;
@@ -108,15 +110,20 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 			//get length and resize aligner vector if needed
 			uint64_t maxLen = alignerObjForFamilyDet.parts_.maxSize_;
 			readVec::getMaxLength(seq, maxLen);
+			////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+
 			if (maxLen > alignerObjForFamilyDet.parts_.maxSize_) {
 				alignerObjForFamilyDet.parts_.setMaxSize(maxLen);
 			}
 			if (maxLen > alignerObjForStitching.parts_.maxSize_) {
 				alignerObjForStitching.parts_.setMaxSize(maxLen);
 			}
+			////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 			bool found = false;
 			std::unordered_map<std::string, std::pair<std::vector<Mip::ArmPosScore>, std::vector<Mip::ArmPosScore>>> possibleArms;
 			std::unordered_map<std::string, std::vector<Mip::ArmPosScore>> possibleExtArms;
+			////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+
 			for (const auto & mKey : allMipTargets) {
 				const auto & mip = mipMaster.mips_->mips_.at(mKey);
 				//check arm
@@ -131,6 +138,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 					}
 				}
 			}
+			////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 			if(possibleArms.empty()){
 				if(possibleExtArms.empty()){
 					//no matches found
@@ -138,12 +146,15 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 					mipOuts.add("unmatchedReads", seq);
 				}else if(possibleExtArms.size() == 1){
 					const auto & mip = mipMaster.mips_->mips_.at(possibleExtArms.begin()->first);
+					////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					//stitching
 					++pairStitchingCounts[mip.name_].total;
 					auto stitchedRes = pProcessor.processPairedEnd(seq,pairStitchingCounts[mip.name_], alignerObjForStitching);
 					//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
 					SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
+					////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
+						////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 						eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
 						//log and write read
 						MetaDataInName failedStitchingMeta;
@@ -151,16 +162,139 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 						seq.seqBase_.name_.append(failedStitchingMeta.createMetaName());
 						seq.mateSeqBase_.name_.append(failedStitchingMeta.createMetaName());
 						mipOuts.add(mip.name_ + "_filteredOff", seq);
+						////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+					} else {
+						////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+						//quality control
+						std::string failedQaulifierName;
+						if(mip.getPossibleExtArmPos(*stitchedRes.combinedSeq_).empty()){
+							MetaDataInName failedQcMeta;
+							failedQcMeta.addMeta("failed", "ArmsNoLongerMatch");
+							stitchedRes.combinedSeq_->name_.append(failedQcMeta.createMetaName());
+							failedQaulifierName = "_filteredOff";
+							eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
+						} else {
+							++pairStitchingCounts[mip.name_].total;
+							eCase = mip.checkRead(*stitchedRes.combinedSeq_, pars.qFilPars_);
+							failedQaulifierName = MipExtractionStats::getNameForCase(eCase);
+							if("" != failedQaulifierName){
+								MetaDataInName failedQcMeta;
+								failedQcMeta.addMeta("failed", '_' == failedQaulifierName.front()? failedQaulifierName.substr(1) : failedQaulifierName);
+								stitchedRes.combinedSeq_->name_.append(failedQcMeta.createMetaName());
+								failedQaulifierName = "_filteredOff";
+							} else {
+								//stitchedRes.combinedSeq_->outPutSeqAnsi(std::cout);
+								BarcodeInfo barInfo = mip.determineExtBarcode(*stitchedRes.combinedSeq_);
+								mip.determineLigBarcode(*stitchedRes.combinedSeq_, barInfo);
+								MetaDataInName barMeta;
+								barMeta.addMeta("extBar", barInfo.extBar_);
+								barMeta.addMeta("ligBar", barInfo.ligBar_);
+								barMeta.addMeta("fullBar_", barInfo.fullBar_);
+								stitchedRes.combinedSeq_->name_.append(barMeta.createMetaName());
+							}
+						}
+						//log and write read
+						mipStitchedOuts.add(mip.name_ + failedQaulifierName, *stitchedRes.combinedSeq_);
+					}
+					allExtractStats.increaseCount(mip.name_, eCase);
+				}else{
+					////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+					const auto & initialMip = mipMaster.mips_->mips_.at(possibleExtArms.begin()->first);
+					auto currentMip = mipMaster.mips_->determineBestMipInFamily(seq, initialMip, alignerObjForFamilyDet);
+					////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+					//stitching
+					++pairStitchingCounts[currentMip.name_].total;
+					auto stitchedRes = pProcessor.processPairedEnd(seq,pairStitchingCounts[currentMip.name_], alignerObjForStitching);
+					//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
+					SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
+					////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
+						////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+						eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
+						//log and write read
+						MetaDataInName failedStitchingMeta;
+						failedStitchingMeta.addMeta("failedStitchCase", PairedReadProcessor::getOverlapStatusStr(stitchedRes.status_));
+						seq.seqBase_.name_.append(failedStitchingMeta.createMetaName());
+						seq.mateSeqBase_.name_.append(failedStitchingMeta.createMetaName());
+						mipOuts.add(currentMip.name_ + "_filteredOff", seq);
+						////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					}else{
 						//quality control
+						std::string failedQaulifierName;
+						if(currentMip.getPossibleExtArmPos(*stitchedRes.combinedSeq_).empty()){
+							MetaDataInName failedQcMeta;
+							failedQcMeta.addMeta("failed", "ArmsNoLongerMatch");
+							stitchedRes.combinedSeq_->name_.append(failedQcMeta.createMetaName());
+							failedQaulifierName = "_filteredOff";
+							eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
+						} else {
+							++pairStitchingCounts[currentMip.name_].total;
+							eCase = currentMip.checkRead(*stitchedRes.combinedSeq_, pars.qFilPars_);
+							failedQaulifierName = MipExtractionStats::getNameForCase(eCase);
+							if("" != failedQaulifierName){
+								MetaDataInName failedQcMeta;
+								failedQcMeta.addMeta("failed", '_' == failedQaulifierName.front()? failedQaulifierName.substr(1) : failedQaulifierName);
+								stitchedRes.combinedSeq_->name_.append(failedQcMeta.createMetaName());
+								failedQaulifierName = "_filteredOff";
+							} else {
+								//stitchedRes.combinedSeq_->outPutSeqAnsi(std::cout);
+								BarcodeInfo barInfo = currentMip.determineExtBarcode(*stitchedRes.combinedSeq_);
+								currentMip.determineLigBarcode(*stitchedRes.combinedSeq_, barInfo);
+								MetaDataInName barMeta;
+								barMeta.addMeta("extBar", barInfo.extBar_);
+								barMeta.addMeta("ligBar", barInfo.ligBar_);
+								barMeta.addMeta("fullBar_", barInfo.fullBar_);
+								stitchedRes.combinedSeq_->name_.append(barMeta.createMetaName());
+							}
+						}
+
+						//log and write read
+						mipStitchedOuts.add(currentMip.name_ + failedQaulifierName, *stitchedRes.combinedSeq_);
+					}
+					allExtractStats.increaseCount(currentMip.name_, eCase);
+				}
+			} else if (1 == possibleArms.size()) {
+				////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+				//only one possible match
+				const auto & mip = mipMaster.mips_->mips_.at(possibleArms.begin()->first);
+				//stitching
+				auto stitchedRes = pProcessor.processPairedEnd(seq,pairStitchingCounts[mip.name_], alignerObjForStitching);
+
+				//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
+				SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
+				////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+				if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
+					++pairStitchingCounts[mip.name_].total;
+
+					////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+					eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
+					//log and write read
+					MetaDataInName failedStitchingMeta;
+					failedStitchingMeta.addMeta("failedStitchCase", PairedReadProcessor::getOverlapStatusStr(stitchedRes.status_));
+					seq.seqBase_.name_.append(failedStitchingMeta.createMetaName());
+					seq.mateSeqBase_.name_.append(failedStitchingMeta.createMetaName());
+					mipOuts.add(mip.name_ + "_filteredOff", seq);
+					////std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+				}else{
+					//quality control
+					std::string failedQaulifierName;
+					if(mip.getPossibleExtArmPos(*stitchedRes.combinedSeq_).empty()){
+						MetaDataInName failedQcMeta;
+						failedQcMeta.addMeta("failed", "ArmsNoLongerMatch");
+						stitchedRes.combinedSeq_->name_.append(failedQcMeta.createMetaName());
+						failedQaulifierName = "_filteredOff";
+						eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
+					} else {
+						++pairStitchingCounts[mip.name_].total;
 						eCase = mip.checkRead(*stitchedRes.combinedSeq_, pars.qFilPars_);
-						std::string failedQaulifierName = MipExtractionStats::getNameForCase(eCase);
+						failedQaulifierName = MipExtractionStats::getNameForCase(eCase);
 						if("" != failedQaulifierName){
 							MetaDataInName failedQcMeta;
 							failedQcMeta.addMeta("failed", '_' == failedQaulifierName.front()? failedQaulifierName.substr(1) : failedQaulifierName);
 							stitchedRes.combinedSeq_->name_.append(failedQcMeta.createMetaName());
 							failedQaulifierName = "_filteredOff";
 						} else {
+							//stitchedRes.combinedSeq_->outPutSeqAnsi(std::cout);
 							BarcodeInfo barInfo = mip.determineExtBarcode(*stitchedRes.combinedSeq_);
 							mip.determineLigBarcode(*stitchedRes.combinedSeq_, barInfo);
 							MetaDataInName barMeta;
@@ -169,83 +303,6 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 							barMeta.addMeta("fullBar_", barInfo.fullBar_);
 							stitchedRes.combinedSeq_->name_.append(barMeta.createMetaName());
 						}
-						//log and write read
-						mipStitchedOuts.add(mip.name_ + failedQaulifierName, *stitchedRes.combinedSeq_);
-					}
-					allExtractStats.increaseCount(mip.name_, eCase);
-				}else{
-					const auto & initialMip = mipMaster.mips_->mips_.at(possibleExtArms.begin()->first);
-					auto currentMip = mipMaster.mips_->determineBestMipInFamily(seq, initialMip, alignerObjForFamilyDet);
-
-					//stitching
-					++pairStitchingCounts[currentMip.name_].total;
-					auto stitchedRes = pProcessor.processPairedEnd(seq,pairStitchingCounts[currentMip.name_], alignerObjForStitching);
-					//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
-					SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
-					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
-						eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
-						//log and write read
-						MetaDataInName failedStitchingMeta;
-						failedStitchingMeta.addMeta("failedStitchCase", PairedReadProcessor::getOverlapStatusStr(stitchedRes.status_));
-						seq.seqBase_.name_.append(failedStitchingMeta.createMetaName());
-						seq.mateSeqBase_.name_.append(failedStitchingMeta.createMetaName());
-						mipOuts.add(currentMip.name_ + "_filteredOff", seq);
-					}else{
-						//quality control
-						eCase = currentMip.checkRead(*stitchedRes.combinedSeq_, pars.qFilPars_);
-						std::string failedQaulifierName = MipExtractionStats::getNameForCase(eCase);
-						if("" != failedQaulifierName){
-							MetaDataInName failedQcMeta;
-							failedQcMeta.addMeta("failed", '_' == failedQaulifierName.front()? failedQaulifierName.substr(1) : failedQaulifierName);
-							stitchedRes.combinedSeq_->name_.append(failedQcMeta.createMetaName());
-							failedQaulifierName = "_filteredOff";
-						} else {
-							BarcodeInfo barInfo = currentMip.determineExtBarcode(*stitchedRes.combinedSeq_);
-							currentMip.determineLigBarcode(*stitchedRes.combinedSeq_, barInfo);
-							MetaDataInName barMeta;
-							barMeta.addMeta("extBar", barInfo.extBar_);
-							barMeta.addMeta("ligBar", barInfo.ligBar_);
-							barMeta.addMeta("fullBar_", barInfo.fullBar_);
-							stitchedRes.combinedSeq_->name_.append(barMeta.createMetaName());
-						}
-						//log and write read
-						mipStitchedOuts.add(currentMip.name_ + failedQaulifierName, *stitchedRes.combinedSeq_);
-					}
-					allExtractStats.increaseCount(currentMip.name_, eCase);
-				}
-			} else if (1 == possibleArms.size()) {
-				//only one possible match
-				const auto & mip = mipMaster.mips_->mips_.at(possibleArms.begin()->first);
-				//stitching
-				++pairStitchingCounts[mip.name_].total;
-				auto stitchedRes = pProcessor.processPairedEnd(seq,pairStitchingCounts[mip.name_], alignerObjForStitching);
-				//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
-				SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
-				if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
-					eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
-					//log and write read
-					MetaDataInName failedStitchingMeta;
-					failedStitchingMeta.addMeta("failedStitchCase", PairedReadProcessor::getOverlapStatusStr(stitchedRes.status_));
-					seq.seqBase_.name_.append(failedStitchingMeta.createMetaName());
-					seq.mateSeqBase_.name_.append(failedStitchingMeta.createMetaName());
-					mipOuts.add(mip.name_ + "_filteredOff", seq);
-				}else{
-					//quality control
-					eCase = mip.checkRead(*stitchedRes.combinedSeq_, pars.qFilPars_);
-					std::string failedQaulifierName = MipExtractionStats::getNameForCase(eCase);
-					if("" != failedQaulifierName){
-						MetaDataInName failedQcMeta;
-						failedQcMeta.addMeta("failed", '_' == failedQaulifierName.front()? failedQaulifierName.substr(1) : failedQaulifierName);
-						stitchedRes.combinedSeq_->name_.append(failedQcMeta.createMetaName());
-						failedQaulifierName = "_filteredOff";
-					} else {
-						BarcodeInfo barInfo = mip.determineExtBarcode(*stitchedRes.combinedSeq_);
-						mip.determineLigBarcode(*stitchedRes.combinedSeq_, barInfo);
-						MetaDataInName barMeta;
-						barMeta.addMeta("extBar", barInfo.extBar_);
-						barMeta.addMeta("ligBar", barInfo.ligBar_);
-						barMeta.addMeta("fullBar_", barInfo.fullBar_);
-						stitchedRes.combinedSeq_->name_.append(barMeta.createMetaName());
 					}
 					//log and write read
 					mipStitchedOuts.add(mip.name_ + failedQaulifierName, *stitchedRes.combinedSeq_);
@@ -277,15 +334,18 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 						bestMips.emplace_back(possible.first);
 					}
 				}
+				//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 				if(bestMips.size() == 1){
 					const auto & mip = mipMaster.mips_->mips_.at(bestMips.front());
-
+					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					//stitching
 					++pairStitchingCounts[mip.name_].total;
 					auto stitchedRes = pProcessor.processPairedEnd(seq,pairStitchingCounts[mip.name_], alignerObjForStitching);
 					//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
 					SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
+					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
+						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 						eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
 						//log and write read
 						MetaDataInName failedStitchingMeta;
@@ -293,30 +353,44 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 						seq.seqBase_.name_.append(failedStitchingMeta.createMetaName());
 						seq.mateSeqBase_.name_.append(failedStitchingMeta.createMetaName());
 						mipOuts.add(mip.name_ + "_filteredOff", seq);
+						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					}else{
 						//quality control
-						eCase = mip.checkRead(*stitchedRes.combinedSeq_, pars.qFilPars_);
-						std::string failedQaulifierName = MipExtractionStats::getNameForCase(eCase);
-						if("" != failedQaulifierName){
+						std::string failedQaulifierName;
+						if(mip.getPossibleExtArmPos(*stitchedRes.combinedSeq_).empty()){
 							MetaDataInName failedQcMeta;
-							failedQcMeta.addMeta("failed", '_' == failedQaulifierName.front()? failedQaulifierName.substr(1) : failedQaulifierName);
+							failedQcMeta.addMeta("failed", "ArmsNoLongerMatch");
 							stitchedRes.combinedSeq_->name_.append(failedQcMeta.createMetaName());
 							failedQaulifierName = "_filteredOff";
+							eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
 						} else {
-							BarcodeInfo barInfo = mip.determineExtBarcode(*stitchedRes.combinedSeq_);
-							mip.determineLigBarcode(*stitchedRes.combinedSeq_, barInfo);
-							MetaDataInName barMeta;
-							barMeta.addMeta("extBar", barInfo.extBar_);
-							barMeta.addMeta("ligBar", barInfo.ligBar_);
-							barMeta.addMeta("fullBar_", barInfo.fullBar_);
-							stitchedRes.combinedSeq_->name_.append(barMeta.createMetaName());
+							++pairStitchingCounts[mip.name_].total;
+							eCase = mip.checkRead(*stitchedRes.combinedSeq_, pars.qFilPars_);
+							failedQaulifierName = MipExtractionStats::getNameForCase(eCase);
+							if("" != failedQaulifierName){
+								MetaDataInName failedQcMeta;
+								failedQcMeta.addMeta("failed", '_' == failedQaulifierName.front()? failedQaulifierName.substr(1) : failedQaulifierName);
+								stitchedRes.combinedSeq_->name_.append(failedQcMeta.createMetaName());
+								failedQaulifierName = "_filteredOff";
+							} else {
+								//stitchedRes.combinedSeq_->outPutSeqAnsi(std::cout);
+								BarcodeInfo barInfo = mip.determineExtBarcode(*stitchedRes.combinedSeq_);
+								mip.determineLigBarcode(*stitchedRes.combinedSeq_, barInfo);
+								MetaDataInName barMeta;
+								barMeta.addMeta("extBar", barInfo.extBar_);
+								barMeta.addMeta("ligBar", barInfo.ligBar_);
+								barMeta.addMeta("fullBar_", barInfo.fullBar_);
+								stitchedRes.combinedSeq_->name_.append(barMeta.createMetaName());
+							}
 						}
 						//log and write read
 						mipStitchedOuts.add(mip.name_ + failedQaulifierName, *stitchedRes.combinedSeq_);
+						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					}
 					allExtractStats.increaseCount(mip.name_, eCase);
-
+					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 				}else if(bestMips.size() > 1){
+					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					//too many matches found
 					allExtractStats.increaseIndeterminate();
 					MetaDataInName indeterminateMeta;
@@ -341,6 +415,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 						indeterminateMeta.addMeta("match_" + estd::to_string(bestCount)+ "_ligScore", bestLigScore);
 						++bestCount;
 					}
+					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					seq.seqBase_.name_.append(indeterminateMeta.createMetaName() );
 					seq.mateSeqBase_.name_.append(indeterminateMeta.createMetaName() );
 					mipOuts.add("indeterminate", seq);
@@ -353,15 +428,16 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 				}
 			}
 		}
+		//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 		if (verbose_) {
 			std::cout << std::endl;
 		}
 	}
 
-
+	//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 	mipOuts.closeOutAll();
 	mipStitchedOuts.closeOutAll();
-
+	//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 	VecStr extracOnlyColNames {"sampleName", "mipTarget", "mipFamily", "readNumber",
 			"goodReads", "failedLigationArm", "failedMinLen(<"
 					+ estd::to_string(pars.minLen) + ")" };
@@ -376,17 +452,17 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 	}
 	extracOnlyColNames.emplace_back("containsNs");
 	extracOnlyColNames.emplace_back("badStitch");
-
+	//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 	table infoTabByTarget(extracOnlyColNames);
 	infoTabByTarget.content_ = allExtractStats.outputContents(*mipMaster.mips_, "\t");
 	infoTabByTarget.outPutContents(
 			TableIOOpts(OutOptions(sampDirMaster.extractDir_.string() + "extractInfoByTarget.txt", ".txt"), "\t", infoTabByTarget.hasHeader_));
 
-
+	//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 
 	VecStr stitchResultsColNames{"sampleName", "mipTarget", "mipFamily", "total", "r1EndsInR2", "r1BeginsInR2", "OverlapFail", "PerfectOverlap"};
 	table stitchInfoByTarget(stitchResultsColNames);
-
+	//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 	auto mipNameKeys = getVectorOfMapKeys(pairStitchingCounts);
 	MipNameSorter::sort(mipNameKeys);
 	for(const auto & mipKey : mipNameKeys){
@@ -399,6 +475,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 				getPercentageString(pairStitchingCounts[mipKey].overlapFail,pairStitchingCounts[mipKey].total),
 				getPercentageString(pairStitchingCounts[mipKey].perfectOverlapCombined,pairStitchingCounts[mipKey].total));
 	}
+	//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 	stitchInfoByTarget.outPutContents(
 			TableIOOpts(OutOptions(sampDirMaster.extractDir_.string() + "stitchInfoByTarget.txt", ".txt"), "\t", stitchInfoByTarget.hasHeader_));
 
@@ -413,6 +490,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 	if(pars.cacheAlignments){
 		alignerObjForFamilyDet.processAlnInfoOutputNoCheck(sampDirMaster.extractAlnCacheDir_.string(), verbose_);
 	}
+	//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 }
 
 

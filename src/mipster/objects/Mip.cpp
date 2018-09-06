@@ -74,10 +74,15 @@ BarcodeInfo Mip::determineExtBarcodeTrim(seqInfo & read) const {
 BarcodeInfo Mip::determineExtBarcode(const seqInfo & read) const {
 	//assumes these arms are already determined to be there and isn't completely safe to run if
 	//they aren't
+	//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 	auto armPosMotif = getPossibleExtArmPos(read);
+	//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+	//std::cout << "\t" <<"armPosMotif.size(): " << armPosMotif.size() << std::endl;
 	//log  barcode
 	std::string extBarcode = read.seq_.substr(
 			armPosMotif.front().pos_ - extBarcodeLen_, extBarcodeLen_);
+	//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+
 	return BarcodeInfo(name_, extBarcode);
 }
 
