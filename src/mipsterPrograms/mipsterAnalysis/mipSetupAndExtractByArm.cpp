@@ -320,7 +320,7 @@ fi
 		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipAnalysisServerSetUp --masterDir "
 				<< bib::files::normalize(mipMaster.directoryMaster_.masterDir_)
 		<< " --numThreads " << pars.numThreads
-		<< " --name mip$1 --verbose &";
+		<< " --name mip$1 --verbose";
 		mipScriptOut << std::endl;
 	}
 	// run viewer, mav

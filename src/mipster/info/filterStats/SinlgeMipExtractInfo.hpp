@@ -39,6 +39,7 @@ public:
 	static std::string getNameForCase(extractCase eCase);
 	std::string toStr(const std::string & delim) const;
 	VecStr toVecStr() const;
+	static VecStr toVecStrHeader(uint32_t minLen, const std::string & qualCheckStr);
 	uint32_t getTotal() const;
 };
 

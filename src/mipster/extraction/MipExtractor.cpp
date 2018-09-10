@@ -53,6 +53,17 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 
 	//extraction counts
 	MipExtractionStats allExtractStats(pars.sampleName);
+	allExtractStats.minlen_ = pars.minLen;
+	if (pars.qFilPars_.checkingQFrac_) {
+		allExtractStats.qualCheckStr = "failed_q"
+				+ estd::to_string(pars.qFilPars_.qualCheck_) + "<"
+				+ estd::to_string(pars.qFilPars_.qualCheckCutOff_);
+	} else if (pars.qFilPars_.checkingQWindow) {
+		allExtractStats.qualCheckStr = "failed_qW" + pars.qFilPars_.qualWindow_;
+	} else {
+		allExtractStats.qualCheckStr = "failed_quality(noneDone)";
+	}
+
 	std::unordered_map<std::string, PairedReadProcessor::ProcessedResultsCounts> pairStitchingCounts;
 
 //	VecStr filterOutNames = { "_failedQuality", "_failedLigation", "_failedMinLen", "_containsNs", "_badStitch" };
@@ -437,28 +448,17 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 	//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 	mipOuts.closeOutAll();
 	mipStitchedOuts.closeOutAll();
-	//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
-	VecStr extracOnlyColNames {"sampleName", "mipTarget", "mipFamily", "readNumber",
-			"goodReads", "failedLigationArm", "failedMinLen(<"
-					+ estd::to_string(pars.minLen) + ")" };
-	if (pars.qFilPars_.checkingQFrac_) {
-		extracOnlyColNames.emplace_back(
-				"failed_q" + estd::to_string(pars.qFilPars_.qualCheck_) + "<"
-						+ estd::to_string(pars.qFilPars_.qualCheckCutOff_));
-	} else if (pars.qFilPars_.checkingQWindow) {
-		extracOnlyColNames.emplace_back("failed_qW" + pars.qFilPars_.qualWindow_);
-	} else {
-		extracOnlyColNames.emplace_back("failed_quality(noneDone)");
-	}
-	extracOnlyColNames.emplace_back("containsNs");
-	extracOnlyColNames.emplace_back("badStitch");
-	//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
-	table infoTabByTarget(extracOnlyColNames);
-	infoTabByTarget.content_ = allExtractStats.outputContents(*mipMaster.mips_, "\t");
-	infoTabByTarget.outPutContents(
-			TableIOOpts(OutOptions(sampDirMaster.extractDir_.string() + "extractInfoByTarget.txt", ".txt"), "\t", infoTabByTarget.hasHeader_));
 
-	//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+
+	table extractionInfoTabByTarget = allExtractStats.outputContentsJustTargets(*mipMaster.mips_);
+	extractionInfoTabByTarget.outPutContents(
+			TableIOOpts(OutOptions(sampDirMaster.extractDir_.string() + "extractInfoByTarget.txt", ".txt"), "\t", extractionInfoTabByTarget.hasHeader_));
+
+	table extractionInfoTabSummary = allExtractStats.outputContentsSummary(*mipMaster.mips_);
+	extractionInfoTabSummary.outPutContents(
+			TableIOOpts(OutOptions(sampDirMaster.extractDir_.string() + "extractInfoSummary.txt", ".txt"), "\t", extractionInfoTabSummary.hasHeader_));
+
+
 
 	VecStr stitchResultsColNames{"sampleName", "mipTarget", "mipFamily", "total", "r1EndsInR2", "r1BeginsInR2", "OverlapFail", "PerfectOverlap"};
 	table stitchInfoByTarget(stitchResultsColNames);
@@ -534,6 +534,17 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 	}
 
 	MipExtractionStats allExtractStats(pars.sampleName);
+	allExtractStats.minlen_ = pars.minLen;
+	if (pars.qFilPars_.checkingQFrac_) {
+		allExtractStats.qualCheckStr = "failed_q"
+				+ estd::to_string(pars.qFilPars_.qualCheck_) + "<"
+				+ estd::to_string(pars.qFilPars_.qualCheckCutOff_);
+	} else if (pars.qFilPars_.checkingQWindow) {
+		allExtractStats.qualCheckStr = "failed_qW" + pars.qFilPars_.qualWindow_;
+	} else {
+		allExtractStats.qualCheckStr = "failed_quality(noneDone)";
+	}
+
 	for(const auto & sampleIOOpt : sampleIOOpts){
 		//read in reads
 		SeqIO readerOpt(sampleIOOpt);
@@ -753,23 +764,16 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 
 
 	mipOuts.closeOutAll();
-	VecStr extracOnlyColNames {"sampleName", "mipTarget", "mipFamily", "readNumber",
-			"goodReads", "failedLigationArm", "failedMinLen(<"
-					+ estd::to_string(pars.minLen) + ")" };
-	if (pars.qFilPars_.checkingQFrac_) {
-		extracOnlyColNames.emplace_back(
-				"failed_q" + estd::to_string(pars.qFilPars_.qualCheck_) + "<"
-						+ estd::to_string(pars.qFilPars_.qualCheckCutOff_));
-	} else if (pars.qFilPars_.checkingQWindow) {
-		extracOnlyColNames.emplace_back("failed_qW" + pars.qFilPars_.qualWindow_);
-	} else {
-		extracOnlyColNames.emplace_back("failed_quality(noneDone)");
-	}
-	extracOnlyColNames.emplace_back("containsNs");
-	table infoTabByTarget(extracOnlyColNames);
-	infoTabByTarget.content_ = allExtractStats.outputContents(*mipMaster.mips_, "\t");
-	infoTabByTarget.outPutContents(
-			TableIOOpts(OutOptions(sampDirMaster.extractDir_.string() + "extractInfoByTarget.txt", ".txt"), "\t", infoTabByTarget.hasHeader_));
+
+
+	table extractionInfoTabByTarget = allExtractStats.outputContentsJustTargets(*mipMaster.mips_);
+	extractionInfoTabByTarget.outPutContents(
+			TableIOOpts(OutOptions(sampDirMaster.extractDir_.string() + "extractInfoByTarget.txt", ".txt"), "\t", extractionInfoTabByTarget.hasHeader_));
+
+	table extractionInfoTabSummary = allExtractStats.outputContentsSummary(*mipMaster.mips_);
+	extractionInfoTabSummary.outPutContents(
+			TableIOOpts(OutOptions(sampDirMaster.extractDir_.string() + "extractInfoSummary.txt", ".txt"), "\t", extractionInfoTabSummary.hasHeader_));
+
 	std::ofstream sampLog;
 	openTextFile(sampLog, sampDirMaster.extractDir_.string() + "log.txt", ".txt", false, true);
 	sampLog << "Ran on: " << bib::getCurrentDate() << std::endl;

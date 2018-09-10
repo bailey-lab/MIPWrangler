@@ -88,7 +88,11 @@ public:
 	bfs::path pathMipPopClusPopInfo(const MipFamSamp & mipSampName) const;
 	bfs::path pathMipPopClusHaplo(const MipFamSamp & mipSampName) const;
 
+	//extract information
 	bfs::path pathSampleExtractInfo(const MipFamSamp & mipSampName) const;
+	bfs::path pathSampleExtractInfoByTarget(const MipFamSamp & mipSampName) const;
+	bfs::path pathSampleExtractInfoSummary(const MipFamSamp & mipSampName) const;
+	bfs::path pathSampleExtractStitchingInfo(const MipFamSamp & mipSampName) const;
 
 	bfs::path pathMipExtractInfo(const std::string & mipTar) const;
 	bfs::path pathSampleRawData(const MipFamSamp & mipSampName) const;
@@ -111,8 +115,27 @@ public:
 	bfs::path pathToAllPopInfo() const;
 
 	void prepareMipAnalysisServer(uint32_t numThreads) const;
+
 	table gatherExtractStats(const std::vector<MipFamSamp> & samplesExtracted,
 			uint32_t numThreads) const;
+
+
+	void writeAllExtractStatsFromSummary(
+			const std::vector<MipFamSamp> & samplesExtracted,
+			uint32_t numThreads,
+			const OutOptions & outOpts) const;
+	void writeAllExtractStatsFromInfoByTarget(
+			const std::vector<MipFamSamp> & samplesExtracted,
+			uint32_t numThreads,
+			const OutOptions & outOpts) const;
+	void writeAllExtractStitchStats(
+			const std::vector<MipFamSamp> & samplesExtracted,
+			uint32_t numThreads,
+			const OutOptions & outOpts) const;
+
+
+
+
 
 };
 

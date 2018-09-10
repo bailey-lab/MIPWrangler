@@ -50,6 +50,49 @@ bool MipExtractionStats::haveStatFor(const std::string & name)const{
 	return stats_.end() != stats_.find(name);
 }
 
+
+table MipExtractionStats::outputContentsJustTargets(const MipCollection & mips){
+	table ret(toVecStr(VecStr{"Sample", "mipTarget", "mipFamily"}, SinlgeMipExtractInfo::toVecStrHeader(minlen_, qualCheckStr)));
+
+	auto statKeys = getVectorOfMapKeys(stats_);
+	MipNameSorter::sort(statKeys);
+	for (const auto & k : statKeys) {
+		ret.addRow(toVecStr(
+				sampName_,
+				k,
+				mips.getFamilyForTarget(k),
+				stats_[k].toVecStr()));
+	}
+	return ret;
+}
+
+table MipExtractionStats::outputContentsSummary(const MipCollection & mips){
+	table ret(toVecStr(VecStr{"Sample", "total"},
+			VecStr{"unmatched", "indeterminate", "smallFragment"},
+			SinlgeMipExtractInfo::toVecStrHeader(minlen_, qualCheckStr)
+			));
+	auto statKeys = getVectorOfMapKeys(stats_);
+	SinlgeMipExtractInfo total;
+	for (const auto & k : statKeys) {
+		total.good_ += stats_[k].good_;
+		total.failedLig_ += stats_[k].failedLig_;
+		total.failedQual_ += stats_[k].failedQual_;
+		total.failedMinLen_ += stats_[k].failedMinLen_;
+		total.containsNs_ += stats_[k].containsNs_;
+		total.badStitch_ += stats_[k].badStitch_;
+	}
+	uint32_t grandTotal = total.getTotal() + totalUnmatched_
+			+ smallFragmentCount_ + indeterminate_;
+	ret.addRow(toVecStr(sampName_,
+			grandTotal,
+			totalUnmatched_,
+			indeterminate_,
+			smallFragmentCount_,
+			total.toVecStr()));
+	return ret;
+}
+
+
 std::vector<VecStr> MipExtractionStats::outputContents(const MipCollection & mips,
 		const std::string & delim) {
 	std::vector<VecStr> ret;

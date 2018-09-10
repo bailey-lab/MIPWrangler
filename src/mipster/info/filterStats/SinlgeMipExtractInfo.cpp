@@ -81,15 +81,30 @@ std::string SinlgeMipExtractInfo::getNameForCase(extractCase eCase) {
 std::string SinlgeMipExtractInfo::toStr(const std::string & delim) const {
 	return vectorToString(toVecStr(), delim);
 }
+
+VecStr SinlgeMipExtractInfo::toVecStrHeader(uint32_t minLen, const std::string & qualCheckStr){
+	return VecStr{
+		"totalMatched",
+		"goodReads",
+		"failedLigationArm",
+		"failedMinLen(<" + estd::to_string(minLen) + ")",
+		 qualCheckStr,
+		"containsNs",
+		"badStitch"
+	};
+}
+
 VecStr SinlgeMipExtractInfo::toVecStr() const {
 	uint32_t total = getTotal();
-	return bibseq::toVecStr(total, getPercentageString(good_, total),
+	return bibseq::toVecStr(total,
+			getPercentageString(good_, total),
 			getPercentageString(failedLig_, total),
 			getPercentageString(failedMinLen_, total),
 			getPercentageString(failedQual_, total),
 			getPercentageString(containsNs_, total),
 			getPercentageString(badStitch_, total));
 }
+
 uint32_t SinlgeMipExtractInfo::getTotal() const {
 	return good_ + failedLig_ + failedMinLen_ + failedQual_ + containsNs_ + badStitch_;
 }

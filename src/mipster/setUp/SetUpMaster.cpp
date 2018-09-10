@@ -833,6 +833,20 @@ bfs::path SetUpMaster::pathSampleExtractInfo(const MipFamSamp & mipSampName) con
 			mipSampName.samp_ + "_mipExtraction", "extractInfoByTarget.txt");
 }
 
+bfs::path SetUpMaster::pathSampleExtractInfoByTarget(const MipFamSamp & mipSampName) const{
+	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
+			mipSampName.samp_ + "_mipExtraction", "extractInfoByTarget.txt");
+}
+bfs::path SetUpMaster::pathSampleExtractInfoSummary(const MipFamSamp & mipSampName) const{
+	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
+			mipSampName.samp_ + "_mipExtraction", "extractInfoSummary.txt");
+}
+bfs::path SetUpMaster::pathSampleExtractStitchingInfo(const MipFamSamp & mipSampName) const{
+	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
+			mipSampName.samp_ + "_mipExtraction", "stitchInfoByTarget.txt");
+}
+
+
 bfs::path SetUpMaster::pathSampleRawData(const MipFamSamp & mipSampName) const{
 	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
 				mipSampName.samp_ + rawDataSuffix_);
@@ -915,39 +929,62 @@ void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 	bib::files::makeDirP(
 			bib::files::MkdirPar(getMipSerDir().string() + "popClusInfo"));
 	//extraction
+//	{
+//		auto extractionMasterTab = gatherExtractStats(samplesExtracted, numThreads);
+//		if (!extractionMasterTab.content_.empty()) {
+//			TableIOOpts allExtractInfoOpts(InOptions(), "\t",
+//					OutOptions(bfs::path(
+//							getMipSerDir().string()
+//									+ "extractionInfo/allExtractInfo.tab.txt")), "\t", true);
+//			allExtractInfoOpts.out_.overWriteFile_ = true;
+//			extractionMasterTab.outPutContents(allExtractInfoOpts);
+//			std::vector<bfs::path> extractInfoFilepaths;
+//			for (const auto & samp : samplesExtracted) {
+//				extractInfoFilepaths.emplace_back(
+//						pathSampleExtractInfo(samp));
+//			}
+//
+//			MasterTableStaticCache allExtractInfo(
+//					TableIOOpts(InOptions(), "\t", OutOptions(), "\t", true),
+//					extractInfoFilepaths, true);
+//			auto byTarget = allExtractInfo.get().splitTableOnColumn("mipTarget");
+//			auto allTargets = mips_->getMipsForFamily(names_->mips_);
+//			for (auto & tar : byTarget) {
+//				if(bib::in(tar.first, allTargets)){
+//					tar.second.trimElementsAtFirstOccurenceOf("(");
+//					TableIOOpts tarOpts(
+//							OutOptions(bfs::path(
+//									getMipSerDir().string() + "extractionInfo/"
+//											+ tar.first + ".tab.txt")), "\t", true);
+//					tarOpts.out_.overWriteFile_ = true;
+//					tar.second.outPutContents(tarOpts);
+//				}
+//			}
+//		}
+//	}
+	// extraction
 	{
-		auto extractionMasterTab = gatherExtractStats(
-				samplesExtracted,numThreads);
-		if (!extractionMasterTab.content_.empty()) {
-			TableIOOpts allExtractInfoOpts(InOptions(), "\t",
-					OutOptions(bfs::path(
-							getMipSerDir().string()
-									+ "extractionInfo/allExtractInfo.tab.txt")), "\t", true);
-			allExtractInfoOpts.out_.overWriteFile_ = true;
-			extractionMasterTab.outPutContents(allExtractInfoOpts);
-			std::vector<bfs::path> extractInfoFilepaths;
-			for (const auto & samp : samplesExtracted) {
-				extractInfoFilepaths.emplace_back(
-						pathSampleExtractInfo(samp));
-			}
-
-			MasterTableStaticCache allExtractInfo(
-					TableIOOpts(InOptions(), "\t", OutOptions(), "\t", true),
-					extractInfoFilepaths, true);
-			auto byTarget = allExtractInfo.get().splitTableOnColumn("mipTarget");
-			auto allTargets = mips_->getMipsForFamily(names_->mips_);
-			for (auto & tar : byTarget) {
-				if(bib::in(tar.first, allTargets)){
-					tar.second.trimElementsAtFirstOccurenceOf("(");
-					TableIOOpts tarOpts(
-							OutOptions(bfs::path(
-									getMipSerDir().string() + "extractionInfo/"
-											+ tar.first + ".tab.txt")), "\t", true);
-					tarOpts.out_.overWriteFile_ = true;
-					tar.second.outPutContents(tarOpts);
-				}
-			}
+		std::vector<MipFamSamp> samplesForExtraction;
+		for(const auto & samp : names_->samples_){
+			MipFamSamp mipSamp("", samp);
+			samplesForExtraction.emplace_back(mipSamp);
 		}
+
+		OutOptions allExtractInfoByTargetOpt (bfs::path(
+									getMipSerDir().string()
+											+ "extractionInfo/allExtractInfoByTarget.tab.txt"));
+		writeAllExtractStatsFromInfoByTarget(samplesForExtraction, numThreads, allExtractInfoByTargetOpt);
+
+		OutOptions allExtractInfoSummaryOpt (bfs::path(
+									getMipSerDir().string()
+											+ "extractionInfo/allExtractInfoSummary.tab.txt"));
+		writeAllExtractStatsFromSummary(samplesForExtraction, numThreads, allExtractInfoSummaryOpt);
+
+		OutOptions allStitchInfoByTargetOpt (bfs::path(
+									getMipSerDir().string()
+											+ "extractionInfo/allStitchInfoByTarget.tab.txt"));
+		writeAllExtractStitchStats(samplesForExtraction, numThreads, allStitchInfoByTargetOpt);
+
 	}
 	//pop clustering
 	{
@@ -997,7 +1034,6 @@ void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 	}
 }
 
-
 table SetUpMaster::gatherExtractStats(const std::vector<MipFamSamp> & samplesExtracted, uint32_t numThreads)const {
 
 	TableIOOpts allExtractInfoOpts(InOptions(), "\t",
@@ -1019,10 +1055,12 @@ table SetUpMaster::gatherExtractStats(const std::vector<MipFamSamp> & samplesExt
 			}
 		}
 	}
+
 	table extractionMasterTab(VecStr { "Sample", "raw", "assembled", "discarded",
 			"unassembled", "matchingExtArm", "UnmatachedExtArm",
 			"readsFailing_LigationArm", "readsFailing_Minlen", "readsFailing_Quality",
 			"smallFragment" });
+
 	if (needsUpdate) {
 		bib::concurrent::LockableQueue<MipFamSamp> samplesExtractQueue(
 				samplesExtracted);
@@ -1092,6 +1130,145 @@ table SetUpMaster::gatherExtractStats(const std::vector<MipFamSamp> & samplesExt
 	}
 	return extractionMasterTab;
 }
+
+
+void SetUpMaster::writeAllExtractStatsFromSummary(
+		const std::vector<MipFamSamp> & samplesExtracted,
+		uint32_t numThreads,
+		const OutOptions & outOpts) const{
+	std::vector<bfs::path> files;
+	for (const auto & samp : samplesExtracted) {
+		auto infoFnp = pathSampleExtractInfoSummary(samp);
+		if (bfs::exists(infoFnp)) {
+			files.emplace_back(infoFnp);
+		}
+	}
+	bool needsUpdate = false;
+	if (!bfs::exists(outOpts.outName())) {
+		needsUpdate = true;
+	}else{
+		auto extractStatTime = bib::files::last_write_time(outOpts.outName());
+		for (const auto & f : files) {
+			if (bib::files::last_write_time(f) > extractStatTime) {
+				needsUpdate = true;
+				break;
+			}
+		}
+	}
+	if(needsUpdate){
+		OutputStream out(outOpts);
+		/**@todo add safety check for same headers, should be same files but would be a good check
+		 *
+		 */
+		std::vector<std::string> header;
+
+		for(const auto & f : files){
+			table extractionInfo(f, "\t", true);
+			extractionInfo.trimElementsAtFirstOccurenceOf("(");
+
+			if(header.empty()){
+				extractionInfo.outPutContents(out, "\t");
+				header = extractionInfo.columnNames_;
+			}else{
+				extractionInfo.hasHeader_ = false;
+				extractionInfo.outPutContents(out, "\t");
+			}
+		}
+	}
+}
+
+void SetUpMaster::writeAllExtractStatsFromInfoByTarget(
+		const std::vector<MipFamSamp> & samplesExtracted,
+		uint32_t numThreads,
+		const OutOptions & outOpts) const{
+	std::vector<bfs::path> files;
+	for (const auto & samp : samplesExtracted) {
+		auto infoFnp = pathSampleExtractInfoByTarget(samp);
+		if (bfs::exists(infoFnp)) {
+			files.emplace_back(infoFnp);
+		}
+	}
+	bool needsUpdate = false;
+	if (!bfs::exists(outOpts.outName())) {
+		needsUpdate = true;
+	}else{
+		auto extractStatTime = bib::files::last_write_time(outOpts.outName());
+		for (const auto & f : files) {
+			if (bib::files::last_write_time(f) > extractStatTime) {
+				needsUpdate = true;
+				break;
+			}
+		}
+	}
+	if(needsUpdate){
+		OutputStream out(outOpts);
+		/**@todo add safety check for same headers, should be same files but would be a good check
+		 *
+		 */
+		std::vector<std::string> header;
+
+		for(const auto & f : files){
+			table extractionInfo(f, "\t", true);
+			extractionInfo.trimElementsAtFirstOccurenceOf("(");
+
+			if(header.empty()){
+				extractionInfo.outPutContents(out, "\t");
+				header = extractionInfo.columnNames_;
+			}else{
+				extractionInfo.hasHeader_ = false;
+				extractionInfo.outPutContents(out, "\t");
+			}
+		}
+	}
+}
+
+void SetUpMaster::writeAllExtractStitchStats(
+		const std::vector<MipFamSamp> & samplesExtracted,
+		uint32_t numThreads,
+		const OutOptions & outOpts) const{
+	std::vector<bfs::path> files;
+	for (const auto & samp : samplesExtracted) {
+		auto infoFnp = pathSampleExtractStitchingInfo(samp);
+		if (bfs::exists(infoFnp)) {
+			files.emplace_back(infoFnp);
+		}
+	}
+	bool needsUpdate = false;
+	if (!bfs::exists(outOpts.outName())) {
+		needsUpdate = true;
+	}else{
+		auto extractStatTime = bib::files::last_write_time(outOpts.outName());
+		for (const auto & f : files) {
+			if (bib::files::last_write_time(f) > extractStatTime) {
+				needsUpdate = true;
+				break;
+			}
+		}
+	}
+	if(needsUpdate){
+		OutputStream out(outOpts);
+		/**@todo add safety check for same headers, should be same files but would be a good check
+		 *
+		 */
+		std::vector<std::string> header;
+
+		for(const auto & f : files){
+			table extractionInfo(f, "\t", true);
+			extractionInfo.trimElementsAtFirstOccurenceOf("(");
+
+			if(header.empty()){
+				extractionInfo.outPutContents(out, "\t");
+				header = extractionInfo.columnNames_;
+			}else{
+				extractionInfo.hasHeader_ = false;
+				extractionInfo.outPutContents(out, "\t");
+			}
+		}
+	}
+}
+
+
+
 
 
 

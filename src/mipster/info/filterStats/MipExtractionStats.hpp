@@ -32,6 +32,9 @@ public:
 
 	std::string sampName_;
 
+	uint32_t minlen_{0};
+	std::string qualCheckStr;
+
 	void increaseCount(const std::string & name,
 			SinlgeMipExtractInfo::extractCase eCase);
 	void increaseIndeterminate();
@@ -41,6 +44,9 @@ public:
 	VecStr getNames() const;
 	bool haveStatFor(const std::string & name) const;
 	std::vector<VecStr> outputContents(const MipCollection & mips, const std::string & delim);
+
+	table outputContentsJustTargets(const MipCollection & mips);
+	table outputContentsSummary(const MipCollection & mips);
 	static std::string getNameForCase(SinlgeMipExtractInfo::extractCase eCase);
 };
 
