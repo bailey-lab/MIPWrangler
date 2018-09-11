@@ -118,6 +118,7 @@ int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
 	bib::stopWatch watch;
 	watch.setLapName("Initial");
 	MipsOnGenome mips(inputPars);
+	setUp.startARunLog(mips.logDir_.string());
 
 	watch.startNewLap("loadInArms");
 	mips.loadInArms();
@@ -132,6 +133,8 @@ int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
 	if(inputPars.removeBeds){
 		bib::files::rmDirForce(mips.bedsDir_);
 		bib::files::makeDir(bib::files::MkdirPar(mips.bedsDir_));
+		bib::files::makeDir(bib::files::MkdirPar(mips.bedsPerGenomeDir_));
+
 	}
 	watch.startNewLap("genBeds");
 	mips.genBeds(inputPars.allowableError);

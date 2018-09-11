@@ -39,6 +39,7 @@ MipsOnGenome::MipsOnGenome(const pars & inputParameters) :
 	checkInputThrow();
 
 	requireExternalProgramThrow("bowtie2");
+	requireExternalProgramThrow("samtools");
 
 }
 
@@ -261,7 +262,7 @@ void MipsOnGenome::genFastas(){
 										extractionName = genome + "." + extractionNumber;
 									}
 								}
-								seqs.emplace_back(seqInfo(extractionName, seq));
+
 								if(extRegions[regPos].overlaps(ligRegions[regPos])){
 									ss << "Couldn't trim seq for " << mipName << " in " << genome << " because ligation and ext arms overlap" << "\n";
 									ss << "ext: " << extRegions[regPos].chrom_ << ":" << extRegions[regPos].start_ << "-" << extRegions[regPos].end_ << "\n";
@@ -272,6 +273,11 @@ void MipsOnGenome::genFastas(){
 									readVecTrimmer::trimOffEndBases(trimmedSeq, ligRegions[regPos].getLen());
 									trimmedSeqs.emplace_back(trimmedSeq);
 								}
+								//change arms to lower case
+								changeSubStrToLowerFromBegining(seq,extRegions[regPos].getLen());
+								changeSubStrToLowerToEnd(seq, seq.size() - ligRegions[regPos].getLen());
+
+								seqs.emplace_back(seqInfo(extractionName, seq));
 							}
 						}
 					}
@@ -893,7 +899,24 @@ void MipsOnGenome::genBeds(const comparison & allowableError) {
 			while(genomeQueue.getVal(genome)){
 				std::vector<std::shared_ptr<Bed6RecordCore>> regions;
 				OutOptions outOpts(bib::files::make_path(bedsPerGenomeDir_, genome + ".bed"));
+				bool needUpdate = false;
+				if(outOpts.outExists()){
+					auto writeTime = bib::files::last_write_time(outOpts.outName());
+					for(const auto & mip : mipArms_->mips_){
+						auto mipBedFnp = bib::files::make_path(bedsDir_, bib::pasteAsStr(genome, "_", mip.first, ".bed"));
+						if(bfs::exists(mipBedFnp)){
+							if(bib::files::last_write_time(mipBedFnp) < writeTime){
+								needUpdate = true;
+								break;
+							}
+						}
+					}
+				}else{
+					needUpdate = true;
+				}
+				outOpts.overWriteFile_ = true;
 				OutputStream outOut(outOpts);
+
 				for(const auto & mip : mipArms_->mips_){
 					auto mipBedFnp = bib::files::make_path(bedsDir_, bib::pasteAsStr(genome, "_", mip.first, ".bed"));
 					if(bfs::exists(mipBedFnp)){
@@ -906,6 +929,22 @@ void MipsOnGenome::genBeds(const comparison & allowableError) {
 					intersectPars.gffFnp_ = gMapper_.genomes_.at(genome)->gffFnp_;
 					intersectBedLocsWtihGffRecords(regions, intersectPars);
 				}
+				//sort
+				bib::sort(regions, [](const std::shared_ptr<Bed6RecordCore> & b1, const std::shared_ptr<Bed6RecordCore> & b2){
+					if(b1->chrom_ == b1->chrom_){
+						if(b1->chromStart_ == b2->chromStart_){
+							if(b1->chromEnd_ == b2->chromEnd_){
+								return b1->name_ < b2->name_;
+							}else{
+								return b1->chromEnd_ < b2->chromEnd_;
+							}
+						}else{
+							return b1->chromStart_ < b2->chromStart_;
+						}
+					}else{
+						return b1->chrom_ < b2->chrom_;
+					}
+				});
 				for(const auto & b : regions){
 					outOut << b->toDelimStrWithExtra() << std::endl;
 				}
@@ -1065,8 +1104,8 @@ void MipsOnGenome::genTables() const{
 	OutOptions allTabOpts (pathToAllInfoAllGenomes());
 	allTabOpts.overWriteFile_ = true;
 	OutputStream allTabOut(allTabOpts);
-
 	allTabOut << bib::conToStr(getMipTarStatsForGenomeHeader_, "\t") << std::endl;
+
 	auto getGenomeInfo = [this,&genomeQueue,&allInfoMut,&allTabOut](){
 		std::string genome = "";
 		while(genomeQueue.getVal(genome)){
