@@ -32,7 +32,7 @@ int mipsterMipExplorerRunner::mipsAgainstHaplotypes(
 	setUp.processVerbose();
 	setUp.processComparison(inputPars.allowableError);
 	setUp.processReadInNames({"--fasta"}, true);
-	setUp.setOption(inputPars.numThreads, "--numThreads", "Number of Threads");
+	setUp.setOption(inputPars.gMapperPars_.numThreads_, "--numThreads", "Number of Threads");
 	setUp.setOption(selectedMips, "--selectedMips", "Selected Mips");
 	setUp.setOption(mipArmsFnp, "--mipArmsFnp", "Mip Arms Fnp", true);
 	setUp.processDirectoryOutputName(true);
@@ -59,9 +59,12 @@ int mipsterMipExplorerRunner::mipsAgainstHaplotypes(
 		}
 	}
 
-	inputPars.primaryGenome = "inputSeqs";
+	inputPars.gMapperPars_.primaryGenome_ = "inputSeqs";
 	inputPars.mainDir = setUp.pars_.directoryName_;
 	inputPars.inputDir = setUp.pars_.directoryName_;
+	inputPars.gMapperPars_.genomeDir_ = bib::files::make_path(inputPars.inputDir, "genomes");
+	inputPars.gMapperPars_.gffDir_ = bib::files::make_path(inputPars.inputDir, "info/gff");
+
 
 	SeqInput reader(setUp.pars_.ioOptions_);
 	auto seqs = reader.readAllReads<seqInfo>();
@@ -71,12 +74,12 @@ int mipsterMipExplorerRunner::mipsAgainstHaplotypes(
 	MipsOnGenome mips(inputPars);
 	watch.startNewLap("loadInArms");
 	mips.loadInArms();
-	watch.startNewLap("loadInGenomes");
-	mips.loadInGenomes();
-	watch.startNewLap("setUpGenomes");
-	mips.setUpGenomes();
 	watch.startNewLap("createArmFiles");
 	mips.createArmFiles();
+	watch.startNewLap("loadInGenomes");
+	mips.gMapper_.loadInGenomes();
+	watch.startNewLap("setUpGenomes");
+	mips.gMapper_.setUpGenomes();
 	watch.startNewLap("mapArmsToGenomes");
 	mips.mapArmsToGenomes();
 	watch.startNewLap("genBeds");
@@ -96,13 +99,20 @@ int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
 	setUp.processDebug();
 	setUp.processVerbose();
 	setUp.processComparison(inputPars.allowableError);
-	setUp.setOption(inputPars.primaryGenome, "--primaryGenome", "The primary genome", true);
-	setUp.setOption(inputPars.numThreads, "--numThreads", "Number of Threads");
-	setUp.setOption(inputPars.mipArmsFnp, "--mipArmsFnp", "Mip Arms Fnp");
+	setUp.setOption(inputPars.gMapperPars_.primaryGenome_, "--primaryGenome", "The primary genome", true);
+	setUp.setOption(inputPars.gMapperPars_.numThreads_, "--numThreads", "Number of Threads");
+	setUp.setOption(inputPars.mipArmsFnp, "--mipArmsFnp", "Mip Arms Fnp", true);
 	setUp.setOption(inputPars.removeBeds, "--removeBeds", "Whether to remove the bed file to do a re-extraction or not, usefull if changing number of errors allowed");
 	setUp.setOption(inputPars.mainDir, "--masterDir", "The master output directory", true);
 	setUp.setOption(inputPars.inputDir, "--inputDir", "The master input directory, with arm sequences and genomes", true);
-	setUp.setOption(inputPars.selectGenomes, "--selectGenomes", "Extract info from only these genomes, default is all genomes found");
+	std::string selectGenomes = "";
+	setUp.setOption(selectGenomes, "--selectGenomes", "Extract info from only these genomes, default is all genomes found");
+	if("" != selectGenomes){
+		auto selectGenomesToks = tokenizeString(selectGenomes, ",");
+		inputPars.gMapperPars_.selectedGenomes_ = std::set<std::string>(selectGenomesToks.begin(), selectGenomesToks.end());
+	}
+	inputPars.gMapperPars_.genomeDir_ = bib::files::make_path(inputPars.inputDir, "genomes");
+	inputPars.gMapperPars_.gffDir_ = bib::files::make_path(inputPars.inputDir, "info/gff");
 	setUp.finishSetUp(std::cout);
 
 	bib::stopWatch watch;
@@ -111,12 +121,12 @@ int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
 
 	watch.startNewLap("loadInArms");
 	mips.loadInArms();
-	watch.startNewLap("loadInGenomes");
-	mips.loadInGenomes();
-	watch.startNewLap("setUpGenomes");
-	mips.setUpGenomes();
 	watch.startNewLap("createArmFiles");
 	mips.createArmFiles();
+	watch.startNewLap("loadInGenomes");
+	mips.gMapper_.loadInGenomes();
+	watch.startNewLap("setUpGenomes");
+	mips.gMapper_.setUpGenomes();
 	watch.startNewLap("mapArmsToGenomes");
 	mips.mapArmsToGenomes();
 	if(inputPars.removeBeds){
@@ -159,7 +169,7 @@ int mipsterMipExplorerRunner::viewMipsOnGenome(
 	setUp.setOption(inputDir, "--inputDir", "The master input directory, with arm sequences and genomes", true);
 	setUp.setOption(primaryGenome, "--primaryGenome", "The primary genome", true);
 	setUp.setOption(selectGenomes, "--selectGenomes", "Extract info from only these genomes, default is all genomes found");
-	setUp.setOption(mipArmsFnp, "--mipArmsFnp", "Mip Arms Fnp");
+	setUp.setOption(mipArmsFnp, "--mipArmsFnp", "Mip Arms Fnp", true);
 
 	setUp.setOption(resourceDirName, "--resourceDirName",
 			"Name of the resource Directory where the js and hmtl is located",

@@ -19,30 +19,26 @@ namespace bibseq {
 
 
 
-MipsOnGenome::MipsOnGenome(const pars & inputParameters) :inputParameters_(inputParameters),
-		mainDir_(inputParameters.mainDir),
-		mainInputDir_(inputParameters.inputDir),
-		numThreads_(inputParameters.numThreads) {
-	genomeDir_ = bib::files::make_path(mainInputDir_, "genomes");
-	infoDir_ = bib::files::make_path(mainInputDir_, "info");
-	mipArmsFnp_ = inputParameters.mipArmsFnp != "" ? inputParameters.mipArmsFnp : bib::files::make_path(infoDir_, "mip_arms.tab.txt");
-	bib::files::makeDirP(bib::files::MkdirPar { mainDir_ });
-	mapDir_ = bib::files::makeDirP(mainDir_, bib::files::MkdirPar("mapped"));
-	bedsDir_ = bib::files::makeDirP(mainDir_, bib::files::MkdirPar("beds"));
-	fastaDir_ = bib::files::makeDirP(mainDir_, bib::files::MkdirPar("fastas"));
-	armsDir_ = bib::files::makeDirP(mainDir_, bib::files::MkdirPar("arms"));
-	logDir_ = bib::files::makeDirP(mainDir_, bib::files::MkdirPar("logs"));
-	tablesDir_ = bib::files::makeDirP(mainDir_, bib::files::MkdirPar("tables"));
-	if("" != inputParameters.selectGenomes){
-		auto genomes = tokenizeString(inputParameters.selectGenomes, ",");
-		genomes.emplace_back(inputParameters.primaryGenome);
-		std::set<std::string> genomeSet{genomes.begin(), genomes.end()};
-		setSelectedGenomes(genomeSet);
-	}
+MipsOnGenome::MipsOnGenome(const pars & inputParameters) :
+		inputParameters_(inputParameters),
+		gMapper_(inputParameters.gMapperPars_) {
+
+	//std::cout << bib::json::toJson(inputParameters.gMapperPars_) << std::endl;
+
+	bib::files::makeDirP(bib::files::MkdirPar { inputParameters_.mainDir });
+	mapDir_ = bib::files::makeDirP(inputParameters_.mainDir, bib::files::MkdirPar("mapped"));
+	bedsDir_ = bib::files::makeDirP(inputParameters_.mainDir, bib::files::MkdirPar("beds"));
+	bedsPerGenomeDir_ = bib::files::makeDirP(bedsDir_, bib::files::MkdirPar("perGenome"));
+
+	fastaDir_ = bib::files::makeDirP(inputParameters_.mainDir, bib::files::MkdirPar("fastas"));
+	fastaByFamilyDir_ = bib::files::makeDirP(fastaDir_, bib::files::MkdirPar("byFamily"));
+	armsDir_ = bib::files::makeDirP(inputParameters_.mainDir, bib::files::MkdirPar("arms"));
+	logDir_ = bib::files::makeDirP(inputParameters_.mainDir, bib::files::MkdirPar("logs"));
+	tablesDir_ = bib::files::makeDirP(inputParameters_.mainDir, bib::files::MkdirPar("tables"));
+
 	checkInputThrow();
 
 	requireExternalProgramThrow("bowtie2");
-
 
 }
 
@@ -55,11 +51,10 @@ void MipsOnGenome::checkInputThrow() const {
 			ss << bib::bashCT::boldRed(fnp.string())<< " needs to exist "<< "\n";
 		}
 	};
-	checkForPath(mainDir_);
-	checkForPath(mainInputDir_);
-	checkForPath(genomeDir_);
-	checkForPath(infoDir_);
-	checkForPath(mipArmsFnp_);
+	checkForPath(inputParameters_.inputDir);
+	checkForPath(inputParameters_.mipArmsFnp);
+	checkForPath(inputParameters_.gMapperPars_.genomeDir_);
+
 	if (failed) {
 		std::stringstream outSS;
 		outSS << __PRETTY_FUNCTION__ << ", error in checking directory set up"
@@ -69,97 +64,9 @@ void MipsOnGenome::checkInputThrow() const {
 	}
 }
 
-MipsOnGenome::Genome::Genome(const bfs::path & fnp) :
-		fnp_(fnp) {
-	checkExistenceThrow(fnp_, __PRETTY_FUNCTION__);
-	fnpTwoBit_ = fnp_;
-	fnpTwoBit_.replace_extension(".2bit");
-}
-void MipsOnGenome::Genome::createTwoBit() {
-
-	TwoBit::faToTwoBitPars pars;
-	pars.inputFilename = fnp_.string();
-	pars.outFilename = fnpTwoBit_.string();
-	bool buildTwoBit = false;
-	if(!bfs::exists(fnpTwoBit_)){
-		buildTwoBit = true;
-	}else if(bib::files::firstFileIsOlder(fnpTwoBit_, fnp_) ){
-		buildTwoBit = true;
-		pars.overWrite = true;
-	}
-	if(buildTwoBit){
-		TwoBit::fastasToTwoBit(pars);
-	}
-	fnpTwoBit_ = pars.outFilename;
-}
-
-
-Json::Value MipsOnGenome::Genome::chromosomeLengths() const{
-	Json::Value ret;
-
-	TwoBit::TwoBitFile genFile(fnpTwoBit_);
-	auto lens = genFile.getSeqLens();
-	auto lenKeys = bib::getVecOfMapKeys(lens);
-	bib::sort(lenKeys);
-	for(const auto & lenKey : lenKeys	){
-		Json::Value lenObj;
-		lenObj["name"] = lenKey;
-		lenObj["len"] = lens[lenKey];
-		ret.append(lenObj);
-	}
-	return ret;
-}
-
-std::string MipsOnGenome::getPrimaryGenome(){
-	return primaryGenome_;
-}
-
-void MipsOnGenome::Genome::buildBowtie2Index() const {
-	BioCmdsUtils bioRunner;
-	bioRunner.RunBowtie2Index(fnp_);
-}
-void MipsOnGenome::loadInGenomes(){
-	auto fastaFiles = bib::files::gatherFiles(genomeDir_, ".fasta", false);
-	if(fastaFiles.empty()){
-		std::stringstream ss;
-		ss << __PRETTY_FUNCTION__ << ": Error, there has to be at least one genome in " << genomeDir_ << "\n";
-		ss << "Found none ending with .fasta" << "\n";
-		throw std::runtime_error{ss.str()};
-	}
-	for(const auto & f : fastaFiles){
-		if(selectedGenomes_.empty() || bib::in(bfs::basename(f), selectedGenomes_)){
-			genomes_[bib::files::removeExtension(f.filename().string())] = std::make_unique<Genome>(f);
-		}
-	}
-	setPrimaryGenome(inputParameters_.primaryGenome);
-}
-
-void MipsOnGenome::setUpGenomes(){
-
-	auto genomeNames = getVectorOfMapKeys(genomes_);
-
-	bib::concurrent::LockableQueue<std::string> genomeQueue(genomeNames);
-
-	auto runSetUpGenome = [&genomeQueue,this](){
-		std::string genome = "";
-		while(genomeQueue.getVal(genome)){
-			genomes_.at(genome)->createTwoBit();
-			genomes_.at(genome)->buildBowtie2Index();
-		}
-	};
-
-	std::vector<std::thread> threads;
-	for(uint32_t t = 0; t < numThreads_; ++t){
-		threads.emplace_back(std::thread(runSetUpGenome));
-	}
-
-	for(auto & t : threads){
-		t.join();
-	}
-}
 
 void MipsOnGenome::loadInArms(){
-	mipArms_ = std::make_unique<MipCollection>(mipArmsFnp_, 6);
+	mipArms_ = std::make_unique<MipCollection>(inputParameters_.mipArmsFnp, 6);
 }
 
 void MipsOnGenome::createArmFiles(){
@@ -198,14 +105,14 @@ std::string MipsOnGenome::GenomeMip::uid(const std::string & sep) const {
 
 void MipsOnGenome::setMipArmsFnp(const bfs::path & mipArmsFnp){
 	bib::files::checkExistenceThrow(mipArmsFnp, __PRETTY_FUNCTION__);
-	mipArmsFnp_ = mipArmsFnp;
+	inputParameters_.mipArmsFnp = mipArmsFnp;
 }
 
 
 
 void MipsOnGenome::mapArmsToGenomes() {
 	std::vector<GenomeMip> pairs;
-	for (const auto & gen : genomes_) {
+	for (const auto & gen : gMapper_.genomes_) {
 		for (const auto & m : mipArms_->mips_) {
 			pairs.emplace_back(GenomeMip{gen.first, m.second.name_});
 		}
@@ -224,22 +131,22 @@ void MipsOnGenome::mapArmsToGenomes() {
 			std::string outCheckExt = outStub + "_ext.sorted.bam";
 			std::string outCheckLig = outStub + "_lig.sorted.bam";
 			if (!  bfs::exists(outCheckExt)
-					|| bib::files::firstFileIsOlder(outCheckExt, genomes_.at(pair.genome_)->fnp_)
+					|| bib::files::firstFileIsOlder(outCheckExt, gMapper_.genomes_.at(pair.genome_)->fnp_)
 					|| bib::files::firstFileIsOlder(outCheckExt, pathToMipExtArmFasta(pair.mip_)) ||
 					!  bfs::exists(outCheckLig)
-					|| bib::files::firstFileIsOlder(outCheckLig, genomes_.at(pair.genome_)->fnp_)
+					|| bib::files::firstFileIsOlder(outCheckLig, gMapper_.genomes_.at(pair.genome_)->fnp_)
 					|| bib::files::firstFileIsOlder(outCheckLig, pathToMipLigArmFasta(pair.mip_))) {
 				std::stringstream bowtie2CmdExt;
 				bowtie2CmdExt
 						<< " bowtie2 -D 20 -R 3 -N 1 -L 15 -i S,1,0.5 -a --end-to-end "
-						<< "-x " << bib::files::make_path(genomeDir_, pair.genome_)
+						<< "-x " << bib::files::make_path(inputParameters_.gMapperPars_.genomeDir_, pair.genome_)
 						<< " -f -U " << bib::files::make_path(armsDir_, pair.mip_)
 						<< "_ext-arm.fasta" << " | samtools view - -b | samtools sort - -o " << outStub << "_ext.sorted.bam"
 						<< " " << "&& samtools index " << outStub << "_ext.sorted.bam";
 				std::stringstream bowtie2CmdLig;
 				bowtie2CmdLig
 						<< " bowtie2 -D 20 -R 3 -N 1 -L 15 -i S,1,0.5 -a --end-to-end "
-						<< "-x " << bib::files::make_path(genomeDir_, pair.genome_)
+						<< "-x " << bib::files::make_path(inputParameters_.gMapperPars_.genomeDir_, pair.genome_)
 						<< " -f -U " << bib::files::make_path(armsDir_, pair.mip_)
 						<< "_lig-arm.fasta" << " | samtools view - -b | samtools sort - -o " << outStub << "_lig.sorted.bam"
 						<< " " << "&& samtools index " << outStub << "_lig.sorted.bam";
@@ -269,7 +176,7 @@ void MipsOnGenome::mapArmsToGenomes() {
 		}
 	};
 	std::vector<std::thread> threads;
-	for(uint32_t t = 0; t < numThreads_; ++t){
+	for(uint32_t t = 0; t < inputParameters_.gMapperPars_.numThreads_; ++t){
 		threads.emplace_back(std::thread(mapArm));
 	}
 	for(auto & t : threads){
@@ -286,10 +193,9 @@ void MipsOnGenome::mapArmsToGenomes() {
 
 
 
-void MipsOnGenome::genFastas() {
-
+void MipsOnGenome::genFastas(){
 	const VecStr mips = bib::getVecOfMapKeys( mipArms_->mips_);
-	const VecStr genomes = bib::getVecOfMapKeys( genomes_	);
+	const VecStr genomes = bib::getVecOfMapKeys( gMapper_.genomes_	);
 	bib::concurrent::LockableQueue<std::string> mipQueue(mips);
 	std::mutex logMut;
 	Json::Value log;
@@ -299,9 +205,9 @@ void MipsOnGenome::genFastas() {
 		while(mipQueue.getVal(mipName)){
 			std::stringstream ss;
 			bool succes = false;
-			auto outOpts = SeqIOOptions::genFastaOut(bib::files::make_path(fastaDir_, mipName));
+			auto outOpts = SeqIOOptions::genFastaOut(bib::files::make_path(fastaDir_, mipName + "_withArms"));
 			outOpts.out_.overWriteFile_ = true;
-			auto trimmedOutOpts = SeqIOOptions::genFastaOut(bib::files::make_path(fastaDir_, "trimmed_" + mipName));
+			auto trimmedOutOpts = SeqIOOptions::genFastaOut(bib::files::make_path(fastaDir_, mipName));
 			trimmedOutOpts.out_.overWriteFile_ = true;
 			std::unordered_map<std::string, std::shared_ptr<InOptions>> bedOpts;
 			bool needsUpdate = false;
@@ -339,7 +245,7 @@ void MipsOnGenome::genFastas() {
 							ss << "Error in parsing " << bedOpt.second->inFilename_ << ", the number of ext regions doesn't equal full regions or lig regions don't equal full regions\n";
 						}else{
 							for(const auto & regPos : iter::range(regions.size())){
-								TwoBit::TwoBitFile twoBitFile(bib::files::make_path(genomeDir_, genome + ".2bit"));
+								TwoBit::TwoBitFile twoBitFile(bib::files::make_path(inputParameters_.gMapperPars_.genomeDir_, genome + ".2bit"));
 								std::string seq = "";
 								twoBitFile[regions[regPos].chrom_]->getSequence(seq, regions[regPos].start_, regions[regPos].end_);
 								//consider leaving lower case
@@ -401,7 +307,6 @@ void MipsOnGenome::genFastas() {
 							}
 							return outputSeqs;
 						};
-
 						succes = true;
 						auto outputSeqs = collapseSimSeqs(seqs);
 						SeqOutput::write(outputSeqs, outOpts);
@@ -417,17 +322,63 @@ void MipsOnGenome::genFastas() {
 			}
 		}
 	};
-	std::vector<std::thread> threads;
-	for(uint32_t t = 0; t < numThreads_; ++t){
-		threads.emplace_back(std::thread(genFastasFunc));
+	{
+		std::vector<std::thread> threads;
+		for(uint32_t t = 0; t < inputParameters_.gMapperPars_.numThreads_; ++t){
+			threads.emplace_back(std::thread(genFastasFunc));
+		}
+		bib::concurrent::joinAllJoinableThreads(threads);
 	}
-	for(auto & t : threads){
-		t.join();
+
+
+	//combine for mip families
+	auto mipFamilies = mipArms_->getMipFamilies();
+
+	bib::concurrent::LockableQueue<std::string> mipFamilyQueue(mipFamilies);
+	auto combineMipTars = [this,&mipFamilyQueue](){
+		std::string mipFamily = "";
+		while(mipFamilyQueue.getVal(mipFamily)){
+			{
+				std::vector<bfs::path> files;
+				for(const auto & tar : mipArms_->getMipsForFamily(mipFamily)){
+					if(bfs::exists(pathToMipFastaWithoutArms(tar))){
+						files.emplace_back(pathToMipFastaWithoutArms(tar));
+					}
+				}
+//				std::cout << mipFamily << std::endl;
+//				std::cout << "\t" << bib::conToStr(files, ", ") << std::endl;
+				if(!files.empty()){
+					OutOptions fastaOut(pathToMipFamilyFastaWithoutArms(mipFamily));
+					fastaOut.overWriteFile_ = true;
+					concatenateFiles(files, fastaOut);
+				}
+			}
+			{
+				std::vector<bfs::path> files;
+				for(const auto & tar : mipArms_->getMipsForFamily(mipFamily)){
+					if(bfs::exists(pathToMipFasta(tar))){
+						files.emplace_back(pathToMipFasta(tar));
+					}
+				}
+				if(!files.empty()){
+					OutOptions fastaOut(pathToMipFamilyFasta(mipFamily));
+					fastaOut.overWriteFile_ = true;
+					concatenateFiles(files, fastaOut);
+				}
+			}
+		}
+	};
+	{
+		std::vector<std::thread> threads;
+		for(uint32_t t = 0; t < inputParameters_.gMapperPars_.numThreads_; ++t){
+			threads.emplace_back(std::thread(combineMipTars));
+		}
+		bib::concurrent::joinAllJoinableThreads(threads);
 	}
-	std::ofstream outFile;
+
 	OutOptions logOpts(bib::files::make_path(logDir_, "fastaLog-" + bib::getCurrentDate() + ".json"));
 	logOpts.outFilename_ = bib::files::findNonexitantFile(logOpts.outFilename_);
-	openTextFile(outFile, logOpts);
+	OutputStream outFile(logOpts);
 	outFile << log << std::endl;
 }
 
@@ -451,7 +402,7 @@ table MipsOnGenome::getGenomeLocsForMipTar(const std::string & tar) const{
 		}
 	}
 	table locs(VecStr{"genome","chrom","start", "stop", "strand", "length",  "GCContent", "longestHomopolymer" });
-	for(const auto & genome : genomes_){
+	for(const auto & genome : gMapper_.genomes_){
 		auto bedFnp = bib::files::make_path(pathToMipBed(tar, genome.first));
 		if(bfs::exists(bedFnp)){
 			Bed6RecordCore bedCore;
@@ -522,7 +473,7 @@ table MipsOnGenome::getGenomeLocsForAllMipTars() const {
 }
 
 table MipsOnGenome::getGenomeLocsForGenome(const std::string & genome) const {
-	if (!bib::in(genome, genomes_)) {
+	if (!bib::in(genome, gMapper_.genomes_)) {
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__ << ": error, no information for genome " << genome
 				<< "\n";
@@ -592,9 +543,7 @@ table MipsOnGenome::getMipRegionStatsForGenome(
 
 table MipsOnGenome::getMipTarStatsForGenomes(const VecStr & genomes,
 		const VecStr & mipTars, bool allRecords) const{
-	table ret(VecStr { "region", "target", "genome", "extractionNumber", "chrom", "start", "end", "strand",
-			"length", "containsTandemRepeat", "PossibleLengthVariation", "variantNum",
-			"totalVariantsPossible", "variantRatio", "GCContent", "longestHomopolymer" });
+	table ret(getMipTarStatsForGenomeHeader_);
 	for (const auto & mipTar : mipTars) {
 		auto seqsOpts = SeqIOOptions::genFastaIn(pathToMipFasta(mipTar));
 		if(!seqsOpts.inExists()){
@@ -688,6 +637,10 @@ table MipsOnGenome::getMipTarStatsForGenomes(const VecStr & genomes,
 }
 
 
+const VecStr MipsOnGenome::getMipTarStatsForGenomeHeader_{ "region", "target", "genome", "extractionNumber", "chrom", "start", "end", "strand",
+			"length", "containsTandemRepeat", "PossibleLengthVariation", "variantNum",
+			"totalVariantsPossible", "variantRatio", "GCContent", "longestHomopolymer" };
+
 
 table MipsOnGenome::genExtractionNumberTable() const{
 	auto genomes = getGenomes();
@@ -712,10 +665,7 @@ table MipsOnGenome::genExtractionNumberTable() const{
 
 table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
 		const VecStr & mipTars, bool allRecords) const{
-	table ret(VecStr { "region", "target", "genome", "extractionNumber", "chrom", "start", "end",
-			"strand", "length", "containsTandemRepeat", "PossibleLengthVariation",
-			"variantNum", "totalVariantsPossible", "variantRatio", "GCContent",
-			"longestHomopolymer" });
+	table ret(getMipTarStatsForGenomeHeader_);
 	for (const auto & mipTar : mipTars) {
 		auto seqsOpts = SeqIOOptions::genFastaIn(pathToMipFasta(mipTar));
 		if(!seqsOpts.inExists()){
@@ -825,7 +775,7 @@ table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
 
 void MipsOnGenome::genBeds(const comparison & allowableError) {
 	std::vector<GenomeMip> pairs;
-	for (const auto & gen : genomes_) {
+	for (const auto & gen : gMapper_.genomes_) {
 		for (const auto & m : mipArms_->mips_) {
 			pairs.emplace_back(GenomeMip{gen.first, m.second.name_});
 		}
@@ -854,9 +804,9 @@ void MipsOnGenome::genBeds(const comparison & allowableError) {
 					insertSizeCutoff = 10000;
 				}
 				std::vector<std::shared_ptr<AlignmentResults>> alnResultsExt = gatherMapResults(
-						outCheckExt, genomes_.at(pair.genome_)->fnpTwoBit_, allowableError);
+						outCheckExt, gMapper_.genomes_.at(pair.genome_)->fnpTwoBit_, allowableError);
 				std::vector<std::shared_ptr<AlignmentResults>> alnResultsLig = gatherMapResults(
-						outCheckLig, genomes_.at(pair.genome_)->fnpTwoBit_, allowableError);
+						outCheckLig, gMapper_.genomes_.at(pair.genome_)->fnpTwoBit_, allowableError);
 
 				if(alnResultsExt.empty() || alnResultsLig.empty()){
 					if(alnResultsExt.empty()) {
@@ -927,13 +877,48 @@ void MipsOnGenome::genBeds(const comparison & allowableError) {
 			}
 		}
 	};
-	std::vector<std::thread> threads;
-	for(uint32_t t = 0; t < numThreads_; ++t){
-		threads.emplace_back(std::thread(genBedsFunc));
+	{
+		std::vector<std::thread> threads;
+		for(uint32_t t = 0; t < inputParameters_.gMapperPars_.numThreads_; ++t){
+			threads.emplace_back(std::thread(genBedsFunc));
+		}
+		bib::concurrent::joinAllJoinableThreads(threads);
 	}
-	for(auto & t : threads){
-		t.join();
+	{
+		auto genomeNames = getGenomes();
+		bib::concurrent::LockableQueue<std::string> genomeQueue(genomeNames);
+
+		auto combineBedsPerGenomes = [this,&genomeQueue](){
+			std::string genome = "";
+			while(genomeQueue.getVal(genome)){
+				std::vector<std::shared_ptr<Bed6RecordCore>> regions;
+				OutOptions outOpts(bib::files::make_path(bedsPerGenomeDir_, genome + ".bed"));
+				OutputStream outOut(outOpts);
+				for(const auto & mip : mipArms_->mips_){
+					auto mipBedFnp = bib::files::make_path(bedsDir_, bib::pasteAsStr(genome, "_", mip.first, ".bed"));
+					if(bfs::exists(mipBedFnp)){
+						addOtherVec(regions, getBeds(mipBedFnp));
+					}
+				}
+				if("" != gMapper_.genomes_.at(genome)->gffFnp_ &&
+						bfs::exists(gMapper_.genomes_.at(genome)->gffFnp_)){
+					intersectBedLocsWtihGffRecordsPars intersectPars = gMapper_.pars_.gffIntersectPars_;
+					intersectPars.gffFnp_ = gMapper_.genomes_.at(genome)->gffFnp_;
+					intersectBedLocsWtihGffRecords(regions, intersectPars);
+				}
+				for(const auto & b : regions){
+					outOut << b->toDelimStrWithExtra() << std::endl;
+				}
+			}
+		};
+		std::vector<std::thread> threads;
+		for(uint32_t t = 0; t < inputParameters_.gMapperPars_.numThreads_; ++t){
+			threads.emplace_back(std::thread(combineBedsPerGenomes));
+		}
+		bib::concurrent::joinAllJoinableThreads(threads);
+
 	}
+
 	std::ofstream outFile;
 	OutOptions logOpts(bib::files::make_path(logDir_, "bedLog-" + bib::getCurrentDate() + ".json"));
 	logOpts.outFilename_ = bib::files::findNonexitantFile(logOpts.outFilename_);
@@ -944,7 +929,7 @@ void MipsOnGenome::genBeds(const comparison & allowableError) {
 
 std::vector<MipsOnGenome::GenomeMip> MipsOnGenome::genGenomeMipPairs() const {
 	std::vector<GenomeMip> pairs;
-	for (const auto & gen : genomes_) {
+	for (const auto & gen : gMapper_.genomes_) {
 		for (const auto & m : mipArms_->mips_) {
 			pairs.emplace_back(GenomeMip { gen.first, m.second.name_ });
 		}
@@ -954,23 +939,7 @@ std::vector<MipsOnGenome::GenomeMip> MipsOnGenome::genGenomeMipPairs() const {
 
 
 
-void MipsOnGenome::setPrimaryGenome(const std::string & genome){
-	if(!bib::in(genome, genomes_)){
-		std::stringstream ss;
-		ss << __PRETTY_FUNCTION__ << ": Error, no genome found matching = " << genome << "\n";
-		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(genomes_), ", ") << "\n";
-		throw std::runtime_error{ss.str()};
-	}
-	primaryGenome_ = genome;
-}
 
-void MipsOnGenome::setSelectedGenomes(const std::set<std::string> & genomes) {
-	selectedGenomes_ = genomes;
-}
-
-void MipsOnGenome::setSelectedGenomes(const VecStr & genomes) {
-	setSelectedGenomes(std::set<std::string> { genomes.begin(), genomes.end() });
-}
 
 
 bfs::path MipsOnGenome::pathToMipBed(const std::string & mipName, const std::string & genome)const{
@@ -980,10 +949,10 @@ bfs::path MipsOnGenome::pathToMipBed(const std::string & mipName, const std::str
 		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
 		throw std::runtime_error{ss.str()};
 	}
-	if(!bib::in(genome, genomes_)){
+	if(!bib::in(genome, gMapper_.genomes_)){
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__ << ": Error, no genome found matching " << genome << "\n";
-		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(genomes_), ", ") << "\n";
+		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(gMapper_.genomes_), ", ") << "\n";
 		throw std::runtime_error{ss.str()};
 	}
 	return bib::files::make_path(bedsDir_, genome + "_" + mipName + ".bed");
@@ -992,7 +961,12 @@ bfs::path MipsOnGenome::pathToMipBed(const std::string & mipName, const std::str
 
 bfs::path MipsOnGenome::pathToAllInfoPrimaryGenome() const {
 	return bib::files::make_path(tablesDir_,
-			"allTarInfo_" + primaryGenome_ + ".tab.txt");
+			"allTarInfo_" + inputParameters_.gMapperPars_.primaryGenome_ + ".tab.txt");
+}
+
+bfs::path MipsOnGenome::pathToAllInfoForGenome(
+		const std::string & genome) const {
+	return bib::files::make_path(tablesDir_, "allTarInfo_" + genome + ".tab.txt");
 }
 
 bfs::path MipsOnGenome::pathToAllInfoAllGenomes() const {
@@ -1013,8 +987,39 @@ bfs::path MipsOnGenome::pathToMipFasta(const std::string & mipName)const{
 		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
 		throw std::runtime_error{ss.str()};
 	}
+	return bib::files::make_path(fastaDir_, mipName + "_withArms.fasta");
+}
+
+bfs::path MipsOnGenome::pathToMipFastaWithoutArms(const std::string & mipName)const{
+	if(!bib::in(mipName, mipArms_->mips_)){
+		std::stringstream ss;
+		ss << __PRETTY_FUNCTION__ << ": Error, no mip found matching " << mipName << "\n";
+		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
+		throw std::runtime_error{ss.str()};
+	}
 	return bib::files::make_path(fastaDir_, mipName + ".fasta");
 }
+
+bfs::path MipsOnGenome::pathToMipFamilyFasta(const std::string & mipFamily)const{
+	if(!bib::in(mipFamily, mipArms_->mipFamilies_)){
+		std::stringstream ss;
+		ss << __PRETTY_FUNCTION__ << ": Error, no mip found matching " << mipFamily << "\n";
+		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
+		throw std::runtime_error{ss.str()};
+	}
+	return bib::files::make_path(fastaByFamilyDir_, mipFamily + "_withArms.fasta");
+}
+
+bfs::path MipsOnGenome::pathToMipFamilyFastaWithoutArms(const std::string & mipFamily)const{
+	if(!bib::in(mipFamily, mipArms_->mipFamilies_)){
+		std::stringstream ss;
+		ss << __PRETTY_FUNCTION__ << ": Error, no mip found matching " << mipFamily << "\n";
+		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
+		throw std::runtime_error{ss.str()};
+	}
+	return bib::files::make_path(fastaByFamilyDir_, mipFamily + ".fasta");
+}
+
 
 
 bfs::path MipsOnGenome::pathToMipExtArmFasta(const std::string & mipName) const{
@@ -1045,44 +1050,54 @@ VecStr MipsOnGenome::getMips() const {
 }
 
 VecStr MipsOnGenome::getGenomes() const{
-	VecStr ret;
-	VecStr genomes = bib::getVecOfMapKeys(genomes_);
-	if("" != primaryGenome_){
-		ret.emplace_back(primaryGenome_);
-		removeElement(genomes, primaryGenome_);
-
-	}
+	VecStr genomes = bib::getVecOfMapKeys(gMapper_.genomes_);
 	bib::sort(genomes);
-	addOtherVec(ret, genomes);
-	return ret;
+	return genomes;
 }
 
 
 
 
 void MipsOnGenome::genTables() const{
-	if("" != primaryGenome_){
-		auto allTarInfo = getMipTarStatsForGenome(primaryGenome_, getMips());
-		auto tabOpts = TableIOOpts::genTabFileOut(pathToAllInfoPrimaryGenome());
-		tabOpts.out_.overWriteFile_ = true;
-		allTarInfo.outPutContents(tabOpts);
-	}
+	auto genomeNames = getGenomes();
+	bib::concurrent::LockableQueue<std::string> genomeQueue(genomeNames);
+	std::mutex allInfoMut;
+	OutOptions allTabOpts (pathToAllInfoAllGenomes());
+	allTabOpts.overWriteFile_ = true;
+	OutputStream allTabOut(allTabOpts);
 
-	auto allInfoTab = getMipTarStatsForGenomes(getGenomes(), getMips(), true);
-	auto allTabOpts = TableIOOpts::genTabFileOut(pathToAllInfoAllGenomes());
-	allTabOpts.out_.overWriteFile_ = true;
-	allInfoTab.outPutContents(allTabOpts);
+	allTabOut << bib::conToStr(getMipTarStatsForGenomeHeader_, "\t") << std::endl;
+	auto getGenomeInfo = [this,&genomeQueue,&allInfoMut,&allTabOut](){
+		std::string genome = "";
+		while(genomeQueue.getVal(genome)){
+			auto allTarInfo = getMipTarStatsForGenome(genome, getMips());
+			auto tabOpts = TableIOOpts::genTabFileOut(pathToAllInfoForGenome(genome));
+			tabOpts.out_.overWriteFile_ = true;
+			allTarInfo.outPutContents(tabOpts);
+			{
+				std::lock_guard<std::mutex> lock(allInfoMut);
+				allTarInfo.hasHeader_ = false;
+				allTarInfo.outPutContents(allTabOut, "\t");
+			}
+		}
+	};
+
+	std::vector<std::thread> threads;
+	for(uint32_t t = 0; t < inputParameters_.gMapperPars_.numThreads_; ++t){
+		threads.emplace_back(std::thread(getGenomeInfo));
+	}
+	bib::concurrent::joinAllJoinableThreads(threads);
 
 	OutOptions genomeOpts(bib::files::make_path(tablesDir_, "genomes.txt"));
 	genomeOpts.overWriteFile_ = true;
 	OutOptions targetsOpts(bib::files::make_path(tablesDir_, "mipTargets.txt"));
 	targetsOpts.overWriteFile_ = true;
 
-	auto genomeOut = genomeOpts.openFile();
-	auto targetsOut = targetsOpts.openFile();
+	OutputStream genomeOut(genomeOpts);
+	OutputStream targetsOut(targetsOpts);
 
-	printVector(getGenomes(), "\n", *genomeOut);
-	printVector(getMips(), "\n", *targetsOut);
+	printVector(getGenomes(), "\n", genomeOut);
+	printVector(getMips(), "\n", targetsOut);
 
 	auto extractionCounts = genExtractionNumberTable();
 

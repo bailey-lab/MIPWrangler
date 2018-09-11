@@ -7,6 +7,8 @@
  */
 
 #include "mipster/objects/MipCollection.hpp"
+#include <bibseq/objects/BioDataObject/reading.hpp>
+#include <SeekDeep/utils.h>
 
 namespace bibseq {
 
@@ -14,63 +16,45 @@ class MipsOnGenome {
 public:
 
 	struct pars{
+
 		bfs::path mainDir = "";
 		bfs::path inputDir = "";
-		std::string primaryGenome = "";
-		std::string selectGenomes = "";
 		bfs::path mipArmsFnp = "";
-		uint32_t numThreads = 1;
 		comparison allowableError;
 		bool removeBeds = false;
+
+		MultiGenomeMapper::inputParameters gMapperPars_;
+
+
 	};
 
 	MipsOnGenome(const pars & inputParameters);
 
 	pars inputParameters_;
-	bfs::path mainDir_;
-	bfs::path mainInputDir_;
 
-	bfs::path genomeDir_;/**< directory with genome files*/
-	bfs::path infoDir_; /**< directory with info files, specifically the mip arms file*/
+
 	bfs::path armsDir_; /**< directory with fasta files of the just the arms of the mips*/
 	bfs::path mapDir_; /**< directory with the bowtie2 hit results of the arm seqeuences to genomes*/
 	bfs::path bedsDir_; /**< directory with the bowtie2 hits converted to bed files*/
-	bfs::path fastaDir_; /**< directory with the fasta files of bed file regions extract from the genomes and collapse to similar sequences*/
+	bfs::path bedsPerGenomeDir_;
+	bfs::path fastaDir_; /**< directory with the fast files of bed file regions extract from the genomes and collapse to similar sequences*/
+	bfs::path fastaByFamilyDir_;
 	bfs::path tablesDir_; /**< directory to keep some summary tables*/
 
 	bfs::path logDir_;
 
-	bfs::path mipArmsFnp_;
 	std::unique_ptr<MipCollection> mipArms_;
 
-	uint32_t numThreads_ = 1;
+	MultiGenomeMapper gMapper_;
+
 
 private:
-	std::string primaryGenome_ = "";
-	std::set<std::string> selectedGenomes_;
 public:
 
-	std::string getPrimaryGenome();
-
-	class Genome {
-	public:
-		Genome(const bfs::path & fnp);
-		bfs::path fnp_;
-		bfs::path fnpTwoBit_;
-
-		void createTwoBit();
-
-		void buildBowtie2Index() const;
-
-		Json::Value chromosomeLengths() const;
-	};
-
-	std::unordered_map<std::string, std::unique_ptr<Genome>> genomes_;
 
 	void checkInputThrow() const;
 
-	void loadInGenomes();
-	void setUpGenomes();
+
 	void loadInArms();
 	void createArmFiles();
 
@@ -89,12 +73,12 @@ public:
 
 	void genTables() const;
 
-	void setPrimaryGenome(const std::string & genome);
-
-	void setSelectedGenomes(const std::set<std::string> & genomes);
-	void setSelectedGenomes(const VecStr & genomes);
 
 	bfs::path pathToMipFasta(const std::string & mipName) const;
+	bfs::path pathToMipFastaWithoutArms(const std::string & mipName) const;
+	bfs::path pathToMipFamilyFasta(const std::string & mipFamily) const;
+	bfs::path pathToMipFamilyFastaWithoutArms(const std::string & mipFamily) const;
+
 
 	bfs::path pathToMipExtArmFasta(const std::string & mipName) const;
 	bfs::path pathToMipLigArmFasta(const std::string & mipName) const;
@@ -102,6 +86,7 @@ public:
 	bfs::path pathToMipBed(const std::string & mipName,
 			const std::string & genomeName) const;
 	bfs::path pathToAllInfoPrimaryGenome() const;
+	bfs::path pathToAllInfoForGenome(const std::string & genome) const;
 	bfs::path pathToAllInfoAllGenomes() const;
 	bfs::path pathToExtractionCounts() const;
 
@@ -120,6 +105,10 @@ public:
 			const VecStr & mipTars, bool allRecords = false) const;
 	table getMipTarStatsForGenomes(const VecStr & genomes, const VecStr & mipTars,
 			bool allRecords = false) const;
+
+	const static VecStr getMipTarStatsForGenomeHeader_;
+
+
 
 	table genExtractionNumberTable() const;
 

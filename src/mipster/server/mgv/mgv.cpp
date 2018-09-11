@@ -21,22 +21,29 @@ mgv::mgv(const Json::Value & config) :
 	MipsOnGenome::pars mogPars;
 	mogPars.mainDir = mainDir_;
 	mogPars.inputDir = config["inputDir"].asString();
-	mogPars.numThreads = config["numThreads"].asUInt();
+	mogPars.gMapperPars_.genomeDir_ = bib::files::make_path(mogPars.inputDir, "genomes");
+	mogPars.gMapperPars_.gffDir_ = bib::files::make_path(mogPars.inputDir, "info/gff");
+
+	mogPars.gMapperPars_.numThreads_= config["numThreads"].asUInt();
 	if (config.isMember("selectedGenomes")) {
 		auto selectedGenomes = bib::json::jsonArrayToSet<std::string>(
 				config["selectedGenomes"],
 				[](const Json::Value & val) {return val.asString();});
-		mogPars.selectGenomes = bib::conToStr(selectedGenomes, ",");
+
+		mogPars.gMapperPars_.selectedGenomes_= selectedGenomes;
 
 	}
 	if ("" != config["mipArmsFnp"].asString()) {
 		mogPars.mipArmsFnp = config["mipArmsFnp"].asString();
 	}
-	mogPars.primaryGenome = config["primaryGenome"].asString();
+
+	mogPars.gMapperPars_.primaryGenome_ = config["primaryGenome"].asString();
 	mipsInfo_ = std::make_unique<MipsOnGenome>(mogPars);
 
 	mipsInfo_->loadInArms();
-	mipsInfo_->loadInGenomes();
+	mipsInfo_->gMapper_.loadInGenomes();
+	mipsInfo_->gMapper_.setUpGenomes();
+
 
 	jsFiles_->addFiles(
 			bib::files::gatherFiles(
@@ -120,7 +127,7 @@ void mgv::getAllNamesHandler(std::shared_ptr<restbed::Session> session) {
 	MipNameSorter::sort(regions, MipNameSorter::regionNamePat);
 	ret["mipRegions"] = bib::json::toJson(regions);
 
-	ret["primaryGenome"] = bib::json::toJson(mipsInfo_->getPrimaryGenome());
+	ret["primaryGenome"] = bib::json::toJson(mipsInfo_->gMapper_.pars_.primaryGenome_);
 
 	auto body = bib::json::writeAsOneLine(ret);
 	const std::multimap<std::string, std::string> headers =
@@ -425,7 +432,7 @@ void mgv::getInfoMipArmsInfoHandler(std::shared_ptr<restbed::Session> session) {
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	auto request = session->get_request();
 
-	table mipArms(mipsInfo_->mipArmsFnp_, "\t", true);
+	table mipArms(mipsInfo_->inputParameters_.mipArmsFnp, "\t", true);
 
 	auto body = bib::json::writeAsOneLine(tableToJsonByRow(mipArms, "mip_family"));
 	const std::multimap<std::string, std::string> headers =
@@ -480,10 +487,10 @@ void mgv::getGenomeLensPostHandler(std::shared_ptr<restbed::Session> session,
 		auto genomes = bib::json::jsonArrayToVec<std::string>(postData["genomes"], [](const Json::Value & val){ return val.asString();});
 		VecStr missingGenomes;
 		for(const auto & genome : genomes){
-			if(!bib::in(genome, mipsInfo_->genomes_)){
+			if(!bib::in(genome, mipsInfo_->gMapper_.genomes_)){
 				missingGenomes.emplace_back(genome);
 			}else{
-				ret[genome] = mipsInfo_->genomes_.at(genome)->chromosomeLengths();
+				ret[genome] = mipsInfo_->gMapper_.genomes_.at(genome)->chromosomeLengths();
 			}
 		}
 		if(!missingGenomes.empty()){
@@ -525,7 +532,7 @@ void mgv::getMipRegionInfoForGenomePostHandler(std::shared_ptr<restbed::Session>
 		std::cerr << checker.message_.str() << std::endl;
 	} else {
 		std::string genome = postData["genome"].asString();
-		if (!bib::in(genome, mipsInfo_->genomes_)) {
+		if (!bib::in(genome, mipsInfo_->gMapper_.genomes_)) {
 			std::cerr << "Missing info for genomes " << genome << std::endl;
 		} else {
 			auto retTab = mipsInfo_->getMipRegionStatsForGenome(genome);
@@ -568,7 +575,7 @@ void mgv::getMipTarInfoForGenomePostHandler(std::shared_ptr<restbed::Session> se
 	} else {
 		std::string genome = postData["genome"].asString();
 		auto mipTars = bib::json::jsonArrayToVec<std::string>(postData["mipTars"], [](const Json::Value & val){return val.asString();});
-		if (!bib::in(genome, mipsInfo_->genomes_)) {
+		if (!bib::in(genome, mipsInfo_->gMapper_.genomes_)) {
 			std::cerr << "Missing info for genomes " << genome << std::endl;
 		} else {
 			VecStr missingTars;
