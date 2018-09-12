@@ -460,7 +460,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 
 
 
-	VecStr stitchResultsColNames{"sampleName", "mipTarget", "mipFamily", "total", "r1EndsInR2", "r1BeginsInR2", "OverlapFail", "PerfectOverlap"};
+	VecStr stitchResultsColNames{"Sample", "mipTarget", "mipFamily", "total", "r1EndsInR2", "r1BeginsInR2", "OverlapFail", "PerfectOverlap"};
 	table stitchInfoByTarget(stitchResultsColNames);
 	//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 	auto mipNameKeys = getVectorOfMapKeys(pairStitchingCounts);
