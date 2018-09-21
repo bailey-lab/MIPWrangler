@@ -66,6 +66,8 @@ struct mipIllumArmExtractionPars : mipCorePars{
 	  qFilPars_.checkingQFrac_ = false;
 	  qFilPars_.qualCheck_ = 30;
 	  qFilPars_.qualCheckCutOff_ = 0.75;
+	  processPairPars_.r1Trim_ = 1;
+	  processPairPars_.r2Trim_ = 1;
 	}
 	std::string sampleName = "";
 	uint32_t minLen = 150;
