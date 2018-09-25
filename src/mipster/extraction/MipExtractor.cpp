@@ -199,7 +199,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 								mip.determineLigBarcode(*stitchedRes.combinedSeq_, barInfo);
 								MetaDataInName barMeta;
 								barMeta.addMeta("extBar", barInfo.extBar_);
-								barMeta.addMeta("ligBar", barInfo.ligBar_);
+								if ("" != barInfo.ligBar_) barMeta.addMeta("ligBar", barInfo.ligBar_);
 								barMeta.addMeta("fullBar_", barInfo.fullBar_);
 								stitchedRes.combinedSeq_->name_.append(barMeta.createMetaName());
 							}
@@ -253,7 +253,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 								currentMip.determineLigBarcode(*stitchedRes.combinedSeq_, barInfo);
 								MetaDataInName barMeta;
 								barMeta.addMeta("extBar", barInfo.extBar_);
-								barMeta.addMeta("ligBar", barInfo.ligBar_);
+								if ("" != barInfo.ligBar_) barMeta.addMeta("ligBar", barInfo.ligBar_);
 								barMeta.addMeta("fullBar_", barInfo.fullBar_);
 								stitchedRes.combinedSeq_->name_.append(barMeta.createMetaName());
 							}
@@ -310,7 +310,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 							mip.determineLigBarcode(*stitchedRes.combinedSeq_, barInfo);
 							MetaDataInName barMeta;
 							barMeta.addMeta("extBar", barInfo.extBar_);
-							barMeta.addMeta("ligBar", barInfo.ligBar_);
+							if ("" != barInfo.ligBar_) barMeta.addMeta("ligBar", barInfo.ligBar_);
 							barMeta.addMeta("fullBar_", barInfo.fullBar_);
 							stitchedRes.combinedSeq_->name_.append(barMeta.createMetaName());
 						}
@@ -389,7 +389,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 								mip.determineLigBarcode(*stitchedRes.combinedSeq_, barInfo);
 								MetaDataInName barMeta;
 								barMeta.addMeta("extBar", barInfo.extBar_);
-								barMeta.addMeta("ligBar", barInfo.ligBar_);
+								if ("" != barInfo.ligBar_) barMeta.addMeta("ligBar", barInfo.ligBar_);
 								barMeta.addMeta("fullBar_", barInfo.fullBar_);
 								stitchedRes.combinedSeq_->name_.append(barMeta.createMetaName());
 							}
@@ -604,7 +604,7 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 						mip.determineLigBarcode(seq.mateSeqBase_, barInfo);
 						MetaDataInName barMeta;
 						barMeta.addMeta("extBar", barInfo.extBar_);
-						barMeta.addMeta("ligBar", barInfo.ligBar_);
+						if ("" != barInfo.ligBar_) barMeta.addMeta("ligBar", barInfo.ligBar_);
 						barMeta.addMeta("fullBar_", barInfo.fullBar_);
 						seq.seqBase_.name_.append(barMeta.createMetaName());
 						seq.mateSeqBase_.name_.append(barMeta.createMetaName());
@@ -631,7 +631,7 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 						mip.determineLigBarcode(seq.mateSeqBase_, barInfo);
 						MetaDataInName barMeta;
 						barMeta.addMeta("extBar", barInfo.extBar_);
-						barMeta.addMeta("ligBar", barInfo.ligBar_);
+						if ("" != barInfo.ligBar_) barMeta.addMeta("ligBar", barInfo.ligBar_);
 						barMeta.addMeta("fullBar", barInfo.fullBar_);
 						seq.seqBase_.name_.append(barMeta.createMetaName());
 						seq.mateSeqBase_.name_.append(barMeta.createMetaName());
@@ -660,7 +660,7 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 					mip.determineLigBarcode(seq.mateSeqBase_, barInfo);
 					MetaDataInName barMeta;
 					barMeta.addMeta("extBar", barInfo.extBar_);
-					barMeta.addMeta("ligBar", barInfo.ligBar_);
+					if ("" != barInfo.ligBar_) barMeta.addMeta("ligBar", barInfo.ligBar_);
 					barMeta.addMeta("fullBar_", barInfo.fullBar_);
 					seq.seqBase_.name_.append(barMeta.createMetaName());
 					seq.mateSeqBase_.name_.append(barMeta.createMetaName());
@@ -712,7 +712,7 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 						mip.determineLigBarcode(seq.mateSeqBase_, barInfo);
 						MetaDataInName barMeta;
 						barMeta.addMeta("extBar", barInfo.extBar_);
-						barMeta.addMeta("ligBar", barInfo.ligBar_);
+						if ("" != barInfo.ligBar_) barMeta.addMeta("ligBar", barInfo.ligBar_);
 						barMeta.addMeta("fullBar_", barInfo.fullBar_);
 						seq.seqBase_.name_.append(barMeta.createMetaName());
 						seq.mateSeqBase_.name_.append(barMeta.createMetaName());
