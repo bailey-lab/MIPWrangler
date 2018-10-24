@@ -97,7 +97,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 
 
 	//get overlapped gene ids
-	auto gCounter = countRegionsInBam(alignOpts.out_.outName());
+	auto gCounter = GenomicRegionCounter::countRegionsInBam(alignOpts.out_.outName());
 
 	auto idsFromData = gCounter.getIntersectingGffIds(gffFnp);
 
