@@ -211,6 +211,7 @@ int mipsterMipExplorerRunner::viewMipsOnGenome(
 	auto settings = std::make_shared<restbed::Settings>();
 	settings->set_port(seqServerCorePars.port_);
 	settings->set_default_header("Connection", "close");
+	settings->set_bind_address(seqServerCorePars.bindAddress_);
 	settings->set_worker_limit(4);
 	restbed::Service service;
 	service.set_error_handler(mgv::mgvErrorHandler);
