@@ -8,7 +8,7 @@
 
 #include "mav.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 
 void mav::oneSampAllMipDataPageHandler(
@@ -39,11 +39,11 @@ void mav::mipFamNamesForSampHandler(
 	if (search == popClusInfoBySample_.end()) {
 		std::cerr << __PRETTY_FUNCTION__ << ": Sample Name wasn't found: " << sample << "\n";
 	} else {
-		ret["mipFamilies"] = bib::json::toJson(
+		ret["mipFamilies"] = njh::json::toJson(
 								search->second.get().getColumnLevels("p_targetName"));
 	}
 
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -55,20 +55,20 @@ void mav::getOneSampAllMipDataPostHandler(
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	const auto request = session->get_request();
 	auto sample = request->get_path_parameter("sample");
-	const auto postData = bib::json::parse(std::string(body.begin(), body.end()));
-	bib::json::MemberChecker checker(postData);
+	const auto postData = njh::json::parse(std::string(body.begin(), body.end()));
+	njh::json::MemberChecker checker(postData);
 	Json::Value ret;
 	if (checker.failMemberCheck( { "mipFamilies" }, __PRETTY_FUNCTION__)) {
 		std::cerr << checker.message_.str() << std::endl;
 	} else {
-		VecStr mips = bib::json::jsonArrayToVec<std::string>(postData["mipFamilies"], [](const Json::Value & val){return val.asString();});
+		VecStr mips = njh::json::jsonArrayToVec<std::string>(postData["mipFamilies"], [](const Json::Value & val){return val.asString();});
 		//printVector(mips);
 		auto search = popClusInfoBySample_.find(sample);
 		if (popClusInfoBySample_.find(sample) == popClusInfoBySample_.end()) {
 			std::cerr << "Sample Name wasn't found: " << sample << std::endl;
 		} else {
 			auto containsMipName = [&mips](const std::string & str) {
-				return bib::in(str, mips);
+				return njh::in(str, mips);
 			};
 			//printVector(mips);
 			auto trimedTab = search->second.get().extractByComp("p_targetName",
@@ -93,16 +93,16 @@ void mav::getOneSampAllMipDataPostHandler(
 			for (const auto & m : trimedTab.getColumn("c_clusterID")) {
 				++mipClusIdCounts[m];
 			}
-			auto outColors = bib::njhColors(mipClusIdCounts.size());
-			bibseq::VecStr outColorsStrs;
+			auto outColors = njh::njhColors(mipClusIdCounts.size());
+			njhseq::VecStr outColorsStrs;
 			outColorsStrs.reserve(outColors.size());
 			for (const auto & c : outColors) {
 				outColorsStrs.emplace_back("#" + c.hexStr_);
 			}
-			ret["popColors"] = bib::json::toJson(outColorsStrs);
+			ret["popColors"] = njh::json::toJson(outColorsStrs);
 		}
 	}
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -163,6 +163,6 @@ std::shared_ptr<restbed::Resource> mav::getOneSampAllMipData(){
 	return resource;
 }
 
-} // namespace bibseq
+} // namespace njhseq
 
 

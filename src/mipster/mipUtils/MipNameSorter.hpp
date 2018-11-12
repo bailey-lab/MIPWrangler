@@ -8,7 +8,7 @@
 
 #include "mipster/common.h"
 
-namespace bibseq {
+namespace njhseq {
 
 class MipNameSorter{
 public:
@@ -75,7 +75,7 @@ void MipNameSorter::sort(std::vector<T> & seqs, const std::regex & namePat){
 				<< "\n";
 		throw std::runtime_error { ss.str() };
 	}
-	bib::sort(seqs, [&namePat](const T & seq1,
+	njh::sort(seqs, [&namePat](const T & seq1,
 			const T & seq2) {
 		return compareNames(getSeqBase(seq1).name_, getSeqBase(seq2).name_, namePat);
 	});
@@ -96,7 +96,7 @@ void MipNameSorter::sort(std::vector<T> & seqs, const std::regex & namePat,
 		throw std::runtime_error{ss.str()};
 	}
 
-	bib::sort(seqs, [&namePat,&secondaryPat](const T & seq1,
+	njh::sort(seqs, [&namePat,&secondaryPat](const T & seq1,
 			const T & seq2){
 		return compareNames(getSeqBase(seq1).name_, getSeqBase(seq2).name_, namePat, secondaryPat);
 	});
@@ -120,7 +120,7 @@ void MipNameSorter::sort(std::vector<T> & input, const std::regex & namePat,
 				<< secondaryPat.mark_count() << "\n";
 		throw std::runtime_error { ss.str() };
 	}
-	bib::sort(input, [&namePat,&secondaryPat,&nameFunc](const T & seq1,
+	njh::sort(input, [&namePat,&secondaryPat,&nameFunc](const T & seq1,
 			const T & seq2) {
 		return compareNames(nameFunc(seq1), nameFunc(seq2), namePat, secondaryPat);
 	});
@@ -137,14 +137,14 @@ void MipNameSorter::sort(std::vector<T> & input,
 				<< "\n";
 		throw std::runtime_error { ss.str() };
 	}
-	bib::sort(input, [&namePat,&nameFunc](const T & input1,
+	njh::sort(input, [&namePat,&nameFunc](const T & input1,
 			const T & input2) {
 		return compareNames(nameFunc(input1), nameFunc(input2), namePat);
 	});
 }
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 
 
 

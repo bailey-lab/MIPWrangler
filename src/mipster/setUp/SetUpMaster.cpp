@@ -9,7 +9,7 @@
 #include "SetUpMaster.hpp"
 #include "mipster/mipUtils.h"
 
-namespace bibseq {
+namespace njhseq {
 
 void SetUpMaster::makeBarcodeCorDirs()const{
 	if(!names_){
@@ -42,9 +42,9 @@ void SetUpMaster::makeClusteringDirs()const{
 
 SetUpMaster::SetUpMaster(const bfs::path & masterDir) :
 		directoryMaster_(masterDir), mipArmFnp_(
-				bib::files::make_path(directoryMaster_.resourceDir_,
+				njh::files::make_path(directoryMaster_.resourceDir_,
 						"mip_arm_id.tab.txt")), mipsSampsNamesFnp_(
-				bib::files::make_path(directoryMaster_.resourceDir_,
+				njh::files::make_path(directoryMaster_.resourceDir_,
 						"allMipsSamplesNames.tab.txt")) {
 }
 
@@ -76,13 +76,13 @@ void SetUpMaster::setMetaData(const bfs::path & metaFnp) {
 	if (!bfs::exists(metaFnp)) {
 		std::stringstream ss;
 		ss << "Error in " << __PRETTY_FUNCTION__ << " "
-				<< bib::bashCT::boldRed(metaFnp.string()) << " doesn't exist"
+				<< njh::bashCT::boldRed(metaFnp.string()) << " doesn't exist"
 				<< std::endl;
 		throw std::runtime_error { ss.str() };
 	}
 
 	meta_ = std::make_unique<MultipleGroupMetaData>(
-			bib::files::normalize(metaFnp), names_->getSetSampNames());
+			njh::files::normalize(metaFnp), names_->getSetSampNames());
 
 }
 
@@ -216,7 +216,7 @@ void SetUpMaster::createDirStructSkeleton(const bfs::path & mipSampleFile,
 
 		if (nullptr != meta_) {
 			bfs::copy_file(meta_->groupingsFile_,
-					bib::files::make_path(directoryMaster_.masterDir_, "resources",
+					njh::files::make_path(directoryMaster_.masterDir_, "resources",
 							"samplesMeta.tab.txt"));
 		}
 	}
@@ -232,9 +232,9 @@ void SetUpMaster::createTopSampleDirs() const {
 	}
 	if (bfs::exists(directoryMaster_.masterDir_)) {
 		for (const auto & samp : names_->samples_) {
-			bib::files::makeDir(
-					bib::files::MkdirPar(
-							bib::files::join(directoryMaster_.masterDir_.string(), samp)));
+			njh::files::makeDir(
+					njh::files::MkdirPar(
+							njh::files::join(directoryMaster_.masterDir_.string(), samp)));
 		}
 	} else {
 		std::stringstream ss;
@@ -255,13 +255,13 @@ void SetUpMaster::createPopClusMipDirs(uint32_t numThreads) const {
 		throw std::runtime_error{ss.str()};
 	}
 	if (bfs::exists(directoryMaster_.populationClusteringDir_)) {
-		bib::concurrent::LockableQueue<std::string> mipQueue(names_->mips_);
+		njh::concurrent::LockableQueue<std::string> mipQueue(names_->mips_);
 		std::string popDir = directoryMaster_.populationClusteringDir_.string();
 		auto mkDirs = [&mipQueue,&popDir]() {
 			std::string m = "";
 			std::stringstream ss;
 			while(mipQueue.getVal(m)) {
-				bib::files::makeDir(popDir, bib::files::MkdirPar(m));
+				njh::files::makeDir(popDir, njh::files::MkdirPar(m));
 			}
 		};
 		std::vector<std::thread> threads;
@@ -318,7 +318,7 @@ VecStr SetUpMaster::checkDirStruct() const{
 				"mip_family", "extension_barcode_length", "ligation_barcode_length" };
 		VecStr columnsNotFound;
 		for (const auto & col : neededColumns) {
-			if (!bib::in(col, mipInfo.columnNames_)) {
+			if (!njh::in(col, mipInfo.columnNames_)) {
 				columnsNotFound.emplace_back(col);
 			}
 		}
@@ -341,7 +341,7 @@ VecStr SetUpMaster::checkDirStruct() const{
 		VecStr missingCols;
 		VecStr neededCols { "mips", "samples" };
 		for (const auto & col : neededCols) {
-			if (!bib::in(col, mipSampInfo.columnNames_)) {
+			if (!njh::in(col, mipSampInfo.columnNames_)) {
 				missingCols.emplace_back(col);
 			}
 		}
@@ -349,8 +349,8 @@ VecStr SetUpMaster::checkDirStruct() const{
 			std::stringstream ss;
 			ss << "Warnings for: "<< mipsSampsNamesFnp_ << std::endl;
 			ss << "Missing the following columns, "
-					<< bib::conToStr(missingCols, ",") << std::endl;
-			ss << "Need the following columns, " << bib::conToStr(neededCols)
+					<< njh::conToStr(missingCols, ",") << std::endl;
+			ss << "Need the following columns, " << njh::conToStr(neededCols)
 					<< std::endl;
 			warnings.emplace_back(ss.str());
 		}else{
@@ -388,7 +388,7 @@ bool SetUpMaster::checkForExtractedMipFamForSamp(const MipFamSamp & mipSampName)
 	auto mipsForFam = mips_->getMipsForFamily(mipSampName.mipFam_);
 	for (const auto & mipName : mipsForFam) {
 		if (bfs::exists(
-				bib::files::join(
+				njh::files::join(
 						VecStr { sampDirMaster.extractDir_.string(), mipName, mipName + ".fastq" }))) {
 			familyHasExtractedReads = true;
 			break;
@@ -399,7 +399,7 @@ bool SetUpMaster::checkForExtractedMipFamForSamp(const MipFamSamp & mipSampName)
 
 bool SetUpMaster::checkForBarCorMipFamForSamp(const MipFamSamp & mipSampName) const{
 	SampleDirectoryMaster sampDirMaster(directoryMaster_, mipSampName);
-	return bfs::exists(bib::files::join(VecStr { sampDirMaster.barCorDir_.string(),
+	return bfs::exists(njh::files::join(VecStr { sampDirMaster.barCorDir_.string(),
 		mipSampName.mipFam_, mipSampName.mipFam_ + "_all.fastq" }));
 }
 
@@ -412,7 +412,7 @@ bool SetUpMaster::checkForExtractedMipFamForSampThrow(const MipFamSamp & mipSamp
 	auto mipsForFam = mips_->getMipsForFamily(mipSampName.mipFam_);
 	for (const auto & mipName : mipsForFam) {
 		if (bfs::exists(
-				bib::files::join(
+				njh::files::join(
 						VecStr { sampDirMaster.extractDir_.string(), mipName, mipName + ".fastq" }))) {
 			familyHasExtractedReads = true;
 			break;
@@ -425,7 +425,7 @@ bool SetUpMaster::checkForBarCorMipFamForSampThrow(const MipFamSamp & mipSampNam
 	SampleDirectoryMaster sampDirMaster(directoryMaster_, mipSampName);
 	sampDirMaster.checkForExtractDirectoryThrow();
 	sampDirMaster.checkForBarCorDirectoryThrow();
-	return bfs::exists(bib::files::join(VecStr { sampDirMaster.barCorDir_.string(),
+	return bfs::exists(njh::files::join(VecStr { sampDirMaster.barCorDir_.string(),
 		mipSampName.mipFam_, mipSampName.mipFam_ + "_all.fastq" }));
 }
 
@@ -447,18 +447,18 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithClustered(uint32_t numThreads)c
 				<< std::endl;
 		throw std::runtime_error{ss.str()};
 	}
-	bib::concurrent::LockableQueue<std::string> sampQueue(names_->samples_);
+	njh::concurrent::LockableQueue<std::string> sampQueue(names_->samples_);
 	std::vector<MipFamSamp> pairs;
 
 	std::mutex pairsMut;
-	auto checkSample = [&pairsMut,&pairs](bib::concurrent::LockableQueue<std::string>& sampQueue,
+	auto checkSample = [&pairsMut,&pairs](njh::concurrent::LockableQueue<std::string>& sampQueue,
 			const SetUpMaster & mipMaster){
 		std::string samp = "";
 		std::vector<MipFamSamp> currentPairs;
 		while(sampQueue.getVal(samp)){
 			SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, MipFamSamp("", samp));
 			for(const auto & mipFam : mipMaster.names_->mips_){
-					if (bfs::exists(bib::files::join(VecStr { sampDirMaster.clusDir_.string(),
+					if (bfs::exists(njh::files::join(VecStr { sampDirMaster.clusDir_.string(),
 						mipFam, mipFam + "_clustered.fastq" }))) {
 						currentPairs.emplace_back(MipFamSamp(mipFam, samp));
 				}
@@ -476,7 +476,7 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithClustered(uint32_t numThreads)c
 	for(auto & t : threads){
 		t.join();
 	}
-	bib::sort(pairs, [](const MipFamSamp & pair1, const MipFamSamp & pair2){
+	njh::sort(pairs, [](const MipFamSamp & pair1, const MipFamSamp & pair2){
 		if(pair1.samp_ == pair2.samp_){
 			return MipNameSorter::compareNames(pair1.mipFam_, pair2.mipFam_, MipNameSorter::mipNamePat, MipNameSorter::regionNamePat);
 		}else{
@@ -501,11 +501,11 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithPopClustered(uint32_t numThread
 				<< std::endl;
 		throw std::runtime_error{ss.str()};
 	}
-	bib::concurrent::LockableQueue<std::string> sampQueue(names_->samples_);
+	njh::concurrent::LockableQueue<std::string> sampQueue(names_->samples_);
 	std::vector<MipFamSamp> pairs;
 
 	std::mutex pairsMut;
-	auto checkSample = [&pairsMut,&pairs,this](bib::concurrent::LockableQueue<std::string>& sampQueue,
+	auto checkSample = [&pairsMut,&pairs,this](njh::concurrent::LockableQueue<std::string>& sampQueue,
 			const SetUpMaster & mipMaster){
 		std::string samp = "";
 		std::vector<MipFamSamp> currentPairs;
@@ -529,7 +529,7 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithPopClustered(uint32_t numThread
 	for(auto & t : threads){
 		t.join();
 	}
-	bib::sort(pairs, [](const MipFamSamp & pair1, const MipFamSamp & pair2){
+	njh::sort(pairs, [](const MipFamSamp & pair1, const MipFamSamp & pair2){
 		if(pair1.samp_ == pair2.samp_){
 			return MipNameSorter::compareNames(pair1.mipFam_, pair2.mipFam_, MipNameSorter::mipNamePat, MipNameSorter::regionNamePat);
 		}else{
@@ -547,11 +547,11 @@ std::vector<MipFamSamp> SetUpMaster::getMipFamsWithPopClustered(uint32_t numThre
 				<< std::endl;
 		throw std::runtime_error{ss.str()};
 	}
-	bib::concurrent::LockableQueue<std::string> mipQueue(names_->mips_);
+	njh::concurrent::LockableQueue<std::string> mipQueue(names_->mips_);
 	std::vector<MipFamSamp> pairs;
 
 	std::mutex pairsMut;
-	auto checkSample = [&pairsMut,&pairs](bib::concurrent::LockableQueue<std::string>& mipQueue,
+	auto checkSample = [&pairsMut,&pairs](njh::concurrent::LockableQueue<std::string>& mipQueue,
 			const SetUpMaster & mipMaster){
 		std::string mipFam = "";
 		std::vector<MipFamSamp> currentPairs;
@@ -573,7 +573,7 @@ std::vector<MipFamSamp> SetUpMaster::getMipFamsWithPopClustered(uint32_t numThre
 	for(auto & t : threads){
 		t.join();
 	}
-	bib::sort(pairs, [](const MipFamSamp & pair1, const MipFamSamp & pair2){
+	njh::sort(pairs, [](const MipFamSamp & pair1, const MipFamSamp & pair2){
 		if(pair1.samp_ == pair2.samp_){
 			return MipNameSorter::compareNames(pair1.mipFam_, pair2.mipFam_, MipNameSorter::mipNamePat, MipNameSorter::regionNamePat);
 		}else{
@@ -592,18 +592,18 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithBarCor(uint32_t numThreads)cons
 				<< std::endl;
 		throw std::runtime_error{ss.str()};
 	}
-	bib::concurrent::LockableQueue<std::string> sampQueue(names_->samples_);
+	njh::concurrent::LockableQueue<std::string> sampQueue(names_->samples_);
 	std::vector<MipFamSamp> pairs;
 	std::mutex pairsMut;
 
-	auto checkSample = [&pairsMut,&pairs](bib::concurrent::LockableQueue<std::string>& sampQueue,
+	auto checkSample = [&pairsMut,&pairs](njh::concurrent::LockableQueue<std::string>& sampQueue,
 			const SetUpMaster & mipMaster){
 		std::string samp = "";
 		std::vector<MipFamSamp> currentPairs;
 		while(sampQueue.getVal(samp)){
 			SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, MipFamSamp("", samp));
 			for(const auto & mipFam : mipMaster.names_->mips_){
-					if (bfs::exists(bib::files::join(VecStr { sampDirMaster.barCorDir_.string(),
+					if (bfs::exists(njh::files::join(VecStr { sampDirMaster.barCorDir_.string(),
 						mipFam, mipFam + "_all.fastq" }))) {
 						currentPairs.emplace_back(MipFamSamp(mipFam, samp));
 				}
@@ -621,7 +621,7 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithBarCor(uint32_t numThreads)cons
 	for(auto & t : threads){
 		t.join();
 	}
-	bib::sort(pairs, [](const MipFamSamp & pair1, const MipFamSamp & pair2){
+	njh::sort(pairs, [](const MipFamSamp & pair1, const MipFamSamp & pair2){
 		if(pair1.samp_ == pair2.samp_){
 			return MipNameSorter::compareNames(pair1.mipFam_, pair2.mipFam_, MipNameSorter::mipNamePat, MipNameSorter::regionNamePat);
 		}else{
@@ -643,11 +643,11 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithExtracted(uint32_t numThreads) 
 				<< std::endl;
 		throw std::runtime_error{ss.str()};
 	}
-	bib::concurrent::LockableQueue<std::string> sampQueue(names_->samples_);
+	njh::concurrent::LockableQueue<std::string> sampQueue(names_->samples_);
 	std::vector<MipFamSamp> pairs;
 	std::mutex pairsMut;
 
-	auto checkSample = [&pairsMut,&pairs](bib::concurrent::LockableQueue<std::string>& sampQueue,
+	auto checkSample = [&pairsMut,&pairs](njh::concurrent::LockableQueue<std::string>& sampQueue,
 			const SetUpMaster & mipMaster){
 		std::string samp = "";
 		std::vector<MipFamSamp> currentPairs;
@@ -657,7 +657,7 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithExtracted(uint32_t numThreads) 
 				auto mipsForFam = mipMaster.mips_->getMipsForFamily(mipFam);
 				for (const auto & mipName : mipsForFam) {
 					if (bfs::exists(
-							bib::files::join(
+							njh::files::join(
 									VecStr { sampDirMaster.extractDir_.string(), mipName, mipName + ".fastq" }))) {
 						currentPairs.emplace_back(MipFamSamp(mipFam, samp));
 						break;
@@ -677,7 +677,7 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithExtracted(uint32_t numThreads) 
 	for(auto & t : threads){
 		t.join();
 	}
-	bib::sort(pairs, [](const MipFamSamp & pair1, const MipFamSamp & pair2){
+	njh::sort(pairs, [](const MipFamSamp & pair1, const MipFamSamp & pair2){
 		if(pair1.samp_ == pair2.samp_){
 			return MipNameSorter::compareNames(pair1.mipFam_, pair2.mipFam_, MipNameSorter::mipNamePat, MipNameSorter::regionNamePat);
 		}else{
@@ -708,7 +708,7 @@ std::vector<MipFamSamp> SetUpMaster::getSamplesWithRawData(uint32_t numThreads)c
 
 bool SetUpMaster::checkForClusteredMipFamForSamp(const MipFamSamp & mipSampName) const{
 	SampleDirectoryMaster sampDirMaster(directoryMaster_, mipSampName);
-	return bfs::exists(bib::files::join(VecStr { sampDirMaster.clusDir_.string(),
+	return bfs::exists(njh::files::join(VecStr { sampDirMaster.clusDir_.string(),
 		mipSampName.mipFam_, mipSampName.mipFam_ + "_clustered.fastq" }));
 }
 
@@ -783,7 +783,7 @@ VecStr SetUpMaster::getMipFamiliesForMipGroup(const std::string & groupName) con
 	VecStr mipFamilies;
 	auto prefix = groupName + "_";
 	for(const auto & mipFam : names_->mips_){
-		if(bib::beginsWith(mipFam, prefix)){
+		if(njh::beginsWith(mipFam, prefix)){
 			mipFamilies.emplace_back(mipFam);
 		}
 	}
@@ -797,92 +797,92 @@ std::string SetUpMaster::getGroupForMipFam(const std::string & mipFamName)const{
 
 bfs::path SetUpMaster::pathMipPopClusSampInfo(
 		const MipFamSamp & mipSampName) const {
-	return bib::files::make_path(directoryMaster_.populationClusteringDir_,
+	return njh::files::make_path(directoryMaster_.populationClusteringDir_,
 			mipSampName.mipFam_, "analysis", "selectedClustersInfo.tab.txt");
 }
 
 bfs::path SetUpMaster::pathSampPopClusSampInfo(const MipFamSamp & mipSampName) const{
-	return bib::files::make_path(getMipSerDir(),"popClusInfo",
+	return njh::files::make_path(getMipSerDir(),"popClusInfo",
 			mipSampName.samp_ + ".tab.txt");
 }
 
 bfs::path SetUpMaster::pathMipExtractInfo(const std::string & mipTar) const{
-	return bib::files::make_path(getMipSerDir(),"extractionInfo",
+	return njh::files::make_path(getMipSerDir(),"extractionInfo",
 			mipTar + ".tab.txt");
 }
 
 bfs::path SetUpMaster::pathMipPopClusPopInfo(
 		const MipFamSamp & mipSampName) const {
-	return bib::files::make_path(directoryMaster_.populationClusteringDir_,
+	return njh::files::make_path(directoryMaster_.populationClusteringDir_,
 			mipSampName.mipFam_, "analysis", "population",
 			"populationCluster.tab.txt");
 }
 
 bfs::path SetUpMaster::pathMipPopClusHaplo(
 		const MipFamSamp & mipSampName) const {
-	/*return bib::files::make_path(directoryMaster_.populationClusteringDir_,
+	/*return njh::files::make_path(directoryMaster_.populationClusteringDir_,
 			mipSampName.mipFam_, "analysis", "population",
 			mipSampName.mipFam_ + ".fastq");*/
-	return bib::files::make_path(directoryMaster_.populationClusteringDir_,
+	return njh::files::make_path(directoryMaster_.populationClusteringDir_,
 				mipSampName.mipFam_, "analysis", "population",
 				"PopSeqs.fastq");
 }
 
 bfs::path SetUpMaster::pathSampleExtractInfo(const MipFamSamp & mipSampName) const {
-	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
+	return njh::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
 			mipSampName.samp_ + "_mipExtraction", "extractInfoByTarget.txt");
 }
 
 bfs::path SetUpMaster::pathSampleExtractInfoByTarget(const MipFamSamp & mipSampName) const{
-	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
+	return njh::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
 			mipSampName.samp_ + "_mipExtraction", "extractInfoByTarget.txt");
 }
 bfs::path SetUpMaster::pathSampleExtractInfoSummary(const MipFamSamp & mipSampName) const{
-	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
+	return njh::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
 			mipSampName.samp_ + "_mipExtraction", "extractInfoSummary.txt");
 }
 bfs::path SetUpMaster::pathSampleExtractStitchingInfo(const MipFamSamp & mipSampName) const{
-	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
+	return njh::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
 			mipSampName.samp_ + "_mipExtraction", "stitchInfoByTarget.txt");
 }
 
 
 bfs::path SetUpMaster::pathSampleRawData(const MipFamSamp & mipSampName) const{
-	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
+	return njh::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
 				mipSampName.samp_ + rawDataSuffix_);
 }
 
 bfs::path SetUpMaster::pathSampleRawDataFirstRead(const MipFamSamp & mipSampName) const{
-	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
+	return njh::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
 				mipSampName.samp_ + firstReadSuffix_);
 }
 
 bfs::path SetUpMaster::pathSampleRawDataSecondRead(const MipFamSamp & mipSampName) const{
-	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
+	return njh::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
 				mipSampName.samp_ + secondReadSuffix_);
 }
 
 bfs::path SetUpMaster::pathPopClusFinalHaplo(const MipFamSamp & mipSampName) const{
-	return bib::files::make_path(directoryMaster_.populationClusteringDir_,
+	return njh::files::make_path(directoryMaster_.populationClusteringDir_,
 				mipSampName.mipFam_, "analysis", "samplesOutput",mipSampName.samp_, "final",
 				mipSampName.samp_ + ".fastq");
 }
 /*
 bfs::path SetUpMaster::pathPopClusOriginalHaplo(const MipFamSamp & mipSampName) const{
-	return bib::files::make_path(directoryMaster_.populationClusteringDir_,
+	return njh::files::make_path(directoryMaster_.populationClusteringDir_,
 				mipSampName.mipFam_, "analysis", "originals",
 				mipSampName.samp_ + ".fastq");
 }*/
 
 bfs::path SetUpMaster::pathMipSampBarCorHap(
 		const MipFamSamp & mipSampName) const {
-	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
+	return njh::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
 			mipSampName.samp_ + "_mipBarcodeCorrection", mipSampName.mipFam_,
 			mipSampName.mipFam_ + "_all.fastq");
 }
 bfs::path SetUpMaster::pathMipSampBarCorBars(
 		const MipFamSamp & mipSampName, const std::string & mipTarName) const {
-	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
+	return njh::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
 			mipSampName.samp_ + "_mipBarcodeCorrection", mipSampName.mipFam_,
 			mipTarName + "_barcodes.tab.txt");
 }
@@ -890,25 +890,25 @@ bfs::path SetUpMaster::pathMipSampBarCorBars(
 //
 
 bfs::path SetUpMaster::pathMipSampClusDir(const MipFamSamp & mipSampName) const{
-	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
+	return njh::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
 					mipSampName.samp_ + "_mipClustering");
 }
 
 bfs::path SetUpMaster::pathMipSampBarCorDir(const MipFamSamp & mipSampName) const{
-	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
+	return njh::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
 				mipSampName.samp_ + "_mipBarcodeCorrection");
 }
 
 bfs::path SetUpMaster::pathSampDir(const MipFamSamp & mipSampName) const{
-	return bib::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_);
+	return njh::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_);
 }
 
 bfs::path SetUpMaster::pathMipSampExtractDir(const MipTarFamSamp & mipTarSampName) const{
-	return bib::files::make_path(directoryMaster_.masterDir_, mipTarSampName.mipFamSamp_.samp_, mipTarSampName.mipTar_);
+	return njh::files::make_path(directoryMaster_.masterDir_, mipTarSampName.mipFamSamp_.samp_, mipTarSampName.mipTar_);
 }
 
 bfs::path SetUpMaster::pathToAllPopInfo() const{
-	return bib::files::make_path(directoryMaster_.populationClusteringDir_, "allInfo.tab.txt");
+	return njh::files::make_path(directoryMaster_.populationClusteringDir_, "allInfo.tab.txt");
 }
 
 void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
@@ -919,15 +919,15 @@ void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 				<< "Error in directory structure, make sure you are in the correct analysis directory"
 				<< std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error { ss.str() };
 	}
 	auto samplesExtracted = getSamplesWithRawData(numThreads);
-	bib::files::makeDirP(
-			bib::files::MkdirPar(
+	njh::files::makeDirP(
+			njh::files::MkdirPar(
 					getMipSerDir().string() + "extractionInfo"));
-	bib::files::makeDirP(
-			bib::files::MkdirPar(getMipSerDir().string() + "popClusInfo"));
+	njh::files::makeDirP(
+			njh::files::MkdirPar(getMipSerDir().string() + "popClusInfo"));
 	//extraction
 //	{
 //		auto extractionMasterTab = gatherExtractStats(samplesExtracted, numThreads);
@@ -950,7 +950,7 @@ void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 //			auto byTarget = allExtractInfo.get().splitTableOnColumn("mipTarget");
 //			auto allTargets = mips_->getMipsForFamily(names_->mips_);
 //			for (auto & tar : byTarget) {
-//				if(bib::in(tar.first, allTargets)){
+//				if(njh::in(tar.first, allTargets)){
 //					tar.second.trimElementsAtFirstOccurenceOf("(");
 //					TableIOOpts tarOpts(
 //							OutOptions(bfs::path(
@@ -995,7 +995,7 @@ void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 			popClusInfofilepaths.emplace_back(
 					pathMipPopClusSampInfo(mipFam));
 		}
-		auto allPopInfoFile = bib::files::make_path(
+		auto allPopInfoFile = njh::files::make_path(
 						getMipSerDir().string() + "popClusInfo/allInfo.tab.txt");
 		TableIOOpts allPopInfoOpts(InOptions(), "\t",
 				OutOptions(allPopInfoFile),
@@ -1006,10 +1006,10 @@ void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 		allPopInfo.writeTabGz();
 		bool needsUpdate = false;
 		for (const auto & samp : names_->samples_) {
-			auto sampPopInfoFnp = bib::files::make_path(getMipSerDir(),
+			auto sampPopInfoFnp = njh::files::make_path(getMipSerDir(),
 					"popClusInfo/", samp + ".tab.txt");
 			if (!bfs::exists(sampPopInfoFnp)
-					|| bib::files::firstFileIsOlder(sampPopInfoFnp, allPopInfoFile)) {
+					|| njh::files::firstFileIsOlder(sampPopInfoFnp, allPopInfoFile)) {
 				needsUpdate = true;
 				break;
 			}
@@ -1017,11 +1017,11 @@ void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 		if(needsUpdate){
 			auto bySample = allPopInfo.get().splitTableOnColumn("s_Sample");
 			for (auto & samp : bySample) {
-				if (bib::in(samp.first, names_->samples_)) {
-					auto sampPopInfoFnp = bib::files::make_path(getMipSerDir(),
+				if (njh::in(samp.first, names_->samples_)) {
+					auto sampPopInfoFnp = njh::files::make_path(getMipSerDir(),
 							"popClusInfo/", samp.first + ".tab.txt");
 					if (!bfs::exists(sampPopInfoFnp)
-							|| bib::files::firstFileIsOlder(sampPopInfoFnp, allPopInfoFile)) {
+							|| njh::files::firstFileIsOlder(sampPopInfoFnp, allPopInfoFile)) {
 						TableIOOpts sampOpts(OutOptions(sampPopInfoFnp), "\t", true);
 						sampOpts.out_.overWriteFile_ = true;
 						samp.second.sortTable("p_geneName", "p_targetName", "c_clusterID",
@@ -1037,7 +1037,7 @@ void SetUpMaster::prepareMipAnalysisServer(uint32_t numThreads) const{
 table SetUpMaster::gatherExtractStats(const std::vector<MipFamSamp> & samplesExtracted, uint32_t numThreads)const {
 
 	TableIOOpts allExtractInfoOpts(InOptions(), "\t",
-			OutOptions(bib::files::make_path(
+			OutOptions(njh::files::make_path(
 					getMipSerDir()
 							,"extractionInfo", "allExtractInfo.tab.txt")), "\t", true);
 	allExtractInfoOpts.out_.overWriteFile_ = true;
@@ -1045,10 +1045,10 @@ table SetUpMaster::gatherExtractStats(const std::vector<MipFamSamp> & samplesExt
 	if (!bfs::exists(allExtractInfoOpts.out_.outFilename_)) {
 		needsUpdate = true;
 	} else {
-		auto extractStatTime = bib::files::last_write_time(
+		auto extractStatTime = njh::files::last_write_time(
 				allExtractInfoOpts.out_.outFilename_);
 		for (const auto & samp : samplesExtracted) {
-			if (bib::files::last_write_time(pathSampleExtractInfo(samp))
+			if (njh::files::last_write_time(pathSampleExtractInfo(samp))
 					> extractStatTime) {
 				needsUpdate = true;
 				break;
@@ -1062,11 +1062,11 @@ table SetUpMaster::gatherExtractStats(const std::vector<MipFamSamp> & samplesExt
 			"smallFragment" });
 
 	if (needsUpdate) {
-		bib::concurrent::LockableQueue<MipFamSamp> samplesExtractQueue(
+		njh::concurrent::LockableQueue<MipFamSamp> samplesExtractQueue(
 				samplesExtracted);
 		std::mutex extractionMasterTabMut;
 		auto gatherSampExtractInfo =
-				[&extractionMasterTabMut,&extractionMasterTab](bib::concurrent::LockableQueue<MipFamSamp> & samplesExtractQueue,
+				[&extractionMasterTabMut,&extractionMasterTab](njh::concurrent::LockableQueue<MipFamSamp> & samplesExtractQueue,
 						const SetUpMaster & mipMaster) {
 					MipFamSamp samp("", "");
 					while(samplesExtractQueue.getVal(samp)) {
@@ -1075,19 +1075,19 @@ table SetUpMaster::gatherExtractStats(const std::vector<MipFamSamp> & samplesExt
 							auto assembled = countSeqs(
 									SeqIOOptions(filePath.string(),
 											SeqIOOptions::getInFormat(
-													bib::files::getExtension(filePath.string())), false), false);
+													njh::files::getExtension(filePath.string())), false), false);
 							uint32_t discarded = countSeqs(
-									SeqIOOptions(bib::files::make_path(mipMaster.directoryMaster_.masterDir_,samp.samp_,samp.samp_ + ".discarded.fastq").string(),
+									SeqIOOptions(njh::files::make_path(mipMaster.directoryMaster_.masterDir_,samp.samp_,samp.samp_ + ".discarded.fastq").string(),
 											SeqIOOptions::inFormats::FASTQ, false), false);
 							uint32_t unassembled = countSeqs(
-									SeqIOOptions(bib::files::make_path(mipMaster.directoryMaster_.masterDir_,samp.samp_,samp.samp_ + ".notCombined_1.fastq").string(),
+									SeqIOOptions(njh::files::make_path(mipMaster.directoryMaster_.masterDir_,samp.samp_,samp.samp_ + ".notCombined_1.fastq").string(),
 											SeqIOOptions::inFormats::FASTQ, false), false);
 							uint32_t raw = assembled + discarded + unassembled;
 							table extractTab(mipMaster.pathSampleExtractInfo(samp).string(), "\t", true);
 							VecStr rowsNeeded {"unmatched", "smallFragment", "total"};
 							extractTab = extractTab.extractByComp("mipTarget",
 									[&rowsNeeded](const std::string & row) {
-										return bib::in(row, rowsNeeded);
+										return njh::in(row, rowsNeeded);
 									});
 							extractTab.trimElementsAtFirstOccurenceOf("(");
 							uint32_t matchingExtArm = 0;
@@ -1147,9 +1147,9 @@ void SetUpMaster::writeAllExtractStatsFromSummary(
 	if (!bfs::exists(outOpts.outName())) {
 		needsUpdate = true;
 	}else{
-		auto extractStatTime = bib::files::last_write_time(outOpts.outName());
+		auto extractStatTime = njh::files::last_write_time(outOpts.outName());
 		for (const auto & f : files) {
-			if (bib::files::last_write_time(f) > extractStatTime) {
+			if (njh::files::last_write_time(f) > extractStatTime) {
 				needsUpdate = true;
 				break;
 			}
@@ -1192,9 +1192,9 @@ void SetUpMaster::writeAllExtractStatsFromInfoByTarget(
 	if (!bfs::exists(outOpts.outName())) {
 		needsUpdate = true;
 	}else{
-		auto extractStatTime = bib::files::last_write_time(outOpts.outName());
+		auto extractStatTime = njh::files::last_write_time(outOpts.outName());
 		for (const auto & f : files) {
-			if (bib::files::last_write_time(f) > extractStatTime) {
+			if (njh::files::last_write_time(f) > extractStatTime) {
 				needsUpdate = true;
 				break;
 			}
@@ -1237,9 +1237,9 @@ void SetUpMaster::writeAllExtractStitchStats(
 	if (!bfs::exists(outOpts.outName())) {
 		needsUpdate = true;
 	}else{
-		auto extractStatTime = bib::files::last_write_time(outOpts.outName());
+		auto extractStatTime = njh::files::last_write_time(outOpts.outName());
 		for (const auto & f : files) {
-			if (bib::files::last_write_time(f) > extractStatTime) {
+			if (njh::files::last_write_time(f) > extractStatTime) {
 				needsUpdate = true;
 				break;
 			}
@@ -1272,5 +1272,5 @@ void SetUpMaster::writeAllExtractStitchStats(
 
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 

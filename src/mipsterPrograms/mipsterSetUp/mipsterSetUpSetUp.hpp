@@ -7,16 +7,16 @@
 //  Copyright (c) 2016 Nick Hathaway. All rights reserved.
 //
 
-#include <bibseq.h>
-#include <bibcpp.h>
+#include <njhseq.h>
+#include <njhcpp.h>
 
 #include "mipster.h"
 
-namespace bibseq {
+namespace njhseq {
 
 class mipsterSetUpSetUp : public seqSetUp {
 
  public:
     using seqSetUp::seqSetUp;
 };
-} // namespace bibseq
+} // namespace njhseq

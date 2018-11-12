@@ -9,13 +9,13 @@
 
 #include "mipsterServerSetUp.hpp"
 #include "mipster.h"
-namespace bibseq {
+namespace njhseq {
 
-class mipsterServerRunner : public bib::progutils::ProgramRunner {
+class mipsterServerRunner : public njh::progutils::ProgramRunner {
  public:
   mipsterServerRunner();
   
-	static int mipAnalysisServerSetUp(const bib::progutils::CmdArgs & inputCommands);
+	static int mipAnalysisServerSetUp(const njh::progutils::CmdArgs & inputCommands);
 
 };
-} // namespace bibseq
+} // namespace njhseq

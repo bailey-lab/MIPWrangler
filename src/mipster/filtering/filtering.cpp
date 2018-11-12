@@ -9,7 +9,7 @@
 #include "filtering.hpp"
 
 
-namespace bibseq {
+namespace njhseq {
 
 
 
@@ -43,7 +43,7 @@ void filterOnMultipleLigBar(
 			readsPerBarcode.push_back(ligBarReads.at(ligKeys[pos]));
 		}
 		for(const auto & pos : iter::range<uint32_t>(ligKeys.size())){
-			if(!bib::in(pos, positions)){
+			if(!njh::in(pos, positions)){
 				/**@todo report/write out the reads not used */
 				tarStat.ligBarFilter_+= ligBarReads.at(ligKeys[pos]).size();
 			}
@@ -93,7 +93,7 @@ std::shared_ptr<MippedRead> filterWithBarcodeCoverage(
 						<< std::endl;
 			}
 			std::vector<uint32_t> positions(clusters.size());
-			bib::iota<uint32_t>(positions, 0);
+			njh::iota<uint32_t>(positions, 0);
 			//iterate over reads with smallest to highest comparison
 			if (setUpPars.debug_) {
 				std::cout << "\tStarting the clustering on id for barcode: "
@@ -188,5 +188,5 @@ std::shared_ptr<MippedRead> filterWithBarcodeCoverage(
 	return correctedRead;
 }
 
-}  // namespace bibseq
+}  // namespace njhseq
 

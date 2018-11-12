@@ -9,23 +9,23 @@
 
 #include "mipsterSetUpSetUp.hpp"
 #include "mipster.h"
-namespace bibseq {
+namespace njhseq {
 
-class mipsterSetUpRunner : public bib::progutils::ProgramRunner {
+class mipsterSetUpRunner : public njh::progutils::ProgramRunner {
  public:
   mipsterSetUpRunner();
   
-	static int makeMipPopClusDirectories(const bib::progutils::CmdArgs & inputCommands);
+	static int makeMipPopClusDirectories(const njh::progutils::CmdArgs & inputCommands);
 
-	static int checkDirectoryStructure(const bib::progutils::CmdArgs & inputCommands);
-	static int createSkeletonDirectoryStructure(const bib::progutils::CmdArgs & inputCommands);
+	static int checkDirectoryStructure(const njh::progutils::CmdArgs & inputCommands);
+	static int createSkeletonDirectoryStructure(const njh::progutils::CmdArgs & inputCommands);
 
-	static int checkForRawData(const bib::progutils::CmdArgs & inputCommands);
-	static int checkForExtracted(const bib::progutils::CmdArgs & inputCommands);
-	static int checkForBarCor(const bib::progutils::CmdArgs & inputCommands);
-	static int checkForClustered(const bib::progutils::CmdArgs & inputCommands);
+	static int checkForRawData(const njh::progutils::CmdArgs & inputCommands);
+	static int checkForExtracted(const njh::progutils::CmdArgs & inputCommands);
+	static int checkForBarCor(const njh::progutils::CmdArgs & inputCommands);
+	static int checkForClustered(const njh::progutils::CmdArgs & inputCommands);
 
-	static int cloneAnalysisDirectory(const bib::progutils::CmdArgs & inputCommands);
+	static int cloneAnalysisDirectory(const njh::progutils::CmdArgs & inputCommands);
 
 };
-} // namespace bibseq
+} // namespace njhseq

@@ -14,7 +14,7 @@
 
 
 
-namespace bibseq {
+namespace njhseq {
 MipMapResult::MipMapResult(const std::string & mipName, const std::string & genomeName,
 		const BamTools::BamAlignment & extAln,
 		const BamTools::BamAlignment & ligAln) :
@@ -110,7 +110,7 @@ std::vector<MipMapResult> getMipMapResults(const bfs::path & fnp, uint32_t inser
 						std::stringstream ss;
 						ss << __PRETTY_FUNCTION__
 								<< ": Error, name should contain meta data filed "
-								<< bib::bashCT::boldRed("mipTar") << std::endl;
+								<< njh::bashCT::boldRed("mipTar") << std::endl;
 						throw std::runtime_error { ss.str() };
 					}
 					std::unique_ptr<MipMapResult> result;
@@ -145,5 +145,5 @@ std::vector<MipMapResult> getMipMapResults(const bfs::path & fnp, uint32_t inser
 }
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 

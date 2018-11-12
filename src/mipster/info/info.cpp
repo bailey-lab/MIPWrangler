@@ -8,7 +8,7 @@
 #include "info.hpp"
 #include <unordered_map>
 
-namespace bibseq {
+namespace njhseq {
 namespace bfs = boost::filesystem;
 
 VecStr processMipExtractInfoFile(table info){
@@ -30,12 +30,12 @@ VecStr processMipExtractInfoFile(table info){
 }
 
 table getSampleStats(const std::string & dirName, bool verbose){
-	auto sampDirs = bib::files::listAllFiles(dirName, false, VecStr{"samp"});
+	auto sampDirs = njh::files::listAllFiles(dirName, false, VecStr{"samp"});
 	if(sampDirs.empty()){
 		if(verbose){
-			std::cout << bib::bashCT::boldBlack("Extracting on dirs with GP instead of samp")<< std::endl;
+			std::cout << njh::bashCT::boldBlack("Extracting on dirs with GP instead of samp")<< std::endl;
 		}
-		sampDirs = bib::files::listAllFiles(dirName, false, {std::regex{".*/GP.*"}});
+		sampDirs = njh::files::listAllFiles(dirName, false, {std::regex{".*/GP.*"}});
 	}
 	table finalInfo{VecStr{"sampleName","totalInitial","assembled", "discarded", "unassembled",
 		"matchingExtArm", "UnmatachedExtArm", "readsFailing_LigationArm",
@@ -43,20 +43,20 @@ table getSampleStats(const std::string & dirName, bool verbose){
 	for(const auto & d : sampDirs){
 		if(d.second){
 			auto pathName = d.first.string();
-			bib::appendAsNeeded(pathName, "/");
+			njh::appendAsNeeded(pathName, "/");
 			auto sName = d.first.filename().string();
 			if(verbose){
-				std::cout << bib::bashCT::bold << bib::bashCT::addColor(210) << "Processing: "
-						<< bib::bashCT::addColor(105) << sName
-						<< bib::bashCT::reset << std::endl;
+				std::cout << njh::bashCT::bold << njh::bashCT::addColor(210) << "Processing: "
+						<< njh::bashCT::addColor(105) << sName
+						<< njh::bashCT::reset << std::endl;
 			}
-			//bib::scopedStopWatch watch(sName, true);
+			//njh::scopedStopWatch watch(sName, true);
 			auto assembled = countSeqs(SeqIOOptions::genFastqIn(pathName + sName + ".assembled.fastq"),verbose);
 			auto discarded = countSeqs(SeqIOOptions::genFastqIn(pathName + sName + ".discarded.fastq"),verbose);
 			auto unassembled = countSeqs(SeqIOOptions::genFastqIn(pathName + sName + ".unassembled.forward.fastq"),verbose);
 			uint32_t total = assembled + discarded + unassembled;
 			if(assembled > 0){
-				auto extractionDirs = bib::files::listAllFiles(pathName, false, VecStr{sName + ".assembled_mip"});
+				auto extractionDirs = njh::files::listAllFiles(pathName, false, VecStr{sName + ".assembled_mip"});
 				std::map<bfs::path, bool, std::greater<bfs::path>> eDirs;
 				for(const auto & ed : extractionDirs){
 					if(ed.second){
@@ -64,7 +64,7 @@ table getSampleStats(const std::string & dirName, bool verbose){
 					}
 				}
 				if (!eDirs.empty()) {
-					auto resultsDir = bib::appendAsNeededRet(eDirs.begin()->first.string(), "/");
+					auto resultsDir = njh::appendAsNeededRet(eDirs.begin()->first.string(), "/");
 					table info { resultsDir + "info.txt", "\t", true };
 					if(info.content_.empty()){
 						continue;
@@ -84,30 +84,30 @@ table getSampleStats(const std::string & dirName, bool verbose){
 }
 
 table getSampleStats(const std::string & dirName, bool verbose, const VecStr & sampNames){
-	auto sampDirs = bib::files::listAllFiles(dirName, false, VecStr{});
+	auto sampDirs = njh::files::listAllFiles(dirName, false, VecStr{});
 	table finalInfo{VecStr{"sampleName","totalInitial","assembled", "discarded", "unassembled",
 		"matchingExtArm", "UnmatachedExtArm", "readsFailing_LigationArm",
 		"readsUsed","readsFailing_BarcodeFiltering", "readsFailing_Minlen", "readsFailing_Quality"}};
 	for(const auto & d : sampDirs){
-		if(!bib::in(d.first.filename().string(), sampNames)){
+		if(!njh::in(d.first.filename().string(), sampNames)){
 			continue;
 		}
 		if(d.second){
 			auto pathName = d.first.string();
-			bib::appendAsNeeded(pathName, "/");
+			njh::appendAsNeeded(pathName, "/");
 			auto sName = d.first.filename().string();
 			if(verbose){
-				std::cout << bib::bashCT::bold << bib::bashCT::addColor(210) << "Processing: "
-						<< bib::bashCT::addColor(105) << sName
-						<< bib::bashCT::reset << std::endl;
+				std::cout << njh::bashCT::bold << njh::bashCT::addColor(210) << "Processing: "
+						<< njh::bashCT::addColor(105) << sName
+						<< njh::bashCT::reset << std::endl;
 			}
-			//bib::scopedStopWatch watch(sName, true);
+			//njh::scopedStopWatch watch(sName, true);
 			auto assembled = countSeqs(SeqIOOptions::genFastqIn(pathName + sName + ".assembled.fastq"),verbose);
 			auto discarded = countSeqs(SeqIOOptions::genFastqIn(pathName + sName + ".discarded.fastq"),verbose);
 			auto unassembled = countSeqs(SeqIOOptions::genFastqIn(pathName + sName + ".unassembled.forward.fastq"),verbose);
 			uint32_t total = assembled + discarded + unassembled;
 			if(assembled > 0){
-				auto extractionDirs = bib::files::listAllFiles(pathName, false, VecStr{sName + ".assembled_mip"});
+				auto extractionDirs = njh::files::listAllFiles(pathName, false, VecStr{sName + ".assembled_mip"});
 				std::map<bfs::path, bool, std::greater<bfs::path>> eDirs;
 				for(const auto & ed : extractionDirs){
 					if(ed.second){
@@ -115,7 +115,7 @@ table getSampleStats(const std::string & dirName, bool verbose, const VecStr & s
 					}
 				}
 				if (!eDirs.empty()) {
-					auto resultsDir = bib::appendAsNeededRet(eDirs.begin()->first.string(), "/");
+					auto resultsDir = njh::appendAsNeededRet(eDirs.begin()->first.string(), "/");
 					table info { resultsDir + "info.txt", "\t", true };
 					if(info.content_.empty()){
 						continue;
@@ -135,25 +135,25 @@ table getSampleStats(const std::string & dirName, bool verbose, const VecStr & s
 }
 
 table getSampleMipStats(const std::string & dirName, bool verbose, const VecStr & sampNames){
-	auto sampDirs = bib::files::listAllFiles(dirName, false, VecStr{});
+	auto sampDirs = njh::files::listAllFiles(dirName, false, VecStr{});
 	table mipFinalInfo;
 	for(const auto & d : sampDirs){
-		if(!bib::in(d.first.filename().string(), sampNames)){
+		if(!njh::in(d.first.filename().string(), sampNames)){
 			continue;
 		}
 		if(d.second){
 			auto pathName = d.first.string();
-			bib::appendAsNeeded(pathName, "/");
+			njh::appendAsNeeded(pathName, "/");
 			auto sName = d.first.filename().string();
 			if(verbose){
-				std::cout << bib::bashCT::bold << bib::bashCT::addColor(210) << "Processing: "
-						<< bib::bashCT::addColor(105) << sName
-						<< bib::bashCT::reset << std::endl;
+				std::cout << njh::bashCT::bold << njh::bashCT::addColor(210) << "Processing: "
+						<< njh::bashCT::addColor(105) << sName
+						<< njh::bashCT::reset << std::endl;
 			}
-			//bib::scopedStopWatch watch(sName, true);
+			//njh::scopedStopWatch watch(sName, true);
 			auto assembled = countSeqs(SeqIOOptions::genFastqIn(pathName + sName + ".assembled.fastq"), verbose);
 			if(assembled > 0){
-				auto extractionDirs = bib::files::listAllFiles(pathName, false, VecStr{sName + ".assembled_mip"});
+				auto extractionDirs = njh::files::listAllFiles(pathName, false, VecStr{sName + ".assembled_mip"});
 				std::map<bfs::path, bool, std::greater<bfs::path>> eDirs;
 				for(const auto & ed : extractionDirs){
 					if(ed.second){
@@ -161,7 +161,7 @@ table getSampleMipStats(const std::string & dirName, bool verbose, const VecStr 
 					}
 				}
 				if (!eDirs.empty()) {
-					auto resultsDir = bib::appendAsNeededRet(eDirs.begin()->first.string(), "/");
+					auto resultsDir = njh::appendAsNeededRet(eDirs.begin()->first.string(), "/");
 					table info { resultsDir + "info.txt", "\t", true };
 					if(info.content_.empty()){
 						continue;
@@ -318,7 +318,7 @@ void genSampeInfoWithBars::setFractions(){
 }
 
 void sortGenClusInfoWithBarsVec(std::vector<genClusInfoWithBars> & vec){
-	bib::sort(vec, [](const genClusInfoWithBars & info1, genClusInfoWithBars & info2){
+	njh::sort(vec, [](const genClusInfoWithBars & info1, genClusInfoWithBars & info2){
 		return info1.clusterID_ > info2.clusterID_;
 	});
 }
@@ -350,7 +350,7 @@ genInputPopClusInfoWithBars::genInputPopClusInfoWithBars(
 		seqBase_(seqBase) {
 	processNameForBarReadInfo(seqBase.name_, barcodeCnt_, readCnt_);
 	auto underPos = seqBase.name_.rfind("_f");
-	barcodeFrac_ = bib::lexical_cast<double>(seqBase.name_.substr(underPos + 2));
+	barcodeFrac_ = njh::lexical_cast<double>(seqBase.name_.substr(underPos + 2));
 }
 
 genPopClusInfoWithBars::genPopClusInfoWithBars(const std::string & popUid,
@@ -423,7 +423,7 @@ void genPopInfoWithBars::updateSampCnt(){
 	for(const auto & i : infos_){
 		for(const auto & subI : i.infos_){
 		  VecStr toks = tokenizeString(subI.seqBase_.name_, ".");
-		  sampNames_.emplace(bib::replaceString(toks[0], "CHI_", ""));
+		  sampNames_.emplace(njh::replaceString(toks[0], "CHI_", ""));
 		}
 	}
 
@@ -536,7 +536,7 @@ PopClusTabs printMipSampleCollapseInfo(
 									clus.seqBase_.getStubName(true))].seqBase_.getStubName(true),
 							"\t");
 			infoFile << "\t";
-			infoFile << bib::conToStr(genSampInfo, "\t");
+			infoFile << njh::conToStr(genSampInfo, "\t");
 			infoFile << "\t" << clus.getInfo("\t", false, checkingExpected)
 					<< std::endl;
 
@@ -560,7 +560,7 @@ PopClusTabs printMipSampleCollapseInfo(
 			std::set<std::string> sampNames;
 			for(const auto & subI : i.infos_){
 			  VecStr toks = tokenizeString(subI.seqBase_.name_, ".");
-			  sampNames.emplace(bib::replaceString(toks[0], "CHI_", ""));
+			  sampNames.emplace(njh::replaceString(toks[0], "CHI_", ""));
 			}
 			currentSamples = std::vector<std::string>{sampNames.begin(), sampNames.end()};
 			auto groupPopInfos = sampCollapses.groupMetaData_->getGroupPopInfos(currentSamples);
@@ -579,4 +579,4 @@ PopClusTabs printMipSampleCollapseInfo(
 
 
 
-} /* namespace bibseq */
+} /* namespace njhseq */

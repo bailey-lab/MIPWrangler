@@ -8,12 +8,12 @@
 
 
 #include "mipster/common.h"
-#include <bibseq/objects/seqObjects/readObject.hpp>
-#include <bibseq/alignment/aligner.h>
-#include <bibseq/objects/BioDataObject/RefSeqGeneRecord.hpp>
+#include <njhseq/objects/seqObjects/readObject.hpp>
+#include <njhseq/alignment/aligner.h>
+#include <njhseq/objects/BioDataObject/RefSeqGeneRecord.hpp>
 
 
-namespace bibseq {
+namespace njhseq {
 
 
 
@@ -27,7 +27,7 @@ public:
 			auto fPos = seqBase.name_.rfind("_f");
 			readNumber_ = estd::stou(seqBase.name_.substr(rPos + 2, bPos - 2 - rPos));
 			seqBase_.cnt_ = estd::stou(seqBase.name_.substr(bPos + 2, fPos - 2 - bPos));
-			seqBase_.frac_ = bib::lexical_cast<double>(seqBase.name_.substr(fPos + 2));
+			seqBase_.frac_ = njh::lexical_cast<double>(seqBase.name_.substr(fPos + 2));
 		}else{
 			auto rPos = seqBase.name_.rfind("_R");
 			auto tPos = seqBase.name_.rfind("_t");
@@ -285,4 +285,4 @@ std::unordered_map<std::string, mipTargetReads> processMipReads(
 		const std::vector<readObject> & reads, const readObject & genomicDna,
 		aligner & alignerObj, bool processed, bool finalAnalysisNameFormat);
 
-} /* namespace bibseq */
+} /* namespace njhseq */

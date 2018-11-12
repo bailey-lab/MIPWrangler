@@ -13,7 +13,7 @@
 
 
 
-namespace bibseq {
+namespace njhseq {
 
 
 
@@ -36,13 +36,13 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 	}
 	auto mipsForFam = mipMaster.mips_->getMipsForFamily(mipSampName.mipFam_);
 	BarcodeFilterStats filterStats(mipSampName.samp_);
-	bib::stopWatch watch;
+	njh::stopWatch watch;
 	if(setUpPars.debug_){
 		std::cout << "Making directory for mip: " << mipSampName.mipFam_
 				<< " in samp: " << mipSampName.samp_ << std::endl;
 	}
-	bfs::path mipFamilyDir = bib::files::makeDir(
-			sampDirMaster.barCorDir_.string(),bib::files::MkdirPar( mipSampName.mipFam_,
+	bfs::path mipFamilyDir = njh::files::makeDir(
+			sampDirMaster.barCorDir_.string(),njh::files::MkdirPar( mipSampName.mipFam_,
 			pars.overWriteDirs));
 	if (setUpPars.debug_) {
 		std::cout << "Done making directory for mip: " << mipSampName.mipFam_
@@ -56,14 +56,14 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 	bool foundNone = true;
 	alignerObj.resetAlnCache();
 	alignerObj.processAlnInfoInputNoCheck(
-			bib::files::make_path(sampDirMaster.barCorAlnCacheDir_, mipSampName.mipFam_).string(),
+			njh::files::make_path(sampDirMaster.barCorAlnCacheDir_, mipSampName.mipFam_).string(),
 			setUpPars.debug_);
 	for (const auto & mipName : mipsForFam) {
 		if(setUpPars.debug_){
 			std::cout << "Creating seqIoOptions for mip: " << mipSampName.mipFam_
 				<< " in samp: " << mipSampName.samp_ << std::endl;
 		}
-		SeqIOOptions options = SeqIOOptions::genFastqIn(bib::files::join(
+		SeqIOOptions options = SeqIOOptions::genFastqIn(njh::files::join(
 				VecStr { sampDirMaster.extractDir_.string(), mipName, mipName + ".fastq" }));
 		if(setUpPars.debug_){
 			std::cout << options.firstName_ << std::endl;
@@ -73,7 +73,7 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 			charCounter ligBarCounter(std::vector<char> { 'A', 'C', 'G', 'T' });
 			charCounter extBarCounter(std::vector<char> { 'A', 'C', 'G', 'T' });
 			std::ofstream barcodeFile;
-			openTextFile(barcodeFile, bib::files::make_path(mipFamilyDir, mipName ).string() + "_barcodes",
+			openTextFile(barcodeFile, njh::files::make_path(mipFamilyDir, mipName ).string() + "_barcodes",
 					".tab.txt", false, true);
 			//barcodeFile << "Barcode\treadCnt\tfilePos" << std::endl;
 			barcodeFile << "Barcode\treadCnt" << "\n";
@@ -123,7 +123,7 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 								correctedRead->seqBase_.qual_));
 				topRead->barInfo_ = std::make_shared<BarcodeInfo>(
 						*(correctedRead->barInfo_));
-				topRead->seqBase_.name_ = bib::pasteAsStr(mipCorrectedNumber,
+				topRead->seqBase_.name_ = njh::pasteAsStr(mipCorrectedNumber,
 						"[samp=",pars.sampleName, ";",
 						"mipTar=", mipName, ";",
 						"mipFam=", mipSampName.mipFam_,";",
@@ -153,13 +153,13 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 			if (mipMaster.mips_->mips_.at(mipName).ligBarcodeLen_ > 0) {
 				std::ofstream ligBarCompOutFile;
 				openTextFile(ligBarCompOutFile,
-						bib::files::make_path(mipFamilyDir,  mipName + "_ligBarNucComp").string(), ".tab.txt", false, true);
+						njh::files::make_path(mipFamilyDir,  mipName + "_ligBarNucComp").string(), ".tab.txt", false, true);
 				ligBarCounter.resetAlphabet(true);
 				ligBarCounter.setFractions();
 				ligBarCounter.outPutInfo(ligBarCompOutFile, false);
 			}
 			std::ofstream extBarCompOutFile;
-			openTextFile(extBarCompOutFile, bib::files::make_path(mipFamilyDir, mipName).string() + "_extBarNucComp",
+			openTextFile(extBarCompOutFile, njh::files::make_path(mipFamilyDir, mipName).string() + "_extBarNucComp",
 					".tab.txt", false, true);
 			extBarCounter.resetAlphabet(true);
 			extBarCounter.setFractions();
@@ -170,19 +170,19 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 	if (foundNone) {
 		//didn't find any extracted reads remove the directory created so it doesn't look like we did
 		writer.closeOut();
-		bib::files::rmDirForce(mipFamilyDir);
+		njh::files::rmDirForce(mipFamilyDir);
 	} else {
 		std::ofstream filterInfoFile;
 		openTextFile(filterInfoFile,
-				OutOptions(bib::files::make_path(mipFamilyDir , "barcodeFilterStats.tab.txt")));
+				OutOptions(njh::files::make_path(mipFamilyDir , "barcodeFilterStats.tab.txt")));
 		filterStats.printInfo(filterInfoFile, "\t");
 
 		alignerObj.processAlnInfoOutputNoCheck(
-				bib::files::join(sampDirMaster.barCorAlnCacheDir_.string(),
+				njh::files::join(sampDirMaster.barCorAlnCacheDir_.string(),
 						mipSampName.mipFam_).string(), setUpPars.debug_);
 		std::ofstream logfile;
-		openTextFile(logfile, OutOptions(bib::files::make_path(mipFamilyDir, "log.txt")));
-		logfile << "Ran on: " << bib::getCurrentDate() << std::endl;
+		openTextFile(logfile, OutOptions(njh::files::make_path(mipFamilyDir, "log.txt")));
+		logfile << "Ran on: " << njh::getCurrentDate() << std::endl;
 		logfile << "Number of Alignments Done: "
 				<< alignerObj.numberOfAlingmentsDone_ << "\n";
 		logfile << "Run Length: " << watch.totalTimeFormatted(6) << std::endl;
@@ -190,7 +190,7 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 }
 
 
-int mipsterAnalysisRunner::mipBarcodeCorrection(const bib::progutils::CmdArgs & inputCommands){
+int mipsterAnalysisRunner::mipBarcodeCorrection(const njh::progutils::CmdArgs & inputCommands){
 	mipsterAnalysisSetUp setUp(inputCommands);
 	mipBarcodeCorrectionPars pars;
 	setUp.setUpMipBarcodeCorrection(pars);
@@ -203,7 +203,7 @@ int mipsterAnalysisRunner::mipBarcodeCorrection(const bib::progutils::CmdArgs & 
 		std::stringstream ss;
 		ss << "Error in directory structure, make sure you are in the correct analysis directory" << std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error{ss.str()};
 	}
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
@@ -216,7 +216,7 @@ int mipsterAnalysisRunner::mipBarcodeCorrection(const bib::progutils::CmdArgs & 
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 	//check for extraction directory and the rawDir and the extractInfo file
 	SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, MipFamSamp("", pars.sampleName));
-	bfs::path extractInfoFilename = bib::files::make_path(sampDirMaster.extractDir_, "extractInfoByTarget.txt");
+	bfs::path extractInfoFilename = njh::files::make_path(sampDirMaster.extractDir_, "extractInfoByTarget.txt");
 
 	sampDirMaster.checkForExtractDirectoryThrow();
 	checkExistenceThrow(extractInfoFilename, __PRETTY_FUNCTION__);
@@ -244,7 +244,7 @@ int mipsterAnalysisRunner::mipBarcodeCorrection(const bib::progutils::CmdArgs & 
 }
 
 
-int mipsterAnalysisRunner::mipBarcodeCorrectionMultiple(const bib::progutils::CmdArgs & inputCommands){
+int mipsterAnalysisRunner::mipBarcodeCorrectionMultiple(const njh::progutils::CmdArgs & inputCommands){
 	mipsterAnalysisSetUp setUp(inputCommands);
 	mipBarcodeCorrectionParsMultiple pars;
 	setUp.setUpMipBarcodeCorrectionMultiple(pars);
@@ -258,13 +258,13 @@ int mipsterAnalysisRunner::mipBarcodeCorrectionMultiple(const bib::progutils::Cm
 		std::stringstream ss;
 		ss << "Error in directory structure, make sure you are in the correct analysis directory" << std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error{ss.str()};
 	}
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 	Json::Value logInfo;
 	std::ofstream logFile;
-	openTextFile(logFile,bib::files::make_path(
+	openTextFile(logFile,njh::files::make_path(
 			mipMaster.directoryMaster_.logsDir_, pars.logFilename), ".json",
 			pars.overWriteLog, true);
 	logInfo["date"] = getCurrentDate();
@@ -279,7 +279,7 @@ int mipsterAnalysisRunner::mipBarcodeCorrectionMultiple(const bib::progutils::Cm
 		std::cout << "Creating mip and sample parings" << std::endl;
 	}
 	std::vector<MipFamSamp> allPairings = mipMaster.getPairsWithExtracted(pars.numThreads);
-	bib::concurrent::LockableQueue<MipFamSamp> pairQueue(allPairings);
+	njh::concurrent::LockableQueue<MipFamSamp> pairQueue(allPairings);
 	if(setUp.pars_.debug_){
 		std::cout << "Creating aligner pool" << std::endl;
 	}
@@ -296,7 +296,7 @@ int mipsterAnalysisRunner::mipBarcodeCorrectionMultiple(const bib::progutils::Cm
 		auto curAlignerObj = alnPool.popAligner();
 		Json::Value currrentPairingLog;
 		while(pairQueue.getVal(mipSamp)){
-			bib::stopWatch watch;
+			njh::stopWatch watch;
 			auto sampPars = pars.createForSample(mipSamp.samp_);
 			if(setUp.pars_.debug_){
 				std::cout << "Checking for extraction directory and if mip: " << mipSamp.mipFam_
@@ -334,8 +334,8 @@ int mipsterAnalysisRunner::mipBarcodeCorrectionMultiple(const bib::progutils::Cm
 
 	//std::unordered_map<std::string, MasterTableCache> sampleExtractTables;
 	for(const auto & samp : mipMaster.names_->samples_){
-		bfs::path sampBarCorDir = bib::files::make_path(mipMaster.directoryMaster_.masterDir_,samp, samp + "_mipBarcodeCorrection/");
-		TableIOOpts barFilOpts = TableIOOpts(OutOptions(bib::files::make_path(
+		bfs::path sampBarCorDir = njh::files::make_path(mipMaster.directoryMaster_.masterDir_,samp, samp + "_mipBarcodeCorrection/");
+		TableIOOpts barFilOpts = TableIOOpts(OutOptions(njh::files::make_path(
 				sampBarCorDir, "barcodeFilterStats.tab.txt"), ".tab.txt", "tab",
 				false,true, false), "\t", true);
 		barFilOpts.hasHeader_ = true;

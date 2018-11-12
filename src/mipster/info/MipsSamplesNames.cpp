@@ -8,26 +8,26 @@
 #include "MipsSamplesNames.hpp"
 #include "mipster/mipUtils/MipNameSorter.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 Json::Value MipFamSamp::toJson() const {
 	Json::Value ret;
-	ret["class"] = bib::getTypeName(*this);
-	ret["mipFam_"] = bib::json::toJson(mipFam_);
-	ret["samp_"] = bib::json::toJson(samp_);
+	ret["class"] = njh::getTypeName(*this);
+	ret["mipFam_"] = njh::json::toJson(mipFam_);
+	ret["samp_"] = njh::json::toJson(samp_);
 	return ret;
 }
 
 Json::Value MipTarFamSamp::toJson() const{
 	Json::Value ret;
-	ret["class"] = bib::getTypeName(*this);
-	ret["mipTar_"] = bib::json::toJson(mipTar_);
-	ret["mipFamSamp_"] = bib::json::toJson(mipFamSamp_);
+	ret["class"] = njh::getTypeName(*this);
+	ret["mipTar_"] = njh::json::toJson(mipTar_);
+	ret["mipFamSamp_"] = njh::json::toJson(mipFamSamp_);
 	return ret;
 }
 MipsSamplesNames::MipsSamplesNames(const VecStr & mips, const VecStr & samples) :
 		mips_(mips), samples_(samples) {
-	bib::sort(samples_);
+	njh::sort(samples_);
 	MipNameSorter::sort(mips_);
 	//remove blanks, this often happens because the columns are different lengths
 	removeElement(samples_, std::string(""));
@@ -42,7 +42,7 @@ MipsSamplesNames::MipsSamplesNames(const bfs::path & mipSampleFilename) {
 	VecStr missingCols;
 	VecStr neededCols { "mips", "samples" };
 	for (const auto & col : neededCols) {
-		if (!bib::in(col, mipSampInfo.columnNames_)) {
+		if (!njh::in(col, mipSampInfo.columnNames_)) {
 			missingCols.emplace_back(col);
 		}
 	}
@@ -50,21 +50,21 @@ MipsSamplesNames::MipsSamplesNames(const bfs::path & mipSampleFilename) {
 		std::stringstream ss;
 		ss << "Error in : " << __PRETTY_FUNCTION__
 				<< ", missing the following columns from " << mipSampleFilename << ", "
-				<< bib::conToStr(missingCols, ",") << std::endl;
-		ss << "Need the following columns, " << bib::conToStr(neededCols)
+				<< njh::conToStr(missingCols, ",") << std::endl;
+		ss << "Need the following columns, " << njh::conToStr(neededCols)
 				<< std::endl;
 		throw std::runtime_error { ss.str() };
 	}
 
 	mips_ = mipSampInfo.getColumn("mips");
 	for(auto & m : mips_){
-		bib::trim(m);
+		njh::trim(m);
 	}
 	samples_ = mipSampInfo.getColumn("samples");
 	for(auto & s : samples_){
-		bib::trim(s);
+		njh::trim(s);
 	}
-	bib::sort(samples_);
+	njh::sort(samples_);
 	MipNameSorter::sort(mips_);
 	//remove blanks, this often happens because the columns are different lengths
 	removeElement(samples_, std::string(""));
@@ -77,7 +77,7 @@ MipsSamplesNames::MipsSamplesNames(const bfs::path & mipSampleFilename) {
 
 void MipsSamplesNames::setSamples(const VecStr & samples){
 	samples_ = samples;
-	bib::sort(samples_);
+	njh::sort(samples_);
 }
 
 void MipsSamplesNames::setMips(const VecStr & mips){
@@ -105,9 +105,9 @@ void MipsSamplesNames::write(std::ostream & out)const{
 			output[pos].emplace_back(samples_[pos]);
 		}
 	}
-	out << bib::conToStr(header, "\t") << std::endl;
+	out << njh::conToStr(header, "\t") << std::endl;
 	for(const auto & outline : output){
-		out << bib::conToStr(outline, "\t") << std::endl;
+		out << njh::conToStr(outline, "\t") << std::endl;
 	}
 }
 
@@ -130,16 +130,16 @@ std::set<std::string> MipsSamplesNames::getSetSampNames() const {
 }
 
 bool MipsSamplesNames::hasSample(const std::string & samp) const {
-	return bib::in(samp, samples_);
+	return njh::in(samp, samples_);
 }
 bool MipsSamplesNames::hasMip(const std::string & mip) const {
-	return bib::in(mip, mips_);
+	return njh::in(mip, mips_);
 }
 
 
 void printMipSampVec(const std::vector<MipFamSamp> & mipSamps, std::ostream & out){
 	for(const auto & mipSamp : mipSamps){
-		out << bib::json::writeAsOneLine(bib::json::toJson(mipSamp));
+		out << njh::json::writeAsOneLine(njh::json::toJson(mipSamp));
 	}
 }
 
@@ -154,7 +154,7 @@ std::vector<MipFamSamp> parseJsonForMipSamps(const Json::Value & val){
 
 std::vector<MipFamSamp> parseJsonForMipSamps(const std::string & str){
 	std::vector<MipFamSamp> ret;
-	Json::Value root = bib::json::parse(str);
+	Json::Value root = njh::json::parse(str);
 	for(const auto & obj : root){
 		ret.emplace_back(obj["mipFam_"].asString(), obj["samp_"].asString());
 	}
@@ -163,14 +163,14 @@ std::vector<MipFamSamp> parseJsonForMipSamps(const std::string & str){
 
 std::vector<MipFamSamp> parseJsonForMipSamps(std::istream & is){
 	std::vector<MipFamSamp> ret;
-	Json::Value root = bib::json::parseStream(is);
+	Json::Value root = njh::json::parseStream(is);
 	return parseJsonForMipSamps(root);
 }
 
 std::string toJsonStr(const std::vector<MipFamSamp> & mipSamps){
-	return bib::json::writeAsOneLine(bib::json::toJson(mipSamps));
+	return njh::json::writeAsOneLine(njh::json::toJson(mipSamps));
 }
 
-}  // namespace bibseq
+}  // namespace njhseq
 
 

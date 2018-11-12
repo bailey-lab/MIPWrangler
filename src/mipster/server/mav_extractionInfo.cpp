@@ -9,7 +9,7 @@
 
 #include "mav.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 void mav::initialReadStatsPageHandler(std::shared_ptr<restbed::Session> session){
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
@@ -24,21 +24,21 @@ void mav::getInitialReadStatsPostHandler(std::shared_ptr<restbed::Session> sessi
 		const restbed::Bytes & body){
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	const auto request = session->get_request();
-	const auto postData = bib::json::parse(std::string(body.begin(), body.end()));
-	bib::json::MemberChecker checker(postData);
+	const auto postData = njh::json::parse(std::string(body.begin(), body.end()));
+	njh::json::MemberChecker checker(postData);
 	Json::Value ret;
 	if (checker.failMemberCheck( { "samples" }, __PRETTY_FUNCTION__)) {
 		std::cerr << checker.message_.str() << std::endl;
 	}else{
-		VecStr samples = bib::json::jsonArrayToVec<std::string>(postData["samples"], [](const Json::Value & val){ return val.asString();});
+		VecStr samples = njh::json::jsonArrayToVec<std::string>(postData["samples"], [](const Json::Value & val){ return val.asString();});
 		auto containsSampleName = [&samples](const std::string & str) {
-			return bib::in(str, samples);
+			return njh::in(str, samples);
 		};
 		auto tab = masterExtractInfo_->get().extractByComp("Sample", containsSampleName);
 		tab.trimElementsAtFirstOccurenceOf("(");
 		ret = tableToJsonByRow(tab, "Sample", VecStr{"Sample", "raw", "matchingExtArm"});
 	}
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -74,7 +74,7 @@ void mav::initialReadStatsPerMipTarPageHandler(
 		if(search == extractInfosByTar_.end()){
 			ss << __PRETTY_FUNCTION__ << ": error, no extraction information for mip target "
 					<< mipTar << "\n";
-			ss << "options are " << bib::conToStr(bib::getVecOfMapKeys(extractInfosByTar_), ", ") << "\n";
+			ss << "options are " << njh::conToStr(njh::getVecOfMapKeys(extractInfosByTar_), ", ") << "\n";
 		}else if(!search->second.opts_.in_.inExists()){
 			ss << __PRETTY_FUNCTION__ << ": error, extraction information for mip target "
 					<< mipTar << " in file " << search->second.opts_.in_.inFilename_ << " doesn't exist" << "\n";
@@ -103,7 +103,7 @@ void mav::initialReadStatsPerSamplePageHandler(
 		if(search == extractInfosByTar_.end()){
 			ss << __PRETTY_FUNCTION__ << ": error, no extraction information for sample "
 					<< sample << "\n";
-			ss << "options are " << bib::conToStr(bib::getVecOfMapKeys(extractInfosByTar_), ", ") << "\n";
+			ss << "options are " << njh::conToStr(njh::getVecOfMapKeys(extractInfosByTar_), ", ") << "\n";
 		}else if(!search->second.opts_.in_.inExists()){
 			ss << __PRETTY_FUNCTION__ << ": error, extraction information for sample "
 					<< sample << " in file " << search->second.opts_.in_.inFilename_ << " doesn't exist" << "\n";
@@ -124,11 +124,11 @@ void mav::samplesForExtractedMipHandler(
 	Json::Value ret;
 	auto search = extractInfosByTar_.find(mipTar);
 	if(search != extractInfosByTar_.end() && search->second.opts_.in_.inExists()){
-		ret["samples"] = bib::json::toJson(search->second.get().getColumn("sampleName"));
+		ret["samples"] = njh::json::toJson(search->second.get().getColumn("sampleName"));
 	}else{
 		std::cerr << __PRETTY_FUNCTION__ << ": " << "couldn't find mipTar: " << mipTar << std::endl;
 	}
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -140,17 +140,17 @@ void mav::getInitialReadStatsPerMipTarPostHandler(
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	const auto request = session->get_request();
 	auto mipTar = request->get_path_parameter("mipTar");
-	const auto postData = bib::json::parse(std::string(body.begin(), body.end()));
-	bib::json::MemberChecker checker(postData);
+	const auto postData = njh::json::parse(std::string(body.begin(), body.end()));
+	njh::json::MemberChecker checker(postData);
 	Json::Value ret;
 	if (checker.failMemberCheck( { "samples" }, __PRETTY_FUNCTION__)) {
 		std::cerr << checker.message_.str() << std::endl;
 	}else{
-		VecStr samples = bib::json::jsonArrayToVec<std::string>(postData["samples"], [](const Json::Value & val){ return val.asString();});
+		VecStr samples = njh::json::jsonArrayToVec<std::string>(postData["samples"], [](const Json::Value & val){ return val.asString();});
 		auto search = extractInfosByTar_.find(mipTar);
 		if(search != extractInfosByTar_.end() && search->second.opts_.in_.inExists()){
 			auto containsSampleName = [&samples](const std::string & str) {
-				return bib::in(str, samples);
+				return njh::in(str, samples);
 			};
 			auto tab = search->second.get().extractByComp("sampleName", containsSampleName);
 			tab.trimElementsAtFirstOccurenceOf("(");
@@ -159,7 +159,7 @@ void mav::getInitialReadStatsPerMipTarPostHandler(
 			std::cerr << __PRETTY_FUNCTION__ << ": " << "couldn't find mipTar: " << mipTar << std::endl;
 		}
 	}
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -188,11 +188,11 @@ void mav::extractedMipsForSampleHandler(
 	Json::Value ret;
 	auto search = extractInfosBySamp_.find(sample);
 	if(search != extractInfosByTar_.end() && search->second.opts_.in_.inExists()){
-		ret["mipTargets"] = bib::json::toJson(search->second.get().getColumn("mipTarget"));
+		ret["mipTargets"] = njh::json::toJson(search->second.get().getColumn("mipTarget"));
 	}else{
 		std::cerr << __PRETTY_FUNCTION__ << ": " << "couldn't find sampName: " << sample << std::endl;
 	}
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -204,17 +204,17 @@ void mav::getInitialReadStatsPerSamplePostHandler(
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	const auto request = session->get_request();
 	auto sample = request->get_path_parameter("sample");
-	const auto postData = bib::json::parse(std::string(body.begin(), body.end()));
-	bib::json::MemberChecker checker(postData);
+	const auto postData = njh::json::parse(std::string(body.begin(), body.end()));
+	njh::json::MemberChecker checker(postData);
 	Json::Value ret;
 	if (checker.failMemberCheck( { "mipTargets" }, __PRETTY_FUNCTION__)) {
 		std::cerr << checker.message_.str() << std::endl;
 	}else{
-		VecStr mipTargets = bib::json::jsonArrayToVec<std::string>(postData["mipTargets"], [](const Json::Value & val){ return val.asString();});
+		VecStr mipTargets = njh::json::jsonArrayToVec<std::string>(postData["mipTargets"], [](const Json::Value & val){ return val.asString();});
 		auto search = extractInfosBySamp_.find(sample);
 		if(search != extractInfosBySamp_.end() && search->second.opts_.in_.inExists()){
 			auto containsMipTarget = [&mipTargets](const std::string & str) {
-				return bib::in(str, mipTargets);
+				return njh::in(str, mipTargets);
 			};
 			auto tab = search->second.get().extractByComp("mipTarget", containsMipTarget);
 			tab.trimElementsAtFirstOccurenceOf("(");
@@ -223,7 +223,7 @@ void mav::getInitialReadStatsPerSamplePostHandler(
 			std::cerr << __PRETTY_FUNCTION__ << ": " << "couldn't find sample: " << sample << std::endl;
 		}
 	}
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -359,4 +359,4 @@ std::shared_ptr<restbed::Resource> mav::getInitialReadStats() {
 
 
 
-}  // namespace bibseq
+}  // namespace njhseq

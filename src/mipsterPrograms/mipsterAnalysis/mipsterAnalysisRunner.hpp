@@ -6,50 +6,50 @@
  *      Author: nickhathaway
  */
 
-#include <bibseq.h>
-#include <bibcpp/progutils/programRunner.hpp>
+#include <njhseq.h>
+#include <njhcpp/progutils/programRunner.hpp>
 #include "mipster.h"
 
 
 
-namespace bibseq {
+namespace njhseq {
 
 
-class mipsterAnalysisRunner : public bib::progutils::ProgramRunner {
+class mipsterAnalysisRunner : public njh::progutils::ProgramRunner {
  public:
 	mipsterAnalysisRunner();
 
 
-	static int extractFromRaw(const bib::progutils::CmdArgs & inputCommands);
-	static int runGzExtractStitch(const bib::progutils::CmdArgs & inputCommands);
+	static int extractFromRaw(const njh::progutils::CmdArgs & inputCommands);
+	static int runGzExtractStitch(const njh::progutils::CmdArgs & inputCommands);
 
-	static int mipSetupAndExtractByArm(const bib::progutils::CmdArgs & inputCommands);
+	static int mipSetupAndExtractByArm(const njh::progutils::CmdArgs & inputCommands);
 
-	static int mipIllumExtractByArmAndFilter(const bib::progutils::CmdArgs & inputCommands);
-	static int mipIllumExtractByArmAndFilterMultiple(const bib::progutils::CmdArgs & inputCommands);
+	static int mipIllumExtractByArmAndFilter(const njh::progutils::CmdArgs & inputCommands);
+	static int mipIllumExtractByArmAndFilterMultiple(const njh::progutils::CmdArgs & inputCommands);
 
-	static int mipIllumExtractByArmAndFilterPaired(const bib::progutils::CmdArgs & inputCommands);
-	static int mipIllumExtractByArmAndFilterMultiplePaired(const bib::progutils::CmdArgs & inputCommands);
+	static int mipIllumExtractByArmAndFilterPaired(const njh::progutils::CmdArgs & inputCommands);
+	static int mipIllumExtractByArmAndFilterMultiplePaired(const njh::progutils::CmdArgs & inputCommands);
 
-	static int mipBarcodeCorrection(const bib::progutils::CmdArgs & inputCommands);
-	static int mipBarcodeCorrectionMultiple(const bib::progutils::CmdArgs & inputCommands);
+	static int mipBarcodeCorrection(const njh::progutils::CmdArgs & inputCommands);
+	static int mipBarcodeCorrectionMultiple(const njh::progutils::CmdArgs & inputCommands);
 
-	static int mipSkipBarcodeCorrection(const bib::progutils::CmdArgs & inputCommands);
-	static int mipSkipBarcodeCorrectionMultiple(const bib::progutils::CmdArgs & inputCommands);
+	static int mipSkipBarcodeCorrection(const njh::progutils::CmdArgs & inputCommands);
+	static int mipSkipBarcodeCorrectionMultiple(const njh::progutils::CmdArgs & inputCommands);
 
-	static int mipClustering(const bib::progutils::CmdArgs & inputCommands);
-	static int mipClusteringMultiple(const bib::progutils::CmdArgs & inputCommands);
+	static int mipClustering(const njh::progutils::CmdArgs & inputCommands);
+	static int mipClusteringMultiple(const njh::progutils::CmdArgs & inputCommands);
 
-	static int mipPopulationClustering(const bib::progutils::CmdArgs & inputCommands);
-	static int mipPopulationClusteringMultiple(const bib::progutils::CmdArgs & inputCommands);
+	static int mipPopulationClustering(const njh::progutils::CmdArgs & inputCommands);
+	static int mipPopulationClusteringMultiple(const njh::progutils::CmdArgs & inputCommands);
 
-	static int mipCorrectForContamWithSameBarcodes(const bib::progutils::CmdArgs & inputCommands);
-	static int mipCorrectForContamWithSameBarcodesMultiple(const bib::progutils::CmdArgs & inputCommands);
+	static int mipCorrectForContamWithSameBarcodes(const njh::progutils::CmdArgs & inputCommands);
+	static int mipCorrectForContamWithSameBarcodesMultiple(const njh::progutils::CmdArgs & inputCommands);
 
 };
 
 
 
-} /* namespace bibseq */
+} /* namespace njhseq */
 
 

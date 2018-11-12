@@ -14,7 +14,7 @@
 #include "mipster/objects/MipCollection.hpp"
 #include "mipster/info/filterStats/SinlgeMipExtractInfo.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 
 class MipExtractionStats {

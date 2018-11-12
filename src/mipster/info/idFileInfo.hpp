@@ -8,9 +8,9 @@
 
 #include "../objects/Mip.hpp"
 #include "mipster/common.h"
-namespace bibseq {
+namespace njhseq {
 
-}  // namespace bibseq
+}  // namespace njhseq
 
 
 

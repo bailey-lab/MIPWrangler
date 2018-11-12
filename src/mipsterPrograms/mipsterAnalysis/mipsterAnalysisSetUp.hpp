@@ -6,9 +6,9 @@
  *      Author: nickhathaway
  */
 
-#include <bibseq/programUtils.h>
+#include <njhseq/programUtils.h>
 #include "mipster.h"
-namespace bibseq {
+namespace njhseq {
 
 
 
@@ -54,6 +54,6 @@ class mipsterAnalysisSetUp : public seqSetUp {
 };
 
 
-} /* namespace bibseq */
+} /* namespace njhseq */
 
 

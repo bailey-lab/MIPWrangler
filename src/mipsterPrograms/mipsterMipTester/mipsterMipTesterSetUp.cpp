@@ -9,6 +9,6 @@
 #include "mipsterMipTesterSetUp.hpp"
     
     
-namespace bibseq {
+namespace njhseq {
 
-} // namespace bibseq
+} // namespace njhseq

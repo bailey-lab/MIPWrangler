@@ -10,7 +10,7 @@
 
 #include "MipOverlapGraph.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 MipOverlapGraph::MipOverlapGraph(const std::string & regionName,
 		const comparison & allowableErrors, uint32_t minOverlap) :
@@ -111,10 +111,10 @@ void MipOverlapGraph::addMipNumToOverlapJson(Json::Value & graphJson) {
 		std::unordered_map<std::string, std::string> meta;
 		seqInfo seq(node["name"].asString(), "A");
 		seq.processNameForMeta(meta);
-		if (bib::has(meta, "mipFam")) {
-			auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
+		if (njh::has(meta, "mipFam")) {
+			auto mipFamToks = njh::tokenizeString(meta.at("mipFam"), "_");
 			uint32_t mipNum = estd::stou(
-					bib::replaceString(mipFamToks.back(), "mip", ""));
+					njh::replaceString(mipFamToks.back(), "mip", ""));
 			node["mipNum"] = mipNum;
 		} else {
 			std::stringstream ss;
@@ -131,4 +131,4 @@ Json::Value MipOverlapGraph::genOverlapJson() const {
 	return sankeyOutput;
 }
 
-}  // namespace bibseq
+}  // namespace njhseq

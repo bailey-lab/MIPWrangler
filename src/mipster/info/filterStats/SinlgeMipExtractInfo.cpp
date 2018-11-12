@@ -8,7 +8,7 @@
 
 #include "SinlgeMipExtractInfo.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 
 
@@ -96,7 +96,7 @@ VecStr SinlgeMipExtractInfo::toVecStrHeader(uint32_t minLen, const std::string &
 
 VecStr SinlgeMipExtractInfo::toVecStr() const {
 	uint32_t total = getTotal();
-	return bibseq::toVecStr(total,
+	return njhseq::toVecStr(total,
 			getPercentageString(good_, total),
 			getPercentageString(failedLig_, total),
 			getPercentageString(failedMinLen_, total),

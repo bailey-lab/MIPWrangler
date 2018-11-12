@@ -8,7 +8,7 @@
 
 #include "BarcodeInfo.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 BarcodeInfo::BarcodeInfo() {
 }
@@ -29,17 +29,17 @@ void BarcodeInfo::setFullBar() {
 
 Json::Value BarcodeInfo::toJson() const{
 	Json::Value ret;
-	ret["class"] = bib::json::toJson(bib::getTypeName(*this));
+	ret["class"] = njh::json::toJson(njh::getTypeName(*this));
 
-	ret["fullBar_"] = bib::json::toJson(fullBar_);
-	ret["extBar_"] = bib::json::toJson(extBar_);
-	ret["ligBar_"] = bib::json::toJson(ligBar_);
-	ret["mipId_"] = bib::json::toJson(mipId_);
+	ret["fullBar_"] = njh::json::toJson(fullBar_);
+	ret["extBar_"] = njh::json::toJson(extBar_);
+	ret["ligBar_"] = njh::json::toJson(ligBar_);
+	ret["mipId_"] = njh::json::toJson(mipId_);
 
 	return ret;
 }
 
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 

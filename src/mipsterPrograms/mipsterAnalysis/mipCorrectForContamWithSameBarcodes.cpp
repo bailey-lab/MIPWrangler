@@ -8,7 +8,7 @@
 #include "mipsterAnalysisRunner.hpp"
 #include "mipsterAnalysisSetUp.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 void correctForContamForMipFam(const mipCorrectForContamWithSameBarcodesPars & pars,
 		const SetUpMaster & mipMaster){
@@ -35,8 +35,8 @@ void correctForContamForMipFam(const mipCorrectForContamWithSameBarcodesPars & p
 				throw std::runtime_error { ss.str() };
 			}
 			std::string line = "";
-			while (bib::files::crossPlatGetline(barFile, line)) {
-				if (!bib::beginsWith(line, "Barcode")) {
+			while (njh::files::crossPlatGetline(barFile, line)) {
+				if (!njh::beginsWith(line, "Barcode")) {
 					auto toks = tokenizeString(line, "\t");
 					if (2 != toks.size()) {
 						std::stringstream ss;
@@ -103,7 +103,7 @@ void correctForContamForMipFam(const mipCorrectForContamWithSameBarcodesPars & p
 			if (read.containsMeta("bar") && read.containsMeta("mipTar")) {
 				auto search = samps.second.find(read.getMeta("mipTar"));
 				if(search != samps.second.end()){
-					if(bib::in(read.getMeta("bar"), search->second)){
+					if(njh::in(read.getMeta("bar"), search->second)){
 						read.addMeta("remove", true, true);
 						read.resetMetaInName();
 					}else{
@@ -120,7 +120,7 @@ void correctForContamForMipFam(const mipCorrectForContamWithSameBarcodesPars & p
 				ss << "Error in " << __PRETTY_FUNCTION__
 						<< ", error in parsing read for meta data: bar and mipTar" << std::endl;
 				ss << "Current meta data is: "
-						<< bib::conToStr(getVectorOfMapKeys(read.meta_.meta_), ",") << std::endl;
+						<< njh::conToStr(getVectorOfMapKeys(read.meta_.meta_), ",") << std::endl;
 				throw std::runtime_error { ss.str() };
 			}
 		}
@@ -131,7 +131,7 @@ void correctForContamForMipFam(const mipCorrectForContamWithSameBarcodesPars & p
 }
 
 int mipsterAnalysisRunner::mipCorrectForContamWithSameBarcodes(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	// parameters
 	mipsterAnalysisSetUp setUp(inputCommands);
 	mipCorrectForContamWithSameBarcodesPars pars;
@@ -147,7 +147,7 @@ int mipsterAnalysisRunner::mipCorrectForContamWithSameBarcodes(
 				<< "Error in directory structure, make sure you are in the correct analysis directory"
 				<< std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error { ss.str() };
 	}
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
@@ -158,7 +158,7 @@ int mipsterAnalysisRunner::mipCorrectForContamWithSameBarcodes(
 }
 
 int mipsterAnalysisRunner::mipCorrectForContamWithSameBarcodesMultiple(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	// parameters
 	mipsterAnalysisSetUp setUp(inputCommands);
 	mipCorrectForContamWithSameBarcodesParsMultiple pars;
@@ -174,29 +174,29 @@ int mipsterAnalysisRunner::mipCorrectForContamWithSameBarcodesMultiple(
 				<< "Error in directory structure, make sure you are in the correct analysis directory"
 				<< std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error { ss.str() };
 	}
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 	Json::Value logInfo;
 	std::ofstream logFile;
-	openTextFile(logFile,bib::files::make_path(
+	openTextFile(logFile,njh::files::make_path(
 			mipMaster.directoryMaster_.logsDir_, pars.logFilename), ".json",
 			pars.overWriteLog, true);
 	logInfo["date"] = getCurrentDate();
 	logInfo["workingDir"] = inputCommands.workingDir_;
 	logInfo["command"] = inputCommands.commandLine_;
 	std::vector<std::thread> threads;
-	bib::concurrent::LockableQueue<std::string> mipsQueue(
+	njh::concurrent::LockableQueue<std::string> mipsQueue(
 			mipMaster.names_->mips_);
 	std::mutex logMut;
 	auto & pairingLog = logInfo["PerMip"];
-	auto runCorrectForContamWithSameBarcodes = [&logMut,&pairingLog](bib::concurrent::LockableQueue<std::string>& mipsQueue,
+	auto runCorrectForContamWithSameBarcodes = [&logMut,&pairingLog](njh::concurrent::LockableQueue<std::string>& mipsQueue,
 			const mipCorrectForContamWithSameBarcodesParsMultiple& pars,
 			const SetUpMaster & mipMaster){
 		std::string mipName = "";
 		while (mipsQueue.getVal(mipName)) {
-			bib::stopWatch watch;
+			njh::stopWatch watch;
 			auto currentSampPars = pars.createForMip(mipName);
 			correctForContamForMipFam(currentSampPars,mipMaster);
 			{
@@ -223,4 +223,4 @@ int mipsterAnalysisRunner::mipCorrectForContamWithSameBarcodesMultiple(
 	return 0;
 }
 
-}  // namespace bibseq
+}  // namespace njhseq

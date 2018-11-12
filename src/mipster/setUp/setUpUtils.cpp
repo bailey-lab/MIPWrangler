@@ -7,19 +7,19 @@
 
 #include "setUpUtils.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 
 
 bool checkForFileDirExistence(const bfs::path & fnp, VecStr & warnings) {
 	if (!bfs::exists(fnp)) {
 		warnings.emplace_back(
-				"Directory or file " + bib::bashCT::boldRed(fnp.string())
+				"Directory or file " + njh::bashCT::boldRed(fnp.string())
 						+ " doesn't exist");
 		return false;
 	}
 	return true;
 }
 
-}  // namespace bibseq
+}  // namespace njhseq
 

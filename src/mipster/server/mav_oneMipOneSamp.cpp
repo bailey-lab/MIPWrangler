@@ -7,7 +7,7 @@
 
 #include "mav.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 void mav::oneMipOneSampDataPageHandler(
 		std::shared_ptr<restbed::Session> session) {
@@ -23,7 +23,7 @@ void mav::oneMipOneSampDataPageHandler(
 		ss << __PRETTY_FUNCTION__ << ": " << "Mip name wasn't found :" << mipFam
 				<< std::endl;
 	} else {
-		if (!bib::in(sample, search->second.get().getColumn("s_sName"))) {
+		if (!njh::in(sample, search->second.get().getColumn("s_sName"))) {
 			redirecting = true;
 			ss << __PRETTY_FUNCTION__ << ": " << "Samp name wasn't found :" << sample
 					<< " for mipName: " << mipFam << std::endl;
@@ -47,12 +47,12 @@ void mav::getMipOneSampOriginalSeqsPostHandler(std::shared_ptr<restbed::Session>
 	auto sample = request->get_path_parameter("sample");
 	Json::Value postData;
 	if(!body.empty()){
-		postData = bib::json::parse(std::string(body.begin(), body.end()));
+		postData = njh::json::parse(std::string(body.begin(), body.end()));
 	}
 	Json::Value ret;
 
 	std::string searchTerm = mipFam + "_" + sample + "_original";
-	if (bib::in(searchTerm, seqs_->cache_)) {
+	if (njh::in(searchTerm, seqs_->cache_)) {
 		uint32_t sesUid = std::numeric_limits<uint32_t>::max();
 		//check to see if there is a session already started associated with this seq
 		if (!postData.isMember("sessionUID")) {
@@ -61,14 +61,14 @@ void mav::getMipOneSampOriginalSeqsPostHandler(std::shared_ptr<restbed::Session>
 			sesUid = postData["sessionUID"].asUInt();
 		}
 		ret = seqsBySession_[sesUid]->getJson(searchTerm);
-		ret["sessionUID"] = bib::json::toJson(sesUid);
+		ret["sessionUID"] = njh::json::toJson(sesUid);
 	} else {
 		std::cerr << __PRETTY_FUNCTION__ << ": couldn't find " << searchTerm
 				<< " Sample and Mip fam seqs not found :" << sample << " - " << mipFam
 				<< std::endl;
 	}
 
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -96,12 +96,12 @@ void mav::getMipOneSampFinalSeqsPostHandler(std::shared_ptr<restbed::Session> se
 	auto sample = request->get_path_parameter("sample");
 	Json::Value postData;
 	if(!body.empty()){
-		postData = bib::json::parse(std::string(body.begin(), body.end()));
+		postData = njh::json::parse(std::string(body.begin(), body.end()));
 	}
 	Json::Value ret;
 
 	std::string searchTerm = mipFam + "_" + sample + "_final";
-	if (bib::in(searchTerm, seqs_->cache_)) {
+	if (njh::in(searchTerm, seqs_->cache_)) {
 		uint32_t sesUid = std::numeric_limits<uint32_t>::max();
 		//check to see if there is a session already started associated with this seq
 		if (!postData.isMember("sessionUID")) {
@@ -110,13 +110,13 @@ void mav::getMipOneSampFinalSeqsPostHandler(std::shared_ptr<restbed::Session> se
 			sesUid = postData["sessionUID"].asUInt();
 		}
 		ret = seqsBySession_[sesUid]->getJson(searchTerm );
-		ret["sessionUID"] = bib::json::toJson(sesUid);
+		ret["sessionUID"] = njh::json::toJson(sesUid);
 	} else {
 		std::cerr << __PRETTY_FUNCTION__ << ": couldn't find " << searchTerm << " Sample and Mip fam seqs not found :"
 				<< sample << " - " << mipFam << std::endl;
 	}
 
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -144,14 +144,14 @@ void mav::getOneMipOneSampsDataHandler(std::shared_ptr<restbed::Session> session
 	Json::Value ret;
 	auto search = popClusInfoByTar_.find(mipFam);
 	if (search != popClusInfoByTar_.end()) {
-		if(bib::in(sample,search->second.get().getColumn("s_sName"))){
+		if(njh::in(sample,search->second.get().getColumn("s_sName"))){
 			auto containsSampName = [&sample](const std::string & str) {
 				return str == sample;
 			};
 			auto trimedTab = search->second.get().extractByComp("s_sName", containsSampName);
 			auto popUids = trimedTab.getColumnLevels("h_popUID");
 			auto containsPopUID = [&popUids](const std::string & str) {
-				return bib::in(str, popUids);
+				return njh::in(str, popUids);
 			};
 			ret = tableToJsonByRow(
 					popClusPopInfoByTar_.find(mipFam)->second.get().extractByComp("h_popUID",
@@ -171,7 +171,7 @@ void mav::getOneMipOneSampsDataHandler(std::shared_ptr<restbed::Session> session
 		std::cerr << __PRETTY_FUNCTION__ << ": " << "Mip name wasn't found :"
 				<< mipFam << std::endl;
 	}
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -241,10 +241,10 @@ std::shared_ptr<restbed::Resource> mav::getOneMipOneSampsData(){
 
 /*
 void mav::showOneMipOneSampsData(std::string mipName, std::string sampName){
-	bib::scopedMessage mess(messStrFactory(__PRETTY_FUNCTION__, {{"mipName", mipName},{"sampName", sampName}}), std::cout, debug_);
+	njh::scopedMessage mess(messStrFactory(__PRETTY_FUNCTION__, {{"mipName", mipName},{"sampName", sampName}}), std::cout, debug_);
 	auto search = popClusInfoByTar_.find(mipName);
 	if (search != popClusInfoByTar_.end()) {
-		if(bib::in(sampName,search->second.get().getColumn("s_sName"))){
+		if(njh::in(sampName,search->second.get().getColumn("s_sName"))){
 			auto pageSearch = pages_.find("oneMipOneSampInfo");
 			response().out() << pageSearch->second.get();
 		}else{
@@ -260,7 +260,7 @@ void mav::showOneMipOneSampsData(std::string mipName, std::string sampName){
 }
 
 void mav::getOneMipOneSampsData(std::string mipName, std::string sampName){
-	bib::scopedMessage mess(messStrFactory(__PRETTY_FUNCTION__, {{"mipName", mipName},{"sampName", sampName}}), std::cout, debug_);
+	njh::scopedMessage mess(messStrFactory(__PRETTY_FUNCTION__, {{"mipName", mipName},{"sampName", sampName}}), std::cout, debug_);
 	ret_json();
 	Json::Value ret;
 	std::map<std::string, std::string> testMap;
@@ -268,7 +268,7 @@ void mav::getOneMipOneSampsData(std::string mipName, std::string sampName){
 
 	auto search = popClusInfoByTar_.find(mipName);
 	if (search != popClusInfoByTar_.end()) {
-		if(bib::in(sampName,search->second.get().getColumn("s_sName"))){
+		if(njh::in(sampName,search->second.get().getColumn("s_sName"))){
 			auto containsSampName = [&sampName](const std::string & str) {
 				return str == sampName;
 			};
@@ -280,8 +280,8 @@ void mav::getOneMipOneSampsData(std::string mipName, std::string sampName){
 				"h_barcodeFrac", "s_sName", "s_usedTotalClusterCnt",
 				"s_usedTotalBarcodeCnt", "c_clusterID", "c_name", "c_readCnt",
 				"c_readFrac", "c_barcodeCnt", "c_barcodeFrac" });
-			auto popCounts = bibseq::countVec(trimedTab.getColumn("h_popUID"));
-			auto popColors = bib::njhColors(popCounts.size());
+			auto popCounts = njhseq::countVec(trimedTab.getColumn("h_popUID"));
+			auto popColors = njh::njhColors(popCounts.size());
 			VecStr popColorsStrs(popColors.size(), "");
 			uint32_t count = 0;
 			uint32_t halfCount = 0;
@@ -296,7 +296,7 @@ void mav::getOneMipOneSampsData(std::string mipName, std::string sampName){
 				}
 				popColorsStrs[cPos] = "#" + popColors[pos].hexStr_;
 			}
-			ret["popColors"] = bib::json::toJson(popColorsStrs);
+			ret["popColors"] = njh::json::toJson(popColorsStrs);
 		}else{
 			std::cerr << __PRETTY_FUNCTION__ << ": " << "Samp name wasn't found :" << sampName << " for mipName: " << mipName << std::endl;
 		}
@@ -307,20 +307,20 @@ void mav::getOneMipOneSampsData(std::string mipName, std::string sampName){
 }
 
 void mav::getOneMipOneSampsPopData(std::string mipName, std::string sampName) {
-	bib::scopedMessage mess(messStrFactory(__PRETTY_FUNCTION__, { { "mipName",
+	njh::scopedMessage mess(messStrFactory(__PRETTY_FUNCTION__, { { "mipName",
 			mipName }, { "sampName", sampName } }), std::cout, debug_);
 	ret_json();
 	Json::Value ret;
 	auto search = popClusInfoByTar_.find(mipName);
 	if (search != popClusInfoByTar_.end()) {
-		if(bib::in(sampName,search->second.get().getColumn("s_sName"))){
+		if(njh::in(sampName,search->second.get().getColumn("s_sName"))){
 			auto containsSampName = [&sampName](const std::string & str) {
 				return str == sampName;
 			};
 			auto trimedTab = search->second.get().extractByComp("s_sName", containsSampName);
 			auto popUids = trimedTab.getColumnLevels("h_popUID");
 			auto containsPopUID = [&popUids](const std::string & str) {
-				return bib::in(str, popUids);
+				return njh::in(str, popUids);
 			};
 			ret = tableToJsonByRow(
 					popClusPopInfoByTar_.find(mipName)->second.get().extractByComp("h_popUID",
@@ -342,7 +342,7 @@ void mav::getOneMipOneSampsPopData(std::string mipName, std::string sampName) {
 }
 
 void mav::getMipOneSampOriginalSeqs(std::string mipName, std::string sampName) {
-	bib::scopedMessage mess(messStrFactory(__PRETTY_FUNCTION__, { { "mipName",
+	njh::scopedMessage mess(messStrFactory(__PRETTY_FUNCTION__, { { "mipName",
 			mipName }, { "sampName", sampName } }), std::cout, debug_);
 	auto search = originalHapsByTarBySamp_.find(mipName);
 	ret_json();
@@ -367,7 +367,7 @@ void mav::getMipOneSampOriginalSeqs(std::string mipName, std::string sampName) {
 }
 
 void mav::getMipOneSampFinalSeqs(std::string mipName, std::string sampName) {
-	bib::scopedMessage mess(messStrFactory(__PRETTY_FUNCTION__, { { "mipName",
+	njh::scopedMessage mess(messStrFactory(__PRETTY_FUNCTION__, { { "mipName",
 			mipName }, { "sampName", sampName } }), std::cout, debug_);
 	auto search = finalHapsByTarSamp_.find(mipName);
 	ret_json();
@@ -392,4 +392,4 @@ void mav::getMipOneSampFinalSeqs(std::string mipName, std::string sampName) {
 	response().out() << ret;
 }
 */
-}  // namespace bibseq
+}  // namespace njhseq

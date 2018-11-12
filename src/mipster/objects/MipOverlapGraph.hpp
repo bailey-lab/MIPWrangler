@@ -12,7 +12,7 @@
 #include "mipster/common.h"
 #include <elucidator/objects/dataContainers/graphs.h>
 
-namespace bibseq {
+namespace njhseq {
 
 class MipOverlapGraph {
 public:
@@ -37,9 +37,9 @@ public:
 	void addMipSeqToMipSeqMap(const T & seq) {
 		std::unordered_map<std::string, std::string> meta;
 		getSeqBase(seq).processNameForMeta(meta);
-		if(bib::has(meta, "mipFam")) {
-			auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
-			uint32_t mipNum = estd::stou(bib::replaceString(mipFamToks.back(), "mip", ""));
+		if(njh::has(meta, "mipFam")) {
+			auto mipFamToks = njh::tokenizeString(meta.at("mipFam"), "_");
+			uint32_t mipNum = estd::stou(njh::replaceString(mipFamToks.back(), "mip", ""));
 			seqsByMipNum_[mipNum].emplace_back(std::make_shared<seqInfo>(getSeqBase(seq)));
 		} else {
 			std::stringstream ss;
@@ -58,6 +58,6 @@ public:
 
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 
 

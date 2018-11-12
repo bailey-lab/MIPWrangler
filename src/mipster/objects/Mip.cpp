@@ -7,7 +7,7 @@
 
 #include "Mip.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 Mip::Mip() :
 		extBarcodeLen_(0), ligationArmMotObj_(""), igationArmMotObj5_to_3prime_(""), extentionArmMotObj_("") {
@@ -351,8 +351,8 @@ void Mip::writeInfoLine(std::ostream & out) const{
 }
 
 void Mip::writeOutArms(const OutOptions & opts) const{
-	auto extOpts = SeqIOOptions::genFastaOut(bib::files::make_path(opts.outFilename_, name_ + "_ext-arm").string());
-	auto ligOpts = SeqIOOptions::genFastaOut(bib::files::make_path(opts.outFilename_, name_ + "_lig-arm").string());
+	auto extOpts = SeqIOOptions::genFastaOut(njh::files::make_path(opts.outFilename_, name_ + "_ext-arm").string());
+	auto ligOpts = SeqIOOptions::genFastaOut(njh::files::make_path(opts.outFilename_, name_ + "_lig-arm").string());
 	extOpts.out_.overWriteFile_ = opts.overWriteFile_;
 	extOpts.out_.append_ = opts.append_;
 	ligOpts.out_.overWriteFile_ = opts.overWriteFile_;
@@ -381,4 +381,4 @@ uint32_t Mip::getMipNumFromName(const std::string & name)  {
 	return mipNumber;
 }
 
-} /* namespace bibseq */
+} /* namespace njhseq */

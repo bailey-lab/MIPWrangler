@@ -10,7 +10,7 @@
 #include "mipster/common.h"
 #include "mipster/objects/BarcodeInfo.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 class MippedRead : public readObject{
 public:
@@ -20,7 +20,7 @@ public:
 	std::shared_ptr<BarcodeInfo> barInfo_;
 };
 
-}  // namespace bibseq
+}  // namespace njhseq
 
 
 

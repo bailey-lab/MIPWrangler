@@ -12,7 +12,7 @@
 #include "mipster/objects/MipCollection.hpp"
 #include "mipster/info/MipsSamplesNames.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 class SetUpMaster {
 public:
@@ -139,4 +139,4 @@ public:
 
 };
 
-}  // namespace bibseq
+}  // namespace njhseq

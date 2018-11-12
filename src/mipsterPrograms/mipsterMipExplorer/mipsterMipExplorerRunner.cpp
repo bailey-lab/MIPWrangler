@@ -9,10 +9,10 @@
 #include "mipsterMipExplorerRunner.hpp"
 
 
-namespace bibseq {
+namespace njhseq {
 
 mipsterMipExplorerRunner::mipsterMipExplorerRunner() :
-		bib::progutils::ProgramRunner(
+		njh::progutils::ProgramRunner(
 				{ addFunc("viewMipsOnGenome", viewMipsOnGenome, false),
 					addFunc("setUpViewMipsOnGenome", setUpViewMipsOnGenome, false),
 					addFunc("mipsAgainstHaplotypes", mipsAgainstHaplotypes, false),
@@ -22,7 +22,7 @@ mipsterMipExplorerRunner::mipsterMipExplorerRunner() :
 
 
 int mipsterMipExplorerRunner::mipsAgainstHaplotypes(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	MipsOnGenome::pars inputPars;
 	bfs::path mipArmsFnp = "";
 	std::string selectedMips = "";
@@ -37,23 +37,23 @@ int mipsterMipExplorerRunner::mipsAgainstHaplotypes(
 	setUp.setOption(mipArmsFnp, "--mipArmsFnp", "Mip Arms Fnp", true);
 	setUp.processDirectoryOutputName(true);
 	setUp.finishSetUp(std::cout);
-	bib::stopWatch watch;
+	njh::stopWatch watch;
 	watch.setLapName("Initial");
 	setUp.startARunLog(setUp.pars_.directoryName_);
-	auto genomeDir = bib::files::make_path(setUp.pars_.directoryName_,"genomes");
-	auto infoDir = bib::files::make_path(setUp.pars_.directoryName_,"info");
-	bib::files::makeDir(bib::files::MkdirPar{genomeDir});
-	bib::files::makeDir(bib::files::MkdirPar{infoDir});
-	auto seqOutOpts = SeqIOOptions::genFastaOut(bib::files::make_path(genomeDir, "inputSeqs.fasta"));
+	auto genomeDir = njh::files::make_path(setUp.pars_.directoryName_,"genomes");
+	auto infoDir = njh::files::make_path(setUp.pars_.directoryName_,"info");
+	njh::files::makeDir(njh::files::MkdirPar{genomeDir});
+	njh::files::makeDir(njh::files::MkdirPar{infoDir});
+	auto seqOutOpts = SeqIOOptions::genFastaOut(njh::files::make_path(genomeDir, "inputSeqs.fasta"));
 
 	auto mipArms = std::make_unique<MipCollection>(mipArmsFnp, 6);
 	auto selectedMipsCon = getInputValues(selectedMips, ",");
-	OutOptions mipArmsOpts(bib::files::make_path(infoDir, "mip_arms.tab.txt"));
+	OutOptions mipArmsOpts(njh::files::make_path(infoDir, "mip_arms.tab.txt"));
 	{
 		OutputStream mipArmsOut(mipArmsOpts);
-		mipArmsOut << bib::conToStr(Mip::writeInfoLineHeader(), "\t") << std::endl;
+		mipArmsOut << njh::conToStr(Mip::writeInfoLineHeader(), "\t") << std::endl;
 		for(const auto & m : mipArms->mips_){
-			if(selectedMipsCon.empty() || selectedMipsCon.front() == "" || bib::in(m.first, selectedMipsCon)){
+			if(selectedMipsCon.empty() || selectedMipsCon.front() == "" || njh::in(m.first, selectedMipsCon)){
 				m.second.writeInfoLine(mipArmsOut);
 			}
 		}
@@ -62,8 +62,8 @@ int mipsterMipExplorerRunner::mipsAgainstHaplotypes(
 	inputPars.gMapperPars_.primaryGenome_ = "inputSeqs";
 	inputPars.mainDir = setUp.pars_.directoryName_;
 	inputPars.inputDir = setUp.pars_.directoryName_;
-	inputPars.gMapperPars_.genomeDir_ = bib::files::make_path(inputPars.inputDir, "genomes");
-	inputPars.gMapperPars_.gffDir_ = bib::files::make_path(inputPars.inputDir, "info/gff");
+	inputPars.gMapperPars_.genomeDir_ = njh::files::make_path(inputPars.inputDir, "genomes");
+	inputPars.gMapperPars_.gffDir_ = njh::files::make_path(inputPars.inputDir, "info/gff");
 
 
 	SeqInput reader(setUp.pars_.ioOptions_);
@@ -91,7 +91,7 @@ int mipsterMipExplorerRunner::mipsAgainstHaplotypes(
 }
 
 int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 
 	MipsOnGenome::pars inputPars;
 
@@ -111,11 +111,11 @@ int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
 		auto selectGenomesToks = tokenizeString(selectGenomes, ",");
 		inputPars.gMapperPars_.selectedGenomes_ = std::set<std::string>(selectGenomesToks.begin(), selectGenomesToks.end());
 	}
-	inputPars.gMapperPars_.genomeDir_ = bib::files::make_path(inputPars.inputDir, "genomes");
-	inputPars.gMapperPars_.gffDir_ = bib::files::make_path(inputPars.inputDir, "info/gff");
+	inputPars.gMapperPars_.genomeDir_ = njh::files::make_path(inputPars.inputDir, "genomes");
+	inputPars.gMapperPars_.gffDir_ = njh::files::make_path(inputPars.inputDir, "info/gff");
 	setUp.finishSetUp(std::cout);
 
-	bib::stopWatch watch;
+	njh::stopWatch watch;
 	watch.setLapName("Initial");
 	MipsOnGenome mips(inputPars);
 	setUp.startARunLog(mips.logDir_.string());
@@ -131,9 +131,9 @@ int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
 	watch.startNewLap("mapArmsToGenomes");
 	mips.mapArmsToGenomes();
 	if(inputPars.removeBeds){
-		bib::files::rmDirForce(mips.bedsDir_);
-		bib::files::makeDir(bib::files::MkdirPar(mips.bedsDir_));
-		bib::files::makeDir(bib::files::MkdirPar(mips.bedsPerGenomeDir_));
+		njh::files::rmDirForce(mips.bedsDir_);
+		njh::files::makeDir(njh::files::MkdirPar(mips.bedsDir_));
+		njh::files::makeDir(njh::files::MkdirPar(mips.bedsPerGenomeDir_));
 
 	}
 	watch.startNewLap("genBeds");
@@ -153,7 +153,7 @@ int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
 
 
 int mipsterMipExplorerRunner::viewMipsOnGenome(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	bfs::path mainDir = "";
 	bfs::path inputDir = "";
 	std::string primaryGenome = "";
@@ -162,7 +162,7 @@ int mipsterMipExplorerRunner::viewMipsOnGenome(
 	SeqAppCorePars seqServerCorePars;
 	seqServerCorePars.name_ = "mgv0";
 	seqServerCorePars.port_ = 10000;
-	bfs::path resourceDirName = bib::files::make_path(MIPWrangler_INSTALLDIR,
+	bfs::path resourceDirName = njh::files::make_path(MIPWrangler_INSTALLDIR,
 			"etc/serverResources");
 	mipsterMipExplorerSetUp setUp(inputCommands);
 	setUp.processVerbose();
@@ -177,28 +177,28 @@ int mipsterMipExplorerRunner::viewMipsOnGenome(
 	setUp.setOption(resourceDirName, "--resourceDirName",
 			"Name of the resource Directory where the js and hmtl is located",
 			!bfs::exists(resourceDirName));
-	resourceDirName = bib::appendAsNeededRet(resourceDirName.string(), "/");
+	resourceDirName = njh::appendAsNeededRet(resourceDirName.string(), "/");
 	seqServerCorePars.setCoreOptions(setUp);
 	setUp.finishSetUp(std::cout);
 
   //check for html/js/css resource files
   checkExistenceThrow(resourceDirName);
-  checkExistenceThrow(bib::files::make_path(resourceDirName,"mgv/"));
+  checkExistenceThrow(njh::files::make_path(resourceDirName,"mgv/"));
 
 
   Json::Value appConfig;
   seqServerCorePars.addCoreOpts(appConfig);
-  appConfig["resources"] = bib::json::toJson(resourceDirName);
-  appConfig["primaryGenome"] = bib::json::toJson(primaryGenome);
-  appConfig["masterDir"] = bib::json::toJson(mainDir);
-  appConfig["inputDir"] = bib::json::toJson(inputDir);
-  appConfig["mipArmsFnp"] = bib::json::toJson(mipArmsFnp);
+  appConfig["resources"] = njh::json::toJson(resourceDirName);
+  appConfig["primaryGenome"] = njh::json::toJson(primaryGenome);
+  appConfig["masterDir"] = njh::json::toJson(mainDir);
+  appConfig["inputDir"] = njh::json::toJson(inputDir);
+  appConfig["mipArmsFnp"] = njh::json::toJson(mipArmsFnp);
 
 	if("" != selectGenomes){
 		auto genomes = tokenizeString(selectGenomes, ",");
 		genomes.emplace_back(primaryGenome);
 		std::set<std::string> genomeSet{genomes.begin(), genomes.end()};
-		appConfig["selectedGenomes"] = bib::json::toJson(genomeSet);
+		appConfig["selectedGenomes"] = njh::json::toJson(genomeSet);
 	}
 
   if(setUp.pars_.verbose_){
@@ -232,4 +232,4 @@ int mipsterMipExplorerRunner::viewMipsOnGenome(
 
 
                     
-} // namespace bibseq
+} // namespace njhseq

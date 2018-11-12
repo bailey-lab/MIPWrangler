@@ -11,7 +11,7 @@
 #include "mipster/parameters.h"
 #include "mipster/setUp.h"
 
-namespace bibseq {
+namespace njhseq {
 
 class MipExtractor {
 public:
@@ -47,5 +47,5 @@ public:
 
 };
 
-} /* namespace bibseq */
+} /* namespace njhseq */
 

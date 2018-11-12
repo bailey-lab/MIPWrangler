@@ -13,13 +13,13 @@
 #include "mipster/setUp/SetUpMaster.hpp"
 
 
-namespace bibseq {
+namespace njhseq {
 
 
 
 
 
-class mav: public bibseq::SeqApp {
+class mav: public njhseq::SeqApp {
 
 	bfs::path masterDir_;
 	bfs::path mipArmsFileName_;
@@ -124,7 +124,7 @@ public:
 	virtual std::vector<std::shared_ptr<restbed::Resource>> getAllResources();
 	virtual VecStr requiredOptions() const;
 
-	typedef bibseq::SeqApp super;
+	typedef njhseq::SeqApp super;
 
 	/**@brief get all the sample names, mip grouping names, mip family names, mip target names
 	 *
@@ -175,9 +175,9 @@ public:
 };
 
 
-int mavRunner(const bib::progutils::CmdArgs & inputCommands);
+int mavRunner(const njh::progutils::CmdArgs & inputCommands);
 
-}  // namespace bibseq
+}  // namespace njhseq
 
 
 

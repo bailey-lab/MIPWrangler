@@ -9,7 +9,7 @@
 
 #include "mipster/common.h"
 
-namespace bibseq {
+namespace njhseq {
 struct MipFamSamp {
 	MipFamSamp(std::string mipFam, std::string samp) :
 			mipFam_(mipFam), samp_(samp) {
@@ -58,7 +58,7 @@ std::string toJsonStr(const std::vector<MipFamSamp> & mipSamps);
 
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 
 
 

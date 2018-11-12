@@ -12,7 +12,7 @@
 #include "mipster/common.h"
 
 
-namespace bibseq {
+namespace njhseq {
 
 class SinlgeMipExtractInfo {
 	uint32_t good_ = 0;

@@ -8,7 +8,7 @@
 
 #include "utils.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 void checkExistenceThrow(const bfs::path & dirName, const std::string & funcName){
 	if(!bfs::exists(dirName)){
@@ -29,11 +29,11 @@ void checkExistenceThrow(const bfs::path & dirName){
 }
 
 bool requireExternalProgramThrow(const std::string & program){
-	auto hasProgram = bib::sys::hasSysCommand(program);
+	auto hasProgram = njh::sys::hasSysCommand(program);
 	if (!hasProgram) {
 		std::stringstream ss;
-		ss << bib::bashCT::boldBlack(program)
-				<< bib::bashCT::boldRed(
+		ss << njh::bashCT::boldBlack(program)
+				<< njh::bashCT::boldRed(
 						" is not in path or may not be executable, cannot be used")
 				<< std::endl;
 		throw std::runtime_error { ss.str() };
@@ -44,6 +44,6 @@ bool requireExternalProgramThrow(const std::string & program){
 
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 
 

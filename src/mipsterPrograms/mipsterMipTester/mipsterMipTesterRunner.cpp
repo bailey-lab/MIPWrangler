@@ -11,10 +11,10 @@
 #include <TwoBit.h>
 
 
-namespace bibseq {
+namespace njhseq {
 
 mipsterMipTesterRunner::mipsterMipTesterRunner() :
-		bib::progutils::ProgramRunner(
+		njh::progutils::ProgramRunner(
 				{
 					addFunc("callMircosateliteSizes", callMircosateliteSizes, false)
 				},
@@ -28,7 +28,7 @@ mipsterMipTesterRunner::mipsterMipTesterRunner() :
 
 
 int mipsterMipTesterRunner::callMircosateliteSizes(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	mipCorePars pars;
 	bfs::path genomeFnp = "";
 	bfs::path bedFile = "";
@@ -59,7 +59,7 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 		std::stringstream ss;
 		ss << "Error in directory structure, make sure you are in the correct analysis directory" << std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error{ss.str()};
 	}
 
@@ -77,10 +77,10 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 					ss << __PRETTY_FUNCTION__ << ", error " << regions[pos].uid_
 							<< " overlaps with " << regions[subPos].uid_ << "\n";
 					ss << "(regions[pos].start_ > regions[subPos].start_&& regions[pos].start_ < regions[subPos].end_)" << std::endl;
-					ss << bib::colorBool((regions[pos].start_ > regions[subPos].start_
+					ss << njh::colorBool((regions[pos].start_ > regions[subPos].start_
 						&& regions[pos].start_ < regions[subPos].end_)) << std::endl;
 					ss << "(regions[pos].end_ > regions[subPos].start_ && regions[pos].end_ < regions[subPos].end_)" << std::endl;
-					ss << bib::colorBool((regions[pos].end_ > regions[subPos].start_
+					ss << njh::colorBool((regions[pos].end_ > regions[subPos].start_
 								&& regions[pos].end_ < regions[subPos].end_)) << std::endl;
 					ss << "regions[pos].end_:" << regions[pos].end_ << std::endl;
 					ss << "regions[subPos].start_:" << regions[subPos].start_ << std::endl;
@@ -98,15 +98,15 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 	for(const auto & pair : finalResultPairs){
 		bySample[pair.samp_].emplace_back(pair);
 	}
-	std::unordered_map<std::string, bib::sys::RunOutput> outputs;
+	std::unordered_map<std::string, njh::sys::RunOutput> outputs;
 	std::mutex outputsMut;
-	bib::concurrent::LockableQueue<std::string> sampQueue(getVectorOfMapKeys(bySample));
+	njh::concurrent::LockableQueue<std::string> sampQueue(getVectorOfMapKeys(bySample));
 	auto alignSamp =
 			[&sampQueue,&bySample,&setUp,&outputsMut,&outputs,&genomeFnp,&mipMaster,&cmdRunner]() {
 				std::string samp = "";
 				while(sampQueue.getVal(samp)) {
-					auto sampDir = bib::files::makeDir(setUp.pars_.directoryName_, bib::files::MkdirPar(samp));
-					SeqIOOptions outOpts = SeqIOOptions::genFastqOut(bib::files::make_path(sampDir, samp));
+					auto sampDir = njh::files::makeDir(setUp.pars_.directoryName_, njh::files::MkdirPar(samp));
+					SeqIOOptions outOpts = SeqIOOptions::genFastqOut(njh::files::make_path(sampDir, samp));
 					//outOpts.out_.append_ = true;
 					SeqOutput writer(outOpts);
 					writer.openOut();
@@ -118,16 +118,16 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 						while(reader.readNextRead(seq)) {
 							MetaDataInName meta(seq.name_);
 							auto mipTar = mipMaster.mips_->getMipsForFamily(meta.getMeta("mipFam")).front();
-							//seq.prepend(bib::strToLowerRet(mipMaster.mips_->mips_[mipTar].extentionArm_));
-							//seq.append(bib::strToLowerRet(mipMaster.mips_->mips_[mipTar].ligationArm_));
-							seq.prepend(bib::strToLowerRet(mipMaster.mips_->mips_[mipTar].extentionArm_));
-							seq.append(bib::strToLowerRet(mipMaster.mips_->mips_[mipTar].ligationArm_));
+							//seq.prepend(njh::strToLowerRet(mipMaster.mips_->mips_[mipTar].extentionArm_));
+							//seq.append(njh::strToLowerRet(mipMaster.mips_->mips_[mipTar].ligationArm_));
+							seq.prepend(njh::strToLowerRet(mipMaster.mips_->mips_[mipTar].extentionArm_));
+							seq.append(njh::strToLowerRet(mipMaster.mips_->mips_[mipTar].ligationArm_));
 							writer.write(seq);
 						}
 					}
 					writer.closeOut();
 					auto opts = SeqIOOptions::genFastqIn(outOpts.out_.outName());
-					opts.out_.outFilename_ = bib::files::make_path(sampDir, samp + ".sorted.bam");
+					opts.out_.outFilename_ = njh::files::make_path(sampDir, samp + ".sorted.bam");
 					opts.out_.outExtention_ = ".sorted.bam";
 					auto runOutput = cmdRunner.bowtie2Align(opts,
 							genomeFnp);
@@ -147,10 +147,10 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 		t.join();
 	}
 
-	OutOptions logOpts(bib::files::make_path(setUp.pars_.directoryName_, "alignLogs.json"));
+	OutOptions logOpts(njh::files::make_path(setUp.pars_.directoryName_, "alignLogs.json"));
 	std::ofstream logFile;
 	logOpts.openFile(logFile);
-	logFile << bib::json::toJson(outputs) << std::endl;
+	logFile << njh::json::toJson(outputs) << std::endl;
 
 	std::unordered_map<std::string, std::vector<GenomicRegion>> regionsByChrom;
 	for(const auto & reg : regions){
@@ -162,7 +162,7 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 	std::unordered_map<std::string, uint32_t> missingRegionsCounts;
 	uint32_t unmapped = 0;
 	for (const auto & samp : bySample) {
-		auto extractOpts = SeqIOOptions::genFastqOut(bib::files::make_path(setUp.pars_.directoryName_, samp.first,
+		auto extractOpts = SeqIOOptions::genFastqOut(njh::files::make_path(setUp.pars_.directoryName_, samp.first,
 						samp.first + "_extracted"));
 		SeqOutput writer(extractOpts);
 		writer.openOut();
@@ -171,7 +171,7 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 		}
 		BamTools::BamAlignment bAln;
 		BamTools::BamReader bReader;
-		auto bamFile = bib::files::make_path(setUp.pars_.directoryName_, samp.first,
+		auto bamFile = njh::files::make_path(setUp.pars_.directoryName_, samp.first,
 				samp.first + ".sorted.bam").string();
 		bReader.Open(bamFile);
 
@@ -191,7 +191,7 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 			MetaDataInName meta(bAln.Name);
 			auto chromName = refData[bAln.RefID].RefName;
 			std::vector<GenomicRegion> regionsContained;
-			if(bib::in(chromName, regionsByChrom)){
+			if(njh::in(chromName, regionsByChrom)){
 				for(const auto & reg : regionsByChrom.at(chromName)){
 					if(reg.start_ >= bAln.Position && reg.end_ <= bAln.GetEndPosition()){
 						regionsContained.emplace_back(reg);
@@ -213,7 +213,7 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 				//get the sequence for the reference at this alignment location
 				std::string refSeq = std::string(alnInfos.begin()->second.localASize_, 'X');
 				auto ref = seqInfo("ref", refSeq);
-				//convert bam alignment to bibseq::seqInfo object
+				//convert bam alignment to njhseq::seqInfo object
 				alignerObj.alignObjectA_ = baseReadObject(ref);
 				alignerObj.alignObjectB_ = baseReadObject(query);
 				//set the alignment info and and rearrange the sequences so they can be profiled with gaps
@@ -261,13 +261,13 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 	}
 	table finalResults(concatVecs(VecStr{"sample", "region","popUID", "length", "count", "fraction"}, getVectorOfMapKeys(mipMaster.meta_->groupData_)));
 	auto samplesKeys = getVectorOfMapKeys(bySample);
-	bib::sort(samplesKeys);
+	njh::sort(samplesKeys);
 	struct NameBarNum{
 		std::string name_ = "";
 		uint32_t barNum_ = 0;
 	};
 	for (const auto & sampKey : samplesKeys) {
-		auto extractInOpts = SeqIOOptions::genFastqIn(bib::files::make_path(setUp.pars_.directoryName_, sampKey,
+		auto extractInOpts = SeqIOOptions::genFastqIn(njh::files::make_path(setUp.pars_.directoryName_, sampKey,
 				sampKey + "_extracted.fastq"));
 		SeqInput reader(extractInOpts);
 		auto allSeqs = reader.readAllReadsPtrs<seqInfo>();
@@ -318,7 +318,7 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 			}
 		}
 	}
-	finalResults.outPutContents(TableIOOpts::genTabFileOut(bib::files::make_path(setUp.pars_.directoryName_, "regionLengthInfos.tab.txt")));
+	finalResults.outPutContents(TableIOOpts::genTabFileOut(njh::files::make_path(setUp.pars_.directoryName_, "regionLengthInfos.tab.txt")));
 	return 0;
 
 }
@@ -326,4 +326,4 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 
 
                     
-} // namespace bibseq
+} // namespace njhseq

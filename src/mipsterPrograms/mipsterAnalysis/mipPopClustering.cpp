@@ -9,7 +9,7 @@
 #include "mipsterAnalysisSetUp.hpp"
 
 
-namespace bibseq {
+namespace njhseq {
 
 
 
@@ -19,10 +19,10 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		const MipsSamplesNames & mipSamps,
 		const mipPopulationClusteringPars & pars,
 		const SeqSetUpPars & seqPars) {
-	bfs::path mipFamilyDir = bib::files::makeDir(
+	bfs::path mipFamilyDir = njh::files::makeDir(
 			directoryMaster.populationClusteringDir_.string() + mipSamp.mipFam_,
-			bib::files::MkdirPar("analysis/", pars.overWriteDirs));
-	bib::stopWatch watch;
+			njh::files::MkdirPar("analysis/", pars.overWriteDirs));
+	njh::stopWatch watch;
 	uint64_t maxSize = 0;
 	VecStr missingSamples;
 	VecStr foundSamples;
@@ -64,7 +64,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 			seqPars.qScorePars_,
 			seqPars.colOpts_.alignOpts_.countEndGaps_,
 			seqPars.colOpts_.iTOpts_.weighHomopolyer_);
-	bfs::path alnCacheDir = bib::files::join(
+	bfs::path alnCacheDir = njh::files::join(
 			VecStr { directoryMaster.populationClusteringDir_.string(), pars.mipName,
 					"alnCache" });
 	alignerObj.processAlnInfoInputNoCheck(alnCacheDir.string(), seqPars.debug_);
@@ -134,7 +134,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 
 	if(!allSamples.empty()){
 		if(seqPars.verbose_){
-			std::cout << bib::bashCT::boldGreen("Pop Clustering") << std::endl;
+			std::cout << njh::bashCT::boldGreen("Pop Clustering") << std::endl;
 		}
 		sampColl.doPopulationClustering(allSamples,
 						alignerObj, collapserObj,
@@ -156,11 +156,11 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 
 
 		if(seqPars.verbose_){
-			std::cout << bib::bashCT::boldBlack("Printing info...") << std::endl;
+			std::cout << njh::bashCT::boldBlack("Printing info...") << std::endl;
 		}
 
-		auto popTabOpts = TableIOOpts::genTabFileOut(bib::files::make_path(mipFamilyDir, "population", "populationCluster.tab.txt"), true);
-		auto sampTabOpts = TableIOOpts::genTabFileOut(bib::files::make_path(mipFamilyDir, "selectedClustersInfo.tab.txt"), true);
+		auto popTabOpts = TableIOOpts::genTabFileOut(njh::files::make_path(mipFamilyDir, "population", "populationCluster.tab.txt"), true);
+		auto sampTabOpts = TableIOOpts::genTabFileOut(njh::files::make_path(mipFamilyDir, "selectedClustersInfo.tab.txt"), true);
 
 		auto tabs = printMipSampleCollapseInfo(sampColl, true, pars.mipName);
 		//auto tabs = printMipSampleCollapseInfo(sampColl, !expectedSeqs.empty(), pars.mipName);
@@ -199,8 +199,8 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 	alignerObj.processAlnInfoOutputNoCheck(alnCacheDir.string(), seqPars.debug_);
 
 	std::ofstream logfile;
-	openTextFile(logfile, OutOptions(bib::files::make_path(mipFamilyDir,"log.txt")));
-	logfile << "Ran on: " << bib::getCurrentDate() << std::endl;
+	openTextFile(logfile, OutOptions(njh::files::make_path(mipFamilyDir,"log.txt")));
+	logfile << "Ran on: " << njh::getCurrentDate() << std::endl;
 	logfile << "Number of Alignments Done: "
 			<< alignerObj.numberOfAlingmentsDone_ << "\n";
 	logfile << "Run Length: " << watch.totalTimeFormatted(6) << std::endl;
@@ -218,7 +218,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 }
 
 int mipsterAnalysisRunner::mipPopulationClustering(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	// parameters
 	mipsterAnalysisSetUp setUp(inputCommands);
 	mipPopulationClusteringPars pars;
@@ -242,7 +242,7 @@ int mipsterAnalysisRunner::mipPopulationClustering(
 
 
 int mipsterAnalysisRunner::mipPopulationClusteringMultiple(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	// parameters
 	mipsterAnalysisSetUp setUp(inputCommands);
 	mipPopulationClusteringParsMultiple pars;
@@ -256,29 +256,29 @@ int mipsterAnalysisRunner::mipPopulationClusteringMultiple(
 		std::stringstream ss;
 		ss << "Error in directory structure, make sure you are in the correct analysis directory" << std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error{ss.str()};
 	}
 	Json::Value logInfo;
 	std::ofstream logFile;
 	openTextFile(logFile,
-			bib::files::make_path(mipMaster.directoryMaster_.logsDir_ , pars.logFilename), ".json",
+			njh::files::make_path(mipMaster.directoryMaster_.logsDir_ , pars.logFilename), ".json",
 			pars.overWriteLog, true);
 	logInfo["date"] = getCurrentDate();
 	logInfo["workingDir"] = inputCommands.workingDir_;
 	logInfo["command"] = inputCommands.commandLine_;
 	std::vector<std::thread> threads;
-	bib::concurrent::LockableQueue<std::string> mipsQueue(
+	njh::concurrent::LockableQueue<std::string> mipsQueue(
 			mipMaster.names_->mips_);
 	std::mutex logMut;
 	auto & pairingLog = logInfo["PerMip"];
-	auto runPopClusMultiMip = [&logMut,&pairingLog](bib::concurrent::LockableQueue<std::string>& mipsQueue,
+	auto runPopClusMultiMip = [&logMut,&pairingLog](njh::concurrent::LockableQueue<std::string>& mipsQueue,
 			const mipPopulationClusteringParsMultiple& pars,
 			const SeqSetUpPars & setUpPars,
 			const SetUpMaster & mipMaster){
 		std::string mipName = "";
 		while (mipsQueue.getVal(mipName)) {
-			bib::stopWatch watch;
+			njh::stopWatch watch;
 			auto currentSampPars = pars.createForMip(mipName);
 			runPopClusForMip(MipFamSamp(mipName, ""), mipMaster.directoryMaster_, *mipMaster.names_,
 					currentSampPars, setUpPars);
@@ -303,7 +303,7 @@ int mipsterAnalysisRunner::mipPopulationClusteringMultiple(
 
 	TableIOOpts tabOpts(InOptions(), "\t",
 			OutOptions(
-					bib::files::make_path(
+					njh::files::make_path(
 							mipMaster.directoryMaster_.populationClusteringDir_,
 							"allInfo.tab.txt")), "\t", true);
 	tabOpts.out_.overWriteFile_ = true;
@@ -322,6 +322,6 @@ int mipsterAnalysisRunner::mipPopulationClusteringMultiple(
 	return 0;
 }
 
-}  // namespace bibseq
+}  // namespace njhseq
 
 

@@ -14,13 +14,13 @@
 #include <unordered_map>
 
 
-namespace bibseq {
+namespace njhseq {
 
 
 
 
 mipsterUtilsRunner::mipsterUtilsRunner()
-    : bib::progutils::ProgramRunner({addFunc("alignTarget", alignTargets, false),
+    : njh::progutils::ProgramRunner({addFunc("alignTarget", alignTargets, false),
 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 addFunc("processProcessedMips", processProcessedMips, false),
 																		 addFunc("scanForContam", scanForContam, false),
 																		 addFunc("processMipOverlapGraph", processMipOverlapGraph, false),
@@ -71,7 +71,7 @@ mipsterUtilsRunner::mipsterUtilsRunner()
 
 
 int mipsterUtilsRunner::createPrimerFileFromArmFile(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	bfs::path mipArmsFnp;
 	OutOptions outOpts(bfs::path(""));
 	mipsterUtilsSetUp setUp(inputCommands);
@@ -94,7 +94,7 @@ int mipsterUtilsRunner::createPrimerFileFromArmFile(
 	return 0;
 }
 int mipsterUtilsRunner::writeOutPossibleHaplotypes(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	double freqCutOff = 0;
 	mipCorePars pars;
 	comparison noErrors;
@@ -125,7 +125,7 @@ int mipsterUtilsRunner::writeOutPossibleHaplotypes(
 				<< "Error in directory structure, make sure you are in the correct analysis directory"
 				<< std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error { ss.str() };
 	}
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
@@ -140,7 +140,7 @@ int mipsterUtilsRunner::writeOutPossibleHaplotypes(
 			auto mipFams = mipMaster.mips_->getMipFamsForRegion(region);
 			uint64_t maxSize = 0;
 			for(const auto & mipFam : mipFams){
-				if(bib::in(mipFam,mipMaster.names_->mips_ )){
+				if(njh::in(mipFam,mipMaster.names_->mips_ )){
 					//std::cout << mipMaster.pathPopClusFinalHaplo(MipFamSamp(mipFam, samp)) << std::endl;
 
 					auto seqOpts = SeqIOOptions::genFastqIn(mipMaster.pathPopClusFinalHaplo(MipFamSamp(mipFam, samp)).string(), true);
@@ -162,18 +162,18 @@ int mipsterUtilsRunner::writeOutPossibleHaplotypes(
 
 			std::stringstream ss;
 			mog.overlapGraph_->writePaths(ss);
-			auto sampDirPath = bib::files::make_path(setUp.pars_.directoryName_, samp, region);
-			bib::files::makeDirP(bib::files::MkdirPar(sampDirPath.string()));
+			auto sampDirPath = njh::files::make_path(setUp.pars_.directoryName_, samp, region);
+			njh::files::makeDirP(njh::files::MkdirPar(sampDirPath.string()));
 			std::ofstream possibleHapsFile;
 			std::ofstream lociInfoFile;
-			openTextFile(possibleHapsFile,bib::files::join(sampDirPath.string(), "possibleHapsFile"),".txt",false, true );
-			openTextFile(lociInfoFile,bib::files::join(sampDirPath.string(), "lociInfoFile"),".txt",false, true );
-			OutOptions lociAlleNameKeyOpts(bib::files::make_path(sampDirPath, "nameKey.tab.txt"));
+			openTextFile(possibleHapsFile,njh::files::join(sampDirPath.string(), "possibleHapsFile"),".txt",false, true );
+			openTextFile(lociInfoFile,njh::files::join(sampDirPath.string(), "lociInfoFile"),".txt",false, true );
+			OutOptions lociAlleNameKeyOpts(njh::files::make_path(sampDirPath, "nameKey.tab.txt"));
 			std::ofstream lociAlleNameKeyFile;
 			lociAlleNameKeyOpts.openFile(lociAlleNameKeyFile);
 			lociAlleNameKeyFile << "seqName\tLociName" << std::endl;
 			auto overlapPaths = streamToVecStr(ss);
-			auto seqOutOpts = SeqIOOptions::genFastaOut(bib::files::make_path(sampDirPath, "allOverlapsStitched.fasta"));
+			auto seqOutOpts = SeqIOOptions::genFastaOut(njh::files::make_path(sampDirPath, "allOverlapsStitched.fasta"));
 			SeqOutput writer(seqOutOpts);
 			writer.openOut();
 			for(const auto & oPath : overlapPaths){
@@ -208,10 +208,10 @@ int mipsterUtilsRunner::writeOutPossibleHaplotypes(
 					std::unordered_map<std::string, std::string> meta;
 					tempSeq.processNameForMeta(meta);
 					uint32_t lociNum = 0;
-					if (bib::has(meta, "mipFam")) {
-						auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
+					if (njh::has(meta, "mipFam")) {
+						auto mipFamToks = njh::tokenizeString(meta.at("mipFam"), "_");
 						lociNum = estd::stou(
-								bib::replaceString(mipFamToks.back(), "mip", ""));
+								njh::replaceString(mipFamToks.back(), "mip", ""));
 					} else {
 						std::stringstream ss;
 						ss << __PRETTY_FUNCTION__ << ": Error, should have meta data for mipFam"
@@ -250,7 +250,7 @@ int mipsterUtilsRunner::writeOutPossibleHaplotypes(
 
 
 int mipsterUtilsRunner::processMipOverlapGraph(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 
 	mipCorePars pars;
 	comparison noErrors;
@@ -280,7 +280,7 @@ int mipsterUtilsRunner::processMipOverlapGraph(
 				<< "Error in directory structure, make sure you are in the correct analysis directory"
 				<< std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error { ss.str() };
 	}
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
@@ -295,7 +295,7 @@ int mipsterUtilsRunner::processMipOverlapGraph(
 			auto mipFams = mipMaster.mips_->getMipFamsForRegion(region);
 			uint64_t maxSize = 0;
 			for(const auto & mipFam : mipFams){
-				if(bib::in(mipFam,mipMaster.names_->mips_ )){
+				if(njh::in(mipFam,mipMaster.names_->mips_ )){
 					//std::cout << mipMaster.pathPopClusFinalHaplo(MipFamSamp(mipFam, samp)) << std::endl;
 
 					auto seqOpts = SeqIOOptions::genFastqIn(mipMaster.pathPopClusFinalHaplo(MipFamSamp(mipFam, samp)).string(), true);
@@ -315,13 +315,13 @@ int mipsterUtilsRunner::processMipOverlapGraph(
 
 			std::stringstream ss;
 			mog.overlapGraph_->writePaths(ss);
-			auto sampDirPath = bib::files::make_path(setUp.pars_.directoryName_, samp, region);
-			bib::files::makeDirP(bib::files::MkdirPar(sampDirPath.string()));
+			auto sampDirPath = njh::files::make_path(setUp.pars_.directoryName_, samp, region);
+			njh::files::makeDirP(njh::files::MkdirPar(sampDirPath.string()));
 			std::ofstream possibleHapsFile;
 			std::ofstream lociInfoFile;
-			openTextFile(possibleHapsFile,bib::files::join(sampDirPath.string(), "possibleHapsFile"),".txt",false, true );
-			openTextFile(lociInfoFile,bib::files::join(sampDirPath.string(), "lociInfoFile"),".txt",false, true );
-			OutOptions lociAlleNameKeyOpts(bib::files::make_path(sampDirPath, "nameKey.tab.txt"));
+			openTextFile(possibleHapsFile,njh::files::join(sampDirPath.string(), "possibleHapsFile"),".txt",false, true );
+			openTextFile(lociInfoFile,njh::files::join(sampDirPath.string(), "lociInfoFile"),".txt",false, true );
+			OutOptions lociAlleNameKeyOpts(njh::files::make_path(sampDirPath, "nameKey.tab.txt"));
 			std::ofstream lociAlleNameKeyFile;
 			lociAlleNameKeyOpts.openFile(lociAlleNameKeyFile);
 			lociAlleNameKeyFile << "seqName\tLociName" << std::endl;
@@ -335,10 +335,10 @@ int mipsterUtilsRunner::processMipOverlapGraph(
 					std::unordered_map<std::string, std::string> meta;
 					tempSeq.processNameForMeta(meta);
 					uint32_t lociNum = 0;
-					if (bib::has(meta, "mipFam")) {
-						auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
+					if (njh::has(meta, "mipFam")) {
+						auto mipFamToks = njh::tokenizeString(meta.at("mipFam"), "_");
 						lociNum = estd::stou(
-								bib::replaceString(mipFamToks.back(), "mip", ""));
+								njh::replaceString(mipFamToks.back(), "mip", ""));
 					} else {
 						std::stringstream ss;
 						ss << __PRETTY_FUNCTION__ << ": Error, should have meta data for mipFam"
@@ -377,7 +377,7 @@ int mipsterUtilsRunner::processMipOverlapGraph(
 	return 0;
 }
 
-int mipsterUtilsRunner::processMipOverlapGraphSingle(const bib::progutils::CmdArgs & inputCommands) {
+int mipsterUtilsRunner::processMipOverlapGraphSingle(const njh::progutils::CmdArgs & inputCommands) {
 	seqSetUp setUp(inputCommands);
 	setUp.pars_.gapLeft_ = "0,0";
 	setUp.pars_.gapRight_ = "0,0";
@@ -424,7 +424,7 @@ int mipsterUtilsRunner::processMipOverlapGraphSingle(const bib::progutils::CmdAr
 	std::ofstream outFile;
 	openTextFile(outFile, setUp.pars_.ioOptions_.out_);
 	auto graphJson = mog.genOverlapJson();
-	outFile << bib::json::writeAsOneLine(graphJson) << std::endl;
+	outFile << njh::json::writeAsOneLine(graphJson) << std::endl;
 	alignerObj.processAlnInfoOutput(setUp.pars_.alnInfoDirName_,
 			setUp.pars_.verbose_);
 	return 0;
@@ -432,7 +432,7 @@ int mipsterUtilsRunner::processMipOverlapGraphSingle(const bib::progutils::CmdAr
 
 
 int mipsterUtilsRunner::scanForContam(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	// parameters
 	mipsterUtilsSetUp setUp(inputCommands);
 	std::string mipFamName = "";
@@ -456,7 +456,7 @@ int mipsterUtilsRunner::scanForContam(
 				<< "Error in directory structure, make sure you are in the correct analysis directory"
 				<< std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error { ss.str() };
 	}
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
@@ -484,8 +484,8 @@ int mipsterUtilsRunner::scanForContam(
 				throw std::runtime_error { ss.str() };
 			}
 			std::string line = "";
-			while (bib::files::crossPlatGetline(barFile, line)) {
-				if (!bib::beginsWith(line, "Barcode")) {
+			while (njh::files::crossPlatGetline(barFile, line)) {
+				if (!njh::beginsWith(line, "Barcode")) {
 					auto toks = tokenizeString(line, "\t");
 					if (2 != toks.size()) {
 						std::stringstream ss;
@@ -530,7 +530,7 @@ int mipsterUtilsRunner::scanForContam(
 }
 
 int mipsterUtilsRunner::processProcessedMips(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	// parameters
 	mipsterUtilsSetUp setUp(inputCommands);
 	std::string dirName = "";
@@ -559,7 +559,7 @@ int mipsterUtilsRunner::processProcessedMips(
 			inReads, setUp.pars_.seqObj_, alignerObj, true, false);
 
 	auto targetNames = getVectorOfMapKeys(mReads);
-	bib::sort(targetNames);
+	njh::sort(targetNames);
 	for (auto & targetReadName : targetNames) {
 		auto & targetReads = mReads.at(targetReadName);
 		if (setUp.pars_.debug_) {
@@ -567,7 +567,7 @@ int mipsterUtilsRunner::processProcessedMips(
 			std::cout << "\t" << "start: " << targetReads.start_ << std::endl;
 			std::cout << "\t" << "stop: " << targetReads.stop_ << std::endl;
 			std::cout << "\t" << "ReverseStrand: "
-					<< bib::colorBool(targetReads.reverseStrand_) << std::endl;
+					<< njh::colorBool(targetReads.reverseStrand_) << std::endl;
 			VecStr subReadsNames;
 			for (const auto & read : targetReads.reads_) {
 				subReadsNames.emplace_back(read->seqBase_.name_);
@@ -594,7 +594,7 @@ int mipsterUtilsRunner::processProcessedMips(
 }
 
 int mipsterUtilsRunner::alignTargets(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	// parameters
 	mipsterUtilsSetUp setUp(inputCommands);
 	std::string dirName = "";
@@ -637,7 +637,7 @@ int mipsterUtilsRunner::alignTargets(
 }
 
 int mipsterUtilsRunner::rearmTargetsAndCombine(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	bfs::path inputDir = "";
 	bfs::path outputDir = "";
 	mipCorePars corePars;
@@ -655,25 +655,25 @@ int mipsterUtilsRunner::rearmTargetsAndCombine(
 	if (!bfs::exists(inputDir)) {
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__ << ", error, input directory "
-				<< bib::bashCT::boldRed(inputDir.string()) << " doesn't exist" << "\n";
+				<< njh::bashCT::boldRed(inputDir.string()) << " doesn't exist" << "\n";
 		throw std::runtime_error { ss.str() };
 	}
 	if (bfs::exists(outputDir) && !overWriteDir) {
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__ << ", error, output directory "
-				<< bib::bashCT::boldRed(outputDir.string())
+				<< njh::bashCT::boldRed(outputDir.string())
 				<< " already exists, use --overWriteDir to over write " << "\n";
 		throw std::runtime_error { ss.str() };
 	}
 
 	MipCollection mips(corePars.mipArmsFileName, corePars.allowableErrors);
 
-	bib::files::MkdirPar outputPars(outputDir);
+	njh::files::MkdirPar outputPars(outputDir);
 	outputPars.overWriteDir_ = true;
-	bib::files::makeDir(outputPars);
-	setUp.startARunLog(bib::appendAsNeededRet(outputDir.string(), "/"));
+	njh::files::makeDir(outputPars);
+	setUp.startARunLog(njh::appendAsNeededRet(outputDir.string(), "/"));
 
-	auto files = bib::files::gatherFiles(inputDir, ".fasta", false);
+	auto files = njh::files::gatherFiles(inputDir, ".fasta", false);
 	if(setUp.pars_.debug_){
 		printVector(files, "\n");
 	}
@@ -713,7 +713,7 @@ int mipsterUtilsRunner::rearmTargetsAndCombine(
 
 	for(auto & genome : seqsByGenome){
 		MipNameSorter::sort(genome.second);
-		SeqOutput::write(genome.second, SeqIOOptions::genFastaOut(bib::files::make_path(outputDir, genome.first)));
+		SeqOutput::write(genome.second, SeqIOOptions::genFastaOut(njh::files::make_path(outputDir, genome.first)));
 	}
 
 
@@ -722,7 +722,7 @@ int mipsterUtilsRunner::rearmTargetsAndCombine(
 
 
 int mipsterUtilsRunner::createLigArmFastas(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	mipCorePars corePars;
 	bool overWrite = false;
 	mipsterUtilsSetUp setUp(inputCommands);
@@ -748,7 +748,7 @@ int mipsterUtilsRunner::createLigArmFastas(
 }
 
 int mipsterUtilsRunner::createExtArmFastas(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	mipCorePars corePars;
 	bool overWrite = false;
 	mipsterUtilsSetUp setUp(inputCommands);
@@ -773,7 +773,7 @@ int mipsterUtilsRunner::createExtArmFastas(
 }
 
 
-int mipsterUtilsRunner::mipFastasToSeqTable(const bib::progutils::CmdArgs & inputCommands){
+int mipsterUtilsRunner::mipFastasToSeqTable(const njh::progutils::CmdArgs & inputCommands){
 	std::string filePat = "^trimmed_.*.fasta$";
 	bfs::path inputDir = "./";
 	auto outOpts = TableIOOpts::genTabFileOut("out.tab.txt", true);
@@ -785,7 +785,7 @@ int mipsterUtilsRunner::mipFastasToSeqTable(const bib::progutils::CmdArgs & inpu
 	setUp.setOption(inputDir, "--inputDir", "Input directory to search");
 	setUp.finishSetUp(std::cout);
 
-	auto files = bib::files::listAllFiles(inputDir, false, {std::regex{filePat}});
+	auto files = njh::files::listAllFiles(inputDir, false, {std::regex{filePat}});
 	table outTab(VecStr{"target", "name","length", "seq"});
 	for(const auto & f : files){
 		if(setUp.pars_.verbose_){
@@ -798,7 +798,7 @@ int mipsterUtilsRunner::mipFastasToSeqTable(const bib::progutils::CmdArgs & inpu
 				std::cout << seq.name_ << std::endl;
 			}
 			auto bName = bfs::basename(f.first);
-			bName = bib::replaceString(bName, "trimmed_", "");
+			bName = njh::replaceString(bName, "trimmed_", "");
 			outTab.addRow(bName, seq.name_,len(seq), seq.seq_);
 		}
 	}
@@ -806,7 +806,7 @@ int mipsterUtilsRunner::mipFastasToSeqTable(const bib::progutils::CmdArgs & inpu
 	return 0;
 }
 
-int mipsterUtilsRunner::extractPossibleMipCapturesFromGenome(const bib::progutils::CmdArgs & inputCommands){
+int mipsterUtilsRunner::extractPossibleMipCapturesFromGenome(const njh::progutils::CmdArgs & inputCommands){
 	comparison comp;
 	bfs::path ligBamFnp = "";
 	bfs::path extBamFnp = "";
@@ -844,7 +844,7 @@ int mipsterUtilsRunner::extractPossibleMipCapturesFromGenome(const bib::progutil
 	return 0;
 }
 
-int mipsterUtilsRunner::creatingMipArmsFromSeqs(const bib::progutils::CmdArgs & inputCommands){
+int mipsterUtilsRunner::creatingMipArmsFromSeqs(const njh::progutils::CmdArgs & inputCommands){
 	uint32_t extensionArmSize = 15;
 	uint32_t ligationArmSize = 15;
 	uint32_t extensionBarSize = 10;
@@ -882,7 +882,7 @@ int mipsterUtilsRunner::creatingMipArmsFromSeqs(const bib::progutils::CmdArgs & 
 	return 0;
 }
 
-int mipsterUtilsRunner::fixingMipBedFiles(const bib::progutils::CmdArgs & inputCommands){
+int mipsterUtilsRunner::fixingMipBedFiles(const njh::progutils::CmdArgs & inputCommands){
 	bfs::path bedFile = "";
 	OutOptions bedOut(bfs::path("out.bed"));
 	seqSetUp setUp(inputCommands);
@@ -917,7 +917,7 @@ int mipsterUtilsRunner::fixingMipBedFiles(const bib::progutils::CmdArgs & inputC
 }
 
 
-int mipsterUtilsRunner::creatingSeqTableFromDirectory(const bib::progutils::CmdArgs & inputCommands){
+int mipsterUtilsRunner::creatingSeqTableFromDirectory(const njh::progutils::CmdArgs & inputCommands){
 	bfs::path directory = "";
 	OutOptions outOpts(bfs::path(""));
 	seqSetUp setUp(inputCommands);
@@ -928,7 +928,7 @@ int mipsterUtilsRunner::creatingSeqTableFromDirectory(const bib::progutils::CmdA
 	std::ofstream outFile;
 	std::ostream out(outOpts.determineOutBuf(outFile));
 	out << "target\tgenome\tseq" << std::endl;
-	auto inputFiles = bib::files::gatherFiles(directory, ".fasta", false);
+	auto inputFiles = njh::files::gatherFiles(directory, ".fasta", false);
 	for(const auto & inputFile : inputFiles){
 		auto seqIn = SeqIOOptions::genFastaIn(inputFile);
 		SeqInput reader(seqIn);
@@ -948,7 +948,7 @@ int mipsterUtilsRunner::creatingSeqTableFromDirectory(const bib::progutils::CmdA
 
 	return 0;
 }
-int mipsterUtilsRunner::createMipArmFromSelectedMips(const bib::progutils::CmdArgs & inputCommands){
+int mipsterUtilsRunner::createMipArmFromSelectedMips(const njh::progutils::CmdArgs & inputCommands){
 	mipCorePars pars;
 
 	OutOptions outOpts(bfs::path(""));
@@ -962,7 +962,7 @@ int mipsterUtilsRunner::createMipArmFromSelectedMips(const bib::progutils::CmdAr
 
 	MipsSamplesNames names(pars.mipsSamplesFile);
 	OutputStream out(outOpts);
-	out << bib::conToStr(Mip::writeInfoLineHeader(),"\t") << "\n";
+	out << njh::conToStr(Mip::writeInfoLineHeader(),"\t") << "\n";
 	for(const auto & mipFam : names.mips_){
 		for(const auto & mip : mips.getMipsForFamily(mipFam)){
 			mips.mips_.at(mip).writeInfoLine(out);
@@ -976,4 +976,4 @@ int mipsterUtilsRunner::createMipArmFromSelectedMips(const bib::progutils::CmdAr
 
 
                     
-} // namespace bibseq
+} // namespace njhseq

@@ -6,14 +6,14 @@
  *      Author: nickhathaway
  */
 
-#include <bibseq/objects/helperObjects/motif.hpp>
-#include <bibseq/objects/seqObjects/readObject.hpp>
+#include <njhseq/objects/helperObjects/motif.hpp>
+#include <njhseq/objects/seqObjects/readObject.hpp>
 
 #include "mipster/common.h"
 #include "mipster/objects/BarcodeInfo.hpp"
 #include "mipster/info/filterStats/SinlgeMipExtractInfo.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 class Mip {
 public:
@@ -87,5 +87,5 @@ public:
 
 };
 
-} /* namespace bibseq */
+} /* namespace njhseq */
 

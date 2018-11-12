@@ -12,10 +12,10 @@
 #include "mipster/objects/MipsOnGenome.hpp"
 #include <seqServer.h>
 
-namespace bibseq {
+namespace njhseq {
 
-class mgv: public bibseq::SeqApp {
-	typedef bibseq::SeqApp super;
+class mgv: public njhseq::SeqApp {
+	typedef njhseq::SeqApp super;
 
 	bfs::path mainDir_;
 	bfs::path serverResourceDir_;
@@ -97,7 +97,7 @@ public:
 };
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 
 
 

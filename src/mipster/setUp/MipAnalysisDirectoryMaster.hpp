@@ -8,7 +8,7 @@
 
 #include "mipster/common.h"
 
-namespace bibseq {
+namespace njhseq {
 
 class MipAnalysisDirectoryMaster {
 public:
@@ -26,6 +26,6 @@ public:
 	bfs::path getMipSerDir(const std::string & mipServerName) const;
 };
 
-}  // namespace bibseq
+}  // namespace njhseq
 
 

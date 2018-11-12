@@ -10,11 +10,11 @@
 
 
 
-#include <bibseq.h>
-namespace bibseq {
+#include <njhseq.h>
+namespace njhseq {
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 
 
 

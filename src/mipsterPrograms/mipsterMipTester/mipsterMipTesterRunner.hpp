@@ -9,13 +9,13 @@
 
 #include "mipsterMipTesterSetUp.hpp"
 #include "mipster.h"
-namespace bibseq {
+namespace njhseq {
 
-class mipsterMipTesterRunner : public bib::progutils::ProgramRunner {
+class mipsterMipTesterRunner : public njh::progutils::ProgramRunner {
  public:
   mipsterMipTesterRunner();
   
-  static int callMircosateliteSizes(const bib::progutils::CmdArgs & inputCommands);
+  static int callMircosateliteSizes(const njh::progutils::CmdArgs & inputCommands);
 
 };
-} // namespace bibseq
+} // namespace njhseq

@@ -9,23 +9,23 @@
 #include "mipsterUtilsRunner.hpp"
 #include <elucidator/seqToolsUtils.h>
 #include <elucidator/objects/BioDataObject.h>
-#include <bibseq/objects/Gene/GeneFromGffs.hpp>
+#include <njhseq/objects/Gene/GeneFromGffs.hpp>
 #include <elucidator/BamToolsUtils.h>
 
-#include <bibseq/objects/Gene/GenomicAminoAcidPositionTyper.hpp>
+#include <njhseq/objects/Gene/GenomicAminoAcidPositionTyper.hpp>
 
 #include <TwoBit.h>
 
 #include <unordered_map>
 
 
-namespace bibseq {
+namespace njhseq {
 
 
 
 
 int mipsterUtilsRunner::typeFinalHaplotypes(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	mipCorePars pars;
 	bfs::path genomeFnp = "";
 	bfs::path gffFnp = "";
@@ -56,11 +56,11 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 				<< "Error in directory structure, make sure you are in the correct analysis directory"
 				<< std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error { ss.str() };
 	}
 
-	bib::files::checkExistenceThrow(genomeFnp, __PRETTY_FUNCTION__);
+	njh::files::checkExistenceThrow(genomeFnp, __PRETTY_FUNCTION__);
 	BioCmdsUtils bRunner(setUp.pars_.verbose_);
 	bRunner.RunFaToTwoBit(genomeFnp);
 	bRunner.RunBowtie2Index(genomeFnp);
@@ -86,14 +86,14 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 	for(const auto & mipName : popMips){
 		popMipsFnps.emplace_back(mipMaster.pathMipPopClusHaplo(mipName));
 	}
-	OutOptions allPopHapsOpts(bib::files::make_path(setUp.pars_.directoryName_, "allPopSeqs.fastq"));
+	OutOptions allPopHapsOpts(njh::files::make_path(setUp.pars_.directoryName_, "allPopSeqs.fastq"));
 	concatenateFiles(popMipsFnps, allPopHapsOpts);
 
 	//align to genome
 	auto alignOpts = SeqIOOptions::genFastqIn(allPopHapsOpts.outName());
-	alignOpts.out_.outFilename_ = bib::files::make_path(setUp.pars_.directoryName_, "allPopSeqs.sorted.bam");
+	alignOpts.out_.outFilename_ = njh::files::make_path(setUp.pars_.directoryName_, "allPopSeqs.sorted.bam");
 	alignOpts.out_.outExtention_= ".sorted.bam";
-	auto bowtieRunOut = bRunner.bowtie2Align(alignOpts, genomeFnp, bib::pasteAsStr("-p ", pars.numThreads));
+	auto bowtieRunOut = bRunner.bowtie2Align(alignOpts, genomeFnp, njh::pasteAsStr("-p ", pars.numThreads));
 
 
 	//get overlapped gene ids
@@ -103,17 +103,17 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 
 
 	// get gene information
-	auto geneInfoDir = bib::files::make_path(setUp.pars_.directoryName_, "geneInfos");
-	bib::files::makeDir(bib::files::MkdirPar{geneInfoDir});
+	auto geneInfoDir = njh::files::make_path(setUp.pars_.directoryName_, "geneInfos");
+	njh::files::makeDir(njh::files::MkdirPar{geneInfoDir});
 
-	OutOptions outOpts(bib::files::make_path(geneInfoDir, "gene"));
+	OutOptions outOpts(njh::files::make_path(geneInfoDir, "gene"));
 	std::set<std::string> allIds = aaTyper.getGeneIds();
 	allIds.insert(idsFromData.begin(), idsFromData.end());
 
 	std::unordered_map<std::string, VecStr> idToTranscriptName;
 	std::unordered_map<std::string, std::shared_ptr<GeneFromGffs>> genes = GeneFromGffs::getGenesFromGffForIds(gffFnp, allIds);
 	std::unordered_map<std::string, std::shared_ptr<GeneSeqInfo>> geneInfos;
-	OutOptions geneIdsOpts(bib::files::make_path(geneInfoDir, "geneIds.txt"));
+	OutOptions geneIdsOpts(njh::files::make_path(geneInfoDir, "geneIds.txt"));
 	OutputStream geneIdsOut(geneIdsOpts);
 	uint64_t proteinMaxLen = 0;
 	std::unordered_map<std::string, std::unordered_map<std::string, std::shared_ptr<GeneFromGffs>>> genesByChrom;
@@ -144,13 +144,13 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 		ss << __PRETTY_FUNCTION__
 				<< ", error the following ids were found to have more than 1 transcript which can't be handled in the current version"
 				<< "\n";
-		ss << "ids: " << bib::conToStr(idsWithMoreThanOneTranscript, ", ") << "\n";
+		ss << "ids: " << njh::conToStr(idsWithMoreThanOneTranscript, ", ") << "\n";
 		throw std::runtime_error { ss.str() };
 	}
 	//check for missing ids from the input query
 	VecStr idsMissing;
 	for(const auto & id : aaTyper.getGeneIds()){
-		if(!bib::in(id, idToTranscriptName)){
+		if(!njh::in(id, idToTranscriptName)){
 			idsMissing.emplace_back(id);
 			failed = true;
 		}
@@ -161,7 +161,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 		ss << __PRETTY_FUNCTION__
 				<< ", the following ids were not found in the gff file, " << gffFnp
 				<< "\n";
-		ss << "ids: " << bib::conToStr(idsMissing, ", ") << "\n";
+		ss << "ids: " << njh::conToStr(idsMissing, ", ") << "\n";
 		throw std::runtime_error { ss.str() };
 	}
 	//check to make sure the asked for positons are not out of range
@@ -226,12 +226,12 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 
 		MultiSeqOutCache<seqInfo> proteinSeqOuts;
 		for(const auto & g :genes){
-			proteinSeqOuts.addReader(g.first, SeqIOOptions::genFastaOut(bib::files::make_path(setUp.pars_.directoryName_, g.first)));
+			proteinSeqOuts.addReader(g.first, SeqIOOptions::genFastaOut(njh::files::make_path(setUp.pars_.directoryName_, g.first)));
 		}
 		std::mutex proteinSeqOutsMut;
 		std::mutex transferInfoMut;
 		auto chromRegions = genGenRegionsFromRefData(refData);
-		bib::concurrent::LockableVec<GenomicRegion> chromRegionsVec(chromRegions);
+		njh::concurrent::LockableVec<GenomicRegion> chromRegionsVec(chromRegions);
 
 		auto typeOnChrom = [&bamPool,&alnPool,&proteinSeqOuts,&proteinSeqOutsMut,
 												&chromRegionsVec,&refData,&mipMaster,&genes,
@@ -258,7 +258,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 						if (setUp.pars_.verbose_) {
 							std::cout << balnGenomicRegion.genBedRecordCore().toDelimStr() << std::endl;
 						}
-						if(!bib::in(balnGenomicRegion.createUidFromCoords(), alnRegionToGeneIds)){
+						if(!njh::in(balnGenomicRegion.createUidFromCoords(), alnRegionToGeneIds)){
 							continue;
 						}
 						for (const auto & g : alnRegionToGeneIds.at(balnGenomicRegion.createUidFromCoords())) {
@@ -277,7 +277,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 									currentTargetNameToAminoAcidPositions[targetName][g].emplace(aType.first);
 								}
 							}
-							if (!aminoTyping.empty() && bib::in(g, aaTyper.aminoPositionsForTyping_)) {
+							if (!aminoTyping.empty() && njh::in(g, aaTyper.aminoPositionsForTyping_)) {
 								currentPopHapsTyped[bAln.Name].emplace(g, GenomicAminoAcidPositionTyper::GeneAminoTyperInfo(g, aminoTyping));
 								auto typeMeta = MetaDataInName::mapToMeta(aminoTyping);
 								curAligner->alignObjectB_.seqBase_.name_.append(typeMeta.createMetaName());
@@ -309,10 +309,10 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 		for(uint32_t t = 0; t < numOfThreadsToUse; ++t){
 			threads.emplace_back(typeOnChrom);
 		}
-		bib::concurrent::joinAllJoinableThreads(threads);
+		njh::concurrent::joinAllJoinableThreads(threads);
 	}
 
-	OutOptions targetToAminoAcidsCoveredOpt(bib::files::make_path(setUp.pars_.directoryName_, "targetToAminoAcidsCovered.tab.txt"));
+	OutOptions targetToAminoAcidsCoveredOpt(njh::files::make_path(setUp.pars_.directoryName_, "targetToAminoAcidsCovered.tab.txt"));
 	OutputStream targetToAminoAcidsCoveredOut(targetToAminoAcidsCoveredOpt);
 	targetToAminoAcidsCoveredOut << "targetName\tGeneID\taltName\taminoAcidPosition\trefAminoAcid" << std::endl;
 
@@ -353,45 +353,45 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 		auto targetName = outRow[2];
 		auto popName =    outRow[3];
 		std::string outPutName = "others";
-		bool aminoPosTyping = bib::in(regionName, regionsToGeneIds) &&
+		bool aminoPosTyping = njh::in(regionName, regionsToGeneIds) &&
 				std::any_of(regionsToGeneIds[regionName].begin(),
 										regionsToGeneIds[regionName].end(), [&aaTyper](const std::string & gId){
-									return bib::in(gId, aaTyper.aminoPositionsForTypingWithInfo_);
+									return njh::in(gId, aaTyper.aminoPositionsForTypingWithInfo_);
 								});
 		if (aminoPosTyping) {
 			outPutName = regionName + "-" + targetName;
 		}
-		if(!bib::in(outPutName, outputs)){
-			outputs.emplace(outPutName, std::make_unique<OutputStream>(OutOptions(bib::files::make_path(setUp.pars_.directoryName_, outPutName + ".tab.txt"))));
-			(*outputs.at(outPutName)) << bib::conToStr(renamedCols, "\t");
+		if(!njh::in(outPutName, outputs)){
+			outputs.emplace(outPutName, std::make_unique<OutputStream>(OutOptions(njh::files::make_path(setUp.pars_.directoryName_, outPutName + ".tab.txt"))));
+			(*outputs.at(outPutName)) << njh::conToStr(renamedCols, "\t");
 			if(aminoPosTyping){
 				VecStr additionalColumns;
 				for(const auto & g : regionsToGeneIds.at(regionName)){
-					if(bib::in(g, aaTyper.aminoPositionsForTyping_)){
+					if(njh::in(g, aaTyper.aminoPositionsForTyping_)){
 						for(const auto & aaPos : aaTyper.aminoPositionsForTyping_.at(g)){
 							uint32_t currentPos = zeroBased ? aaPos : aaPos + 1;
-							if(bib::in(currentPos, targetNameToAminoAcidPositions[targetName][g])){
-								additionalColumns.emplace_back(bib::pasteAsStr(g, "-", currentPos));
+							if(njh::in(currentPos, targetNameToAminoAcidPositions[targetName][g])){
+								additionalColumns.emplace_back(njh::pasteAsStr(g, "-", currentPos));
 							}
 						}
 					}
 				}
 				if(!additionalColumns.empty()){
-					(*outputs.at(outPutName)) << "\t"<< bib::conToStr(additionalColumns, "\t");
+					(*outputs.at(outPutName)) << "\t"<< njh::conToStr(additionalColumns, "\t");
 				}
 			}
 			(*outputs.at(outPutName)) << std::endl;
 		}
 		if(aminoPosTyping){
-			(*outputs.at(outPutName)) << bib::conToStr(regionsToGeneIds.at(regionName), ",") << "\t"<< bib::conToStr(outRow, "\t");
+			(*outputs.at(outPutName)) << njh::conToStr(regionsToGeneIds.at(regionName), ",") << "\t"<< njh::conToStr(outRow, "\t");
 			VecStr additionalColumns;
 			for(const auto & g : regionsToGeneIds.at(regionName)){
-				if(bib::in(g, aaTyper.aminoPositionsForTyping_)){
+				if(njh::in(g, aaTyper.aminoPositionsForTyping_)){
 					for(const auto & aaPos : aaTyper.aminoPositionsForTyping_.at(g)){
 						uint32_t currentPos = zeroBased ? aaPos : aaPos + 1;
-						if(bib::in(currentPos, targetNameToAminoAcidPositions[targetName][g])){
-							if(bib::in(popName, popHapsTyped)){
-								if(bib::in(g, popHapsTyped[popName])){
+						if(njh::in(currentPos, targetNameToAminoAcidPositions[targetName][g])){
+							if(njh::in(popName, popHapsTyped)){
+								if(njh::in(g, popHapsTyped[popName])){
 									additionalColumns.emplace_back(std::string(1, popHapsTyped[popName].at(g).aminos_[currentPos]));
 								}else{
 									additionalColumns.emplace_back("");
@@ -409,16 +409,16 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 				}
 			}
 			if(!additionalColumns.empty()){
-				(*outputs.at(outPutName)) << "\t"<< bib::conToStr(additionalColumns, "\t");
+				(*outputs.at(outPutName)) << "\t"<< njh::conToStr(additionalColumns, "\t");
 			}
 			(*outputs.at(outPutName)) << std::endl;
 		} else {
 			std::string geneId = "";
-			if(bib::in(regionName, regionsToGeneIds)){
+			if(njh::in(regionName, regionsToGeneIds)){
 				geneId = *regionsToGeneIds.at(regionName).begin();
 			}
 			(*outputs.at(outPutName)) << geneId
-					<< "\t" << bib::conToStr(outRow, "\t");
+					<< "\t" << njh::conToStr(outRow, "\t");
 			if(nullptr != mipMaster.meta_){
 				for(const auto & group : mipMaster.meta_->groupData_){
 					(*outputs.at(outPutName))
@@ -432,5 +432,5 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 }
 
 
-} //namespace bibseq
+} //namespace njhseq
 

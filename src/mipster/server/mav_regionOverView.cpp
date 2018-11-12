@@ -8,7 +8,7 @@
 
 #include "mav.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 
 void mav::oneRegionPageHandler(
@@ -17,7 +17,7 @@ void mav::oneRegionPageHandler(
 	auto request = session->get_request();
 	auto regionName = request->get_path_parameter("regionName");
 	auto regions = mipMaster_->getMipGroupings();
-	if (bib::in(regionName, regions)) {
+	if (njh::in(regionName, regions)) {
 		auto body = genHtmlDoc(rootName_, pages_.at("oneRegionInfo.js"));
 		const std::multimap<std::string, std::string> headers =
 				HeaderFactory::initiateTxtHtmlHeader(body);
@@ -26,7 +26,7 @@ void mav::oneRegionPageHandler(
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__ << ": error, no information for regionName "
 				<< regionName << "\n";
-		ss << "Options are " << bib::conToStr(regions, ", ") << "\n";
+		ss << "Options are " << njh::conToStr(regions, ", ") << "\n";
 		ss << "Redirecting...." << "\n";
 		redirect(session, ss.str());
 	}
@@ -40,7 +40,7 @@ void mav::getNamesForRegionHandler(std::shared_ptr<restbed::Session> session){
 	auto regionName = request->get_path_parameter("regionName");
 	auto regions = mipMaster_->getMipGroupings();
 	Json::Value ret;
-	if (bib::in(regionName, regions)) {
+	if (njh::in(regionName, regions)) {
 		VecStr mipNames = mipMaster_->getMipFamiliesForMipGroup(regionName);
 		std::set<std::string> sampNames;
 		for (const auto & mipName : mipNames) {
@@ -51,14 +51,14 @@ void mav::getNamesForRegionHandler(std::shared_ptr<restbed::Session> session){
 						std::inserter(sampNames, sampNames.end()));
 			}
 		}
-		ret["mipFamilies"] = bib::json::toJson(mipNames);
-		ret["samples"] = bib::json::toJson(sampNames);
+		ret["mipFamilies"] = njh::json::toJson(mipNames);
+		ret["samples"] = njh::json::toJson(sampNames);
 	} else {
 		std::cerr << __PRETTY_FUNCTION__ << ": error, no information for regionName "
 				<< regionName << "\n";
-		std::cerr << "Options are " << bib::conToStr(regions, ", ") << "\n";
+		std::cerr << "Options are " << njh::conToStr(regions, ", ") << "\n";
 	}
-	auto body = bib::json::writeAsOneLine(ret);
+	auto body = njh::json::writeAsOneLine(ret);
 	const std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(body);
 	session->close(restbed::OK, body, headers);
@@ -93,5 +93,5 @@ std::shared_ptr<restbed::Resource> mav::getNamesForRegion() {
 }
 
 
-} //namespace bibseq
+} //namespace njhseq
 

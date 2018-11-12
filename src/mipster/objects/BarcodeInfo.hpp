@@ -12,7 +12,7 @@
 #include "mipster/common.h"
 
 
-namespace bibseq {
+namespace njhseq {
 
 class BarcodeInfo {
 public:
@@ -35,5 +35,5 @@ public:
 
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 

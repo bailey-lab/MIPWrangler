@@ -9,17 +9,17 @@
 #include "mipsterServerRunner.hpp"
 
 
-namespace bibseq {
+namespace njhseq {
 
 mipsterServerRunner::mipsterServerRunner()
-    : bib::progutils::ProgramRunner({
+    : njh::progutils::ProgramRunner({
 																		 addFunc("mipAnalysisServerSetUp", mipAnalysisServerSetUp, false),
 																		 addFunc("mav", mavRunner, false)},
                     "mipsterServer") {}//
 
 
 
-int mipsterServerRunner::mipAnalysisServerSetUp(const bib::progutils::CmdArgs & inputCommands) {
+int mipsterServerRunner::mipAnalysisServerSetUp(const njh::progutils::CmdArgs & inputCommands) {
 	SeqAppCorePars seqServerCorePars;
 	mipCorePars mipCorepars;
 
@@ -54,7 +54,7 @@ int mipsterServerRunner::mipAnalysisServerSetUp(const bib::progutils::CmdArgs & 
 		std::stringstream ss;
 		ss << "Error in directory structure, make sure you are in the correct analysis directory" << std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error{ss.str()};
 	}
 
@@ -66,4 +66,4 @@ int mipsterServerRunner::mipAnalysisServerSetUp(const bib::progutils::CmdArgs & 
 }
 
                     
-} // namespace bibseq
+} // namespace njhseq

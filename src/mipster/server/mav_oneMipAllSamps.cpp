@@ -8,7 +8,7 @@
 
 #include "mav.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 
 
@@ -16,7 +16,7 @@ void mav::oneMipAllSampsPageHandler(std::shared_ptr<restbed::Session> session){
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	auto request = session->get_request();
 	auto mipFam = request->get_path_parameter("mipFam");
-	if (bib::in(mipFam,popClusInfoByTar_)) {
+	if (njh::in(mipFam,popClusInfoByTar_)) {
 		auto body = genHtmlDoc(rootName_, pages_.at("oneMipAllSampsInfo.js"));
 		const std::multimap<std::string, std::string> headers =
 				HeaderFactory::initiateTxtHtmlHeader(body);
@@ -35,7 +35,7 @@ VecStr genColorsStrsForNamesMultiples(VecStr popNames){
 	auto popColors = getColorsForNames(popNames);
 	VecStr popColorsStrs;
 	auto keys = getVectorOfMapKeys(popColors);
-	bib::sort(keys);
+	njh::sort(keys);
 	for(const auto & pColorKey : keys){
 		popColorsStrs.emplace_back(popColors[pColorKey].getHexStr());
 	}
@@ -47,18 +47,18 @@ void mav::getOneMipAllSampsDataPostHandler(std::shared_ptr<restbed::Session> ses
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	auto request = session->get_request();
 	auto mipFam = request->get_path_parameter("mipFam");
-	const auto postData = bib::json::parse(std::string(body.begin(), body.end()));
-	bib::json::MemberChecker checker(postData);
+	const auto postData = njh::json::parse(std::string(body.begin(), body.end()));
+	njh::json::MemberChecker checker(postData);
 	Json::Value ret;
 	if (checker.failMemberCheck( { "samples" }, __PRETTY_FUNCTION__)) {
 		std::cerr << checker.message_.str() << std::endl;
 	} else {
-		VecStr samples = bib::json::jsonArrayToVec<std::string>(postData["samples"],
+		VecStr samples = njh::json::jsonArrayToVec<std::string>(postData["samples"],
 				[](const Json::Value & val) {return val.asString();});
 		auto search = popClusInfoByTar_.find(mipFam);
 		if (search != popClusInfoByTar_.end()) {
 			auto containsSampName = [&samples](const std::string & str) {
-				return bib::in(str, samples);
+				return njh::in(str, samples);
 			};
 			auto trimedTab = search->second.get().extractByComp("s_sName",
 					containsSampName);
@@ -76,15 +76,15 @@ void mav::getOneMipAllSampsDataPostHandler(std::shared_ptr<restbed::Session> ses
 			*/
 			auto popUIDs = trimedTab.getColumn("h_popUID");
 			removeDuplicates(popUIDs);
-			bib::sort(popUIDs);
+			njh::sort(popUIDs);
 			auto popColorsStrs = genColorsStrsForNamesMultiples(popUIDs);
-			ret["popColors"] = bib::json::toJson(popColorsStrs);
-			ret["popUIDs"] = bib::json::toJson(popUIDs);
-			auto popCounts = bibseq::countVec(trimedTab.getColumn("h_popUID"));
-			auto popColors = bib::njhColors(popCounts.size());
+			ret["popColors"] = njh::json::toJson(popColorsStrs);
+			ret["popUIDs"] = njh::json::toJson(popUIDs);
+			auto popCounts = njhseq::countVec(trimedTab.getColumn("h_popUID"));
+			auto popColors = njh::njhColors(popCounts.size());
 		}
 	}
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -110,8 +110,8 @@ void mav::getOneMipPopSeqsPostHandler(
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	auto request = session->get_request();
 	auto mipFam = request->get_path_parameter("mipFam");
-	const auto postData = bib::json::parse(std::string(body.begin(), body.end()));
-	bib::json::MemberChecker checker(postData);
+	const auto postData = njh::json::parse(std::string(body.begin(), body.end()));
+	njh::json::MemberChecker checker(postData);
 	Json::Value ret;
 	if (checker.failMemberCheck( { "popUIDs" }, __PRETTY_FUNCTION__)) {
 		std::cerr << checker.message_.str() << std::endl;
@@ -123,19 +123,19 @@ void mav::getOneMipPopSeqsPostHandler(
 		} else {
 			sesUid = postData["sessionUID"].asUInt();
 		}
-		VecStr popUIDs = bib::json::jsonArrayToVec<std::string>(postData["popUIDs"],
+		VecStr popUIDs = njh::json::jsonArrayToVec<std::string>(postData["popUIDs"],
 				[](const Json::Value & val) {return val.asString();});
 		seqsBySession_[sesUid]->cache_.at(mipFam).reload();
 		seqsBySession_[sesUid]->cache_.at(mipFam).toggleSeqs(
 				[&popUIDs](const readObject & seq) {
-					return bib::in(seq.seqBase_.getStubName(false), popUIDs);
+					return njh::in(seq.seqBase_.getStubName(false), popUIDs);
 				});
 		//make sure seqs aren't empty, viewer doesn't know how to handle that, if it isn't make sure to remove the placeholder seq if it is there
 		seqsBySession_[sesUid]->cache_.at(mipFam).ensureNonEmptyReads();
 		ret = seqsBySession_[sesUid]->getJson(mipFam);
-		ret["sessionUID"] = bib::json::toJson(sesUid);
+		ret["sessionUID"] = njh::json::toJson(sesUid);
 	}
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -161,13 +161,13 @@ void mav::getOneMipAllSampsPopDataPostHandler(
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	auto request = session->get_request();
 	auto mipFam = request->get_path_parameter("mipFam");
-	const auto postData = bib::json::parse(std::string(body.begin(), body.end()));
-	bib::json::MemberChecker checker(postData);
+	const auto postData = njh::json::parse(std::string(body.begin(), body.end()));
+	njh::json::MemberChecker checker(postData);
 	Json::Value ret;
 	if (checker.failMemberCheck( { "popUIDs" }, __PRETTY_FUNCTION__)) {
 		std::cerr << checker.message_.str() << std::endl;
 	}else{
-		VecStr popUIDs = bib::json::jsonArrayToVec<std::string>(postData["popUIDs"], [](const Json::Value & val){ return val.asString();});
+		VecStr popUIDs = njh::json::jsonArrayToVec<std::string>(postData["popUIDs"], [](const Json::Value & val){ return val.asString();});
 		auto search = popClusPopInfoByTar_.find(mipFam);
 		if (search == popClusPopInfoByTar_.end()) {
 			std::cerr << __PRETTY_FUNCTION__ << ": Couldn't find mipName: " << mipFam
@@ -175,7 +175,7 @@ void mav::getOneMipAllSampsPopDataPostHandler(
 		} else {
 			auto tab = search->second.get();
 			auto containsPopUID = [&popUIDs](const std::string & str) {
-				return bib::in(str, popUIDs);
+				return njh::in(str, popUIDs);
 			};
 			auto trimedTab = search->second.get().extractByComp("h_popUID",
 					containsPopUID);
@@ -190,7 +190,7 @@ void mav::getOneMipAllSampsPopDataPostHandler(
 		}
 	}
 
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -272,4 +272,4 @@ std::shared_ptr<restbed::Resource> mav::getOneMipAllSampsPopData(){
 
 
 
-}  // namespace bibseq
+}  // namespace njhseq

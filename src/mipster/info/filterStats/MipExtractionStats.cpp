@@ -11,7 +11,7 @@
 #include "MipExtractionStats.hpp"
 #include "mipster/mipUtils/MipNameSorter.hpp"
 
-namespace bibseq {
+namespace njhseq {
 MipExtractionStats::MipExtractionStats(const std::string & sampName):sampName_(sampName){
 
 }
@@ -39,7 +39,7 @@ uint32_t MipExtractionStats::getGoodAmount(const std::string & name){
 
 VecStr MipExtractionStats::getNames()const{
 	auto ret = getVectorOfMapKeys(stats_);
-	bib::sort(ret);
+	njh::sort(ret);
 	return ret;
 }
 std::string MipExtractionStats::getNameForCase(SinlgeMipExtractInfo::extractCase eCase) {

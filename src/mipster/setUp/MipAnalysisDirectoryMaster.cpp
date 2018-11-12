@@ -10,20 +10,20 @@
 
 #include "MipAnalysisDirectoryMaster.hpp"
 
-namespace bibseq {
+namespace njhseq {
 MipAnalysisDirectoryMaster::MipAnalysisDirectoryMaster(
 		const bfs::path & masterDir) :
-		masterDir_(bib::appendAsNeededRet(masterDir.string(), "/")),
+		masterDir_(njh::appendAsNeededRet(masterDir.string(), "/")),
 				resourceDir_(
-				bib::files::join(masterDir.string(), "resources/")),
+				njh::files::join(masterDir.string(), "resources/")),
 				serResourceDir_(
-				bib::files::join(masterDir.string(), "serverResources/")),
+				njh::files::join(masterDir.string(), "serverResources/")),
 				populationClusteringDir_(
-				bib::files::join(masterDir.string(), "populationClustering/")),
+				njh::files::join(masterDir.string(), "populationClustering/")),
 				logsDir_(
-				bib::files::join(masterDir.string(), "logs/")),
+				njh::files::join(masterDir.string(), "logs/")),
 				scriptsDir_(
-				bib::files::join(masterDir.string(), "scripts/")){
+				njh::files::join(masterDir.string(), "scripts/")){
 
 	//checkForDirectoriesThrow();
 }
@@ -45,23 +45,23 @@ void MipAnalysisDirectoryMaster::checkForDirectoriesThrow() const {
 }
 
 std::string MipAnalysisDirectoryMaster::initMipAnalysisDirectoryStructure(const bfs::path & masterDirPath){
-	bib::files::makeDir(bib::files::MkdirPar(masterDirPath.string()));
-	bib::files::makeDir(masterDirPath.string(), bib::files::MkdirPar("resources/"));
-	bib::files::makeDir(masterDirPath.string(), bib::files::MkdirPar("serverResources/"));
-	bib::files::makeDir(masterDirPath.string(), bib::files::MkdirPar("populationClustering/"));
-	bib::files::makeDir(masterDirPath.string(), bib::files::MkdirPar("logs/"));
-	bib::files::makeDir(masterDirPath.string(), bib::files::MkdirPar("scripts/"));
+	njh::files::makeDir(njh::files::MkdirPar(masterDirPath.string()));
+	njh::files::makeDir(masterDirPath.string(), njh::files::MkdirPar("resources/"));
+	njh::files::makeDir(masterDirPath.string(), njh::files::MkdirPar("serverResources/"));
+	njh::files::makeDir(masterDirPath.string(), njh::files::MkdirPar("populationClustering/"));
+	njh::files::makeDir(masterDirPath.string(), njh::files::MkdirPar("logs/"));
+	njh::files::makeDir(masterDirPath.string(), njh::files::MkdirPar("scripts/"));
 
 
-	return bib::appendAsNeededRet(masterDirPath.string(), "/");
+	return njh::appendAsNeededRet(masterDirPath.string(), "/");
 }
 
 bfs::path MipAnalysisDirectoryMaster::getMipSerDir(
 		const std::string & mipServerName) const {
-	return bib::files::make_path(serResourceDir_,
-			bib::appendAsNeededRet(mipServerName, "/"));
+	return njh::files::make_path(serResourceDir_,
+			njh::appendAsNeededRet(mipServerName, "/"));
 }
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 

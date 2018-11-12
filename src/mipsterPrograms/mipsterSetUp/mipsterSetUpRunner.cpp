@@ -8,10 +8,10 @@
     
 #include "mipsterSetUpRunner.hpp"
     
-namespace bibseq {
+namespace njhseq {
 
 mipsterSetUpRunner::mipsterSetUpRunner()
-    : bib::progutils::ProgramRunner({
+    : njh::progutils::ProgramRunner({
 																		 addFunc("makeMipPopClusDirectories", makeMipPopClusDirectories, false),
 																		 addFunc("checkDirectoryStructure", checkDirectoryStructure, false),
 																		 addFunc("createSkeletonDirectoryStructure", createSkeletonDirectoryStructure, false),
@@ -24,7 +24,7 @@ mipsterSetUpRunner::mipsterSetUpRunner()
 
 
 
-int mipsterSetUpRunner::cloneAnalysisDirectory(const bib::progutils::CmdArgs & inputCommands) {
+int mipsterSetUpRunner::cloneAnalysisDirectory(const njh::progutils::CmdArgs & inputCommands) {
 	// parameters
 	mipsterSetUpSetUp setUp(inputCommands);
 	mipCorePars pars;
@@ -51,7 +51,7 @@ int mipsterSetUpRunner::cloneAnalysisDirectory(const bib::progutils::CmdArgs & i
 	return 0;
 }
 
-int mipsterSetUpRunner::checkDirectoryStructure(const bib::progutils::CmdArgs & inputCommands) {
+int mipsterSetUpRunner::checkDirectoryStructure(const njh::progutils::CmdArgs & inputCommands) {
 	// parameters
 	mipsterSetUpSetUp setUp(inputCommands);
 	mipCorePars pars;
@@ -61,17 +61,17 @@ int mipsterSetUpRunner::checkDirectoryStructure(const bib::progutils::CmdArgs & 
 	SetUpMaster mipMaster(pars.masterDir);
 	auto warnings = mipMaster.checkDirStruct();
 	if(warnings.empty()){
-		std::cout << bib::bashCT::boldGreen("PASS!") << std::endl;
+		std::cout << njh::bashCT::boldGreen("PASS!") << std::endl;
 	}else{
-		std::cout << bib::bashCT::boldRed("FAIL!") << std::endl;
+		std::cout << njh::bashCT::boldRed("FAIL!") << std::endl;
 		std::cout << "Warnings:" << std::endl;
-		std::cout << bib::conToStr(warnings, "\n") << std::endl;
+		std::cout << njh::conToStr(warnings, "\n") << std::endl;
 	}
 	return 0;
 }
 
 
-int mipsterSetUpRunner::createSkeletonDirectoryStructure(const bib::progutils::CmdArgs & inputCommands) {
+int mipsterSetUpRunner::createSkeletonDirectoryStructure(const njh::progutils::CmdArgs & inputCommands) {
 	// parameters
 	mipsterSetUpSetUp setUp(inputCommands);
 	mipCorePars pars;
@@ -92,7 +92,7 @@ int mipsterSetUpRunner::createSkeletonDirectoryStructure(const bib::progutils::C
 }
                     
 
-int mipsterSetUpRunner::makeMipPopClusDirectories(const bib::progutils::CmdArgs & inputCommands) {
+int mipsterSetUpRunner::makeMipPopClusDirectories(const njh::progutils::CmdArgs & inputCommands) {
 	mipsterSetUpSetUp setUp(inputCommands);
 	mipCorePars pars;
 	pars.numThreads = 1;
@@ -112,7 +112,7 @@ int mipsterSetUpRunner::makeMipPopClusDirectories(const bib::progutils::CmdArgs 
 
 
 int mipsterSetUpRunner::checkForRawData(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	mipsterSetUpSetUp setUp(inputCommands);
 	mipCorePars pars;
 	pars.processDefaults(setUp);
@@ -134,7 +134,7 @@ int mipsterSetUpRunner::checkForRawData(
 	return 0;
 }
 
-int mipsterSetUpRunner::checkForExtracted(const bib::progutils::CmdArgs & inputCommands) {
+int mipsterSetUpRunner::checkForExtracted(const njh::progutils::CmdArgs & inputCommands) {
 	mipsterSetUpSetUp setUp(inputCommands);
 	mipCorePars pars;
 	pars.processDefaults(setUp);
@@ -152,7 +152,7 @@ int mipsterSetUpRunner::checkForExtracted(const bib::progutils::CmdArgs & inputC
   return 0;
 }
 
-int mipsterSetUpRunner::checkForBarCor(const bib::progutils::CmdArgs & inputCommands) {
+int mipsterSetUpRunner::checkForBarCor(const njh::progutils::CmdArgs & inputCommands) {
 	mipsterSetUpSetUp setUp(inputCommands);
 	mipCorePars pars;
 	pars.processDefaults(setUp);
@@ -170,7 +170,7 @@ int mipsterSetUpRunner::checkForBarCor(const bib::progutils::CmdArgs & inputComm
   return 0;
 }
 
-int mipsterSetUpRunner::checkForClustered(const bib::progutils::CmdArgs & inputCommands) {
+int mipsterSetUpRunner::checkForClustered(const njh::progutils::CmdArgs & inputCommands) {
 	mipsterSetUpSetUp setUp(inputCommands);
 	mipCorePars pars;
 	pars.processDefaults(setUp);
@@ -191,4 +191,4 @@ int mipsterSetUpRunner::checkForClustered(const bib::progutils::CmdArgs & inputC
 
 
                     
-} // namespace bibseq
+} // namespace njhseq

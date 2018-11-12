@@ -10,7 +10,7 @@
 #include "mipster/setUp/MipAnalysisDirectoryMaster.hpp"
 #include "mipster/info/MipsSamplesNames.hpp"
 
-namespace bibseq {
+namespace njhseq {
 class SampleDirectoryMaster {
 public:
 	SampleDirectoryMaster(const MipAnalysisDirectoryMaster & masterDir, const MipFamSamp & mipSamp);
@@ -43,5 +43,5 @@ public:
 };
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 

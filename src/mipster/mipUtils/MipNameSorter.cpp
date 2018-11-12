@@ -9,7 +9,7 @@
 
 #include "MipNameSorter.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 const std::regex MipNameSorter::mipNamePat{"(.*)mip([0-9]+)[_]*.*$"};
 const std::regex MipNameSorter::regionNamePat{R"(^([A-Za-z]+)(\d+)(.*))"};
@@ -59,5 +59,5 @@ void MipNameSorter::sort(VecStr & names, const std::regex & namePat, const std::
 	sort(names, namePat,secondaryPat, std::function<std::string(const std::string &)>([](const std::string & str1){ return str1;}));
 }
 
-}  // namespace bibseq
+}  // namespace njhseq
 

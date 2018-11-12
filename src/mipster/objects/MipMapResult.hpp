@@ -9,9 +9,9 @@
 
 
 #include "mipster/common.h"
-#include <bibseq/objects/BioDataObject/GenomicRegion.hpp>
+#include <njhseq/objects/BioDataObject/GenomicRegion.hpp>
 
-namespace bibseq {
+namespace njhseq {
 
 class MipMapResult {
 
@@ -44,7 +44,7 @@ public:
  */
 std::vector<MipMapResult> getMipMapResults(const bfs::path & fnp, uint32_t insertSizeCutOff = 1000);
 
-}  // namespace bibseq
+}  // namespace njhseq
 
 
 

@@ -12,7 +12,7 @@
 #include "mipster/objects/Mip.hpp"
 #include "mipster/parameters.h"
 
-namespace bibseq {
+namespace njhseq {
 
 //filtering on mip arms
 
@@ -31,7 +31,7 @@ std::shared_ptr<MippedRead> filterWithBarcodeCoverage(
 		const SeqSetUpPars & setUpPars, const mipBarcodeCorrectionPars & pars,
 		BarcodeFilterStats::BarcodeFilterStat& tarStat);
 
-}  // namespace bibseq
+}  // namespace njhseq
 
 
 

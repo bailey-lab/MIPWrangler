@@ -8,40 +8,40 @@
 #include "mipsterAnalysisRunner.hpp"
 #include "mipsterAnalysisSetUp.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 		const SetUpMaster & mipMaster, aligner & alignerObjForFamilyDet,
 		const mipIllumArmExtractionPars & pars, const QualFilteringPars & qFilPars,
 		bool verbose) {
-	bib::stopWatch watch;
+	njh::stopWatch watch;
 	//std::cout << "On Thread: " << std::this_thread::get_id() << std::endl;
 	SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, MipFamSamp("", pars.sampleName));
 	sampDirMaster.createExtractDirectory(pars.overWriteDirs);
 	alignerObjForFamilyDet.resetAlnCache();
 	alignerObjForFamilyDet.processAlnInfoInputNoCheck(sampDirMaster.extractAlnCacheDir_.string(), verbose);
 	//set up sub directories
-	bfs::path filteredOffDir = bib::files::makeDir(sampDirMaster.extractDir_.string(), bib::files::MkdirPar("filteredOff"));
+	bfs::path filteredOffDir = njh::files::makeDir(sampDirMaster.extractDir_.string(), njh::files::MkdirPar("filteredOff"));
 	//create out files
 	MultiSeqOutCache<seqInfo> mipOuts;
 	mipOuts.setOpenLimit(pars.fileOpenLimit_);
 
 	mipOuts.addReader("indeterminate",
-			SeqIOOptions(bib::files::make_path(filteredOffDir, "indeterminate").string(), sampleIOOpts.outFormat_,sampleIOOpts.out_));
+			SeqIOOptions(njh::files::make_path(filteredOffDir, "indeterminate").string(), sampleIOOpts.outFormat_,sampleIOOpts.out_));
 	mipOuts.addReader("unmatchedReads",
-			SeqIOOptions(bib::files::make_path(filteredOffDir, "unmatchedReads").string(), sampleIOOpts.outFormat_,sampleIOOpts.out_));
+			SeqIOOptions(njh::files::make_path(filteredOffDir, "unmatchedReads").string(), sampleIOOpts.outFormat_,sampleIOOpts.out_));
 	mipOuts.addReader("smallFragment",
-			SeqIOOptions(bib::files::make_path(filteredOffDir, "smallFragment").string(), sampleIOOpts.outFormat_,sampleIOOpts.out_));
+			SeqIOOptions(njh::files::make_path(filteredOffDir, "smallFragment").string(), sampleIOOpts.outFormat_,sampleIOOpts.out_));
 	VecStr filterOutNames = { "_failedQuality", "_failedLigation",
 			"_failedMinLen", "_containsNs" };
 	VecStr allMipTargets = mipMaster.getAllMipTargets();
 	for (const auto & mip : allMipTargets) {
-		mipOuts.addReader(mip, SeqIOOptions(bib::files::join(VecStr {
+		mipOuts.addReader(mip, SeqIOOptions(njh::files::join(VecStr {
 			sampDirMaster.extractDir_.string(), mip, mip }), sampleIOOpts.outFormat_,sampleIOOpts.out_));
 		for (const auto & outName : filterOutNames) {
 			mipOuts.addReader(mip + outName,
 					SeqIOOptions(
-							bib::files::join(
+							njh::files::join(
 									VecStr { sampDirMaster.extractDir_.string(), mip, mip
 											+ outName }), sampleIOOpts.outFormat_,sampleIOOpts.out_));
 		}
@@ -102,7 +102,7 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 						eCase);
 				//log and write read
 				if(!allExtractStats.haveStatFor(mip.name_)){
-					bib::files::makeDirP(sampDirMaster.extractDir_.string(), bib::files::MkdirPar(mip.name_));
+					njh::files::makeDirP(sampDirMaster.extractDir_.string(), njh::files::MkdirPar(mip.name_));
 				}
 				mipOuts.add(mip.name_ + failedQaulifierName, read);
 				allExtractStats.increaseCount(mip.name_, eCase);
@@ -116,7 +116,7 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 						eCase);
 				//log and write read
 				if(!allExtractStats.haveStatFor(currentMip.name_)){
-					bib::files::makeDirP(sampDirMaster.extractDir_.string(), bib::files::MkdirPar(currentMip.name_));
+					njh::files::makeDirP(sampDirMaster.extractDir_.string(), njh::files::MkdirPar(currentMip.name_));
 				}
 				mipOuts.add(currentMip.name_ + failedQaulifierName, read);
 				allExtractStats.increaseCount(currentMip.name_, eCase);
@@ -132,7 +132,7 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 					eCase);
 			//log and write read
 			if(!allExtractStats.haveStatFor(mip.name_)){
-				bib::files::makeDirP(sampDirMaster.extractDir_.string(), bib::files::MkdirPar(mip.name_));
+				njh::files::makeDirP(sampDirMaster.extractDir_.string(), njh::files::MkdirPar(mip.name_));
 			}
 			mipOuts.add(mip.name_ + failedQaulifierName, read);
 			allExtractStats.increaseCount(mip.name_, eCase);
@@ -172,7 +172,7 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 						eCase);
 				//log and write read
 				if(!allExtractStats.haveStatFor(mip.name_)){
-					bib::files::makeDirP(sampDirMaster.extractDir_.string(), bib::files::MkdirPar(mip.name_));
+					njh::files::makeDirP(sampDirMaster.extractDir_.string(), njh::files::MkdirPar(mip.name_));
 				}
 				mipOuts.add(mip.name_ + failedQaulifierName, read);
 				allExtractStats.increaseCount(mip.name_, eCase);
@@ -237,7 +237,7 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 			TableIOOpts(OutOptions(sampDirMaster.extractDir_.string() + "extractInfoByTarget.txt", ".txt"), "\t", infoTabByTarget.hasHeader_));
 	std::ofstream sampLog;
 	openTextFile(sampLog, sampDirMaster.extractDir_.string() + "log.txt", ".txt", false, true);
-	sampLog << "Ran on: " << bib::getCurrentDate() << std::endl;
+	sampLog << "Ran on: " << njh::getCurrentDate() << std::endl;
 	sampLog << "Number of Alignments Done: "
 			<< alignerObjForFamilyDet.numberOfAlingmentsDone_ << "\n";
 	sampLog << "Run Time: " << watch.timeLapFormatted(6) << std::endl;
@@ -245,7 +245,7 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 }
 
 int mipsterAnalysisRunner::mipIllumExtractByArmAndFilter(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	mipsterAnalysisSetUp setUp(inputCommands);
 	mipIllumArmExtractionPars pars;
 	setUp.setUpMipIllumArmExtraction(pars);
@@ -258,7 +258,7 @@ int mipsterAnalysisRunner::mipIllumExtractByArmAndFilter(
 		std::stringstream ss;
 		ss << "Error in directory structure, make sure you are in the correct analysis directory" << std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error{ss.str()};
 	}
 	if (!mipMaster.names_->hasSample(pars.sampleName)) {
@@ -286,12 +286,12 @@ int mipsterAnalysisRunner::mipIllumExtractByArmAndFilter(
 void extractMultiSamples(const SetUpMaster & mipMaster,
 		const mipIllumArmExtractionParsMultiple& pars,
 		const SeqSetUpPars & setUpPars, concurrent::AlignerPool & aligners,
-		bib::concurrent::LockableQueue<std::string>& sampsQueue) {
+		njh::concurrent::LockableQueue<std::string>& sampsQueue) {
 	std::string sampleName = "";
 	auto alignerObjForFamilyDet = aligners.popAligner();
 	while (sampsQueue.getVal(sampleName)) {
 		SeqIOOptions sampOpts = SeqIOOptions::genFastqIn(
-				bib::files::make_path(mipMaster.directoryMaster_.masterDir_.string(), sampleName,
+				njh::files::make_path(mipMaster.directoryMaster_.masterDir_.string(), sampleName,
 								sampleName + pars.seqFileSuffix).string());
 		mipIllumArmExtractionPars samplePars = pars.createForSample(sampleName);
 		extractFilterSampleForMips(sampOpts, mipMaster, *alignerObjForFamilyDet,
@@ -300,7 +300,7 @@ void extractMultiSamples(const SetUpMaster & mipMaster,
 }
 
 int mipsterAnalysisRunner::mipIllumExtractByArmAndFilterMultiple(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	mipsterAnalysisSetUp setUp(inputCommands);
 	mipIllumArmExtractionParsMultiple pars;
 	setUp.setUpMipIllumArmExtractionMultiple(pars);
@@ -313,19 +313,19 @@ int mipsterAnalysisRunner::mipIllumExtractByArmAndFilterMultiple(
 		std::stringstream ss;
 		ss << "Error in directory structure, make sure you are in the correct analysis directory" << std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error{ss.str()};
 	}
 	mipMaster.mips_->setAllMinimumExpectedLen(pars.minLen);
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 	std::ofstream logFile;
 	openTextFile(logFile,
-			bib::files::make_path(mipMaster.directoryMaster_.logsDir_, pars.logFilename),
+			njh::files::make_path(mipMaster.directoryMaster_.logsDir_, pars.logFilename),
 			".txt", pars.overWriteLog, true);
 	logFile << "Ran on: " << getCurrentDate() << std::endl;
 	logFile << "Ran from: " << inputCommands.workingDir_ << std::endl;
 	logFile << "Command: " << inputCommands.commandLine_ << std::endl;
-	bib::concurrent::LockableQueue<std::string> sampsQueue(mipMaster.names_->samples_);
+	njh::concurrent::LockableQueue<std::string> sampsQueue(mipMaster.names_->samples_);
 	uint64_t maxLen = pars.minLen * 1.5;
 	concurrent::AlignerPool aligners(maxLen, setUp.pars_.gapInfo_,
 			setUp.pars_.scoring_, pars.numThreads);

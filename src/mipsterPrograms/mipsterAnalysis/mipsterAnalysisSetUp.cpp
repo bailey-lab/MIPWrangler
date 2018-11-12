@@ -7,7 +7,7 @@
 
 #include "mipsterAnalysisSetUp.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 void mipsterAnalysisSetUp::processDefaults(mipCorePars & pars){
 	processVerbose();
@@ -315,7 +315,7 @@ void mipsterAnalysisSetUp::setUpMipPopulationClustering(
 	setOption(pars_.colOpts_.skipOpts_.fractionDifferenceCutOff_, "-skipCutOff",
 			"fractionDifferenceCutOff");
 	setOption(pars.previousPopDir, "--refDir", "Directory with possible reference sequence to rename popUIDs to");
-	auto refPopFile = bib::files::make_path(pars.previousPopDir, pars.mipName + ".fasta");
+	auto refPopFile = njh::files::make_path(pars.previousPopDir, pars.mipName + ".fasta");
 	if(bfs::exists(refPopFile)){
 		pars.previousPopFilename = refPopFile.string();
 		pars.refIoOptions = SeqIOOptions::genFastaIn(refPopFile);
@@ -443,4 +443,4 @@ void mipsterAnalysisSetUp::setUpMipCorrectForContamWithSameBarcodesMultiple(mipC
 }
 
 
-} /* namespace bibseq */
+} /* namespace njhseq */

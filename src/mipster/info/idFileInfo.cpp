@@ -7,8 +7,8 @@
 
 #include "idFileInfo.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 

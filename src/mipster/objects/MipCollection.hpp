@@ -9,7 +9,7 @@
 #include "mipster/objects/Mip.hpp"
 
 
-namespace bibseq {
+namespace njhseq {
 
 /**@brief Class to hold mip information about molecular barcodes and arms
  *
@@ -59,5 +59,5 @@ public:
 	void setAllMinimumExpectedLen(size_t minimumExpectedLen);
 };
 
-}  // namespace bibseq
+}  // namespace njhseq
 

@@ -9,16 +9,16 @@
 
 #include "mipsterMipExplorerSetUp.hpp"
 #include "mipster.h"
-namespace bibseq {
+namespace njhseq {
 
-class mipsterMipExplorerRunner : public bib::progutils::ProgramRunner {
+class mipsterMipExplorerRunner : public njh::progutils::ProgramRunner {
  public:
   mipsterMipExplorerRunner();
   
-  static int setUpViewMipsOnGenome(const bib::progutils::CmdArgs & inputCommands);
-  static int viewMipsOnGenome(const bib::progutils::CmdArgs & inputCommands);
+  static int setUpViewMipsOnGenome(const njh::progutils::CmdArgs & inputCommands);
+  static int viewMipsOnGenome(const njh::progutils::CmdArgs & inputCommands);
 
 
-  static int mipsAgainstHaplotypes(const bib::progutils::CmdArgs & inputCommands);
+  static int mipsAgainstHaplotypes(const njh::progutils::CmdArgs & inputCommands);
 };
-} // namespace bibseq
+} // namespace njhseq

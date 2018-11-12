@@ -11,7 +11,7 @@
 
 #include <SeekDeep/objects/PairedReadProcessor.hpp>
 
-namespace bibseq {
+namespace njhseq {
 
 
 MipExtractor::MipExtractor(){};
@@ -24,7 +24,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 		aligner & alignerObjForStitching,
 		const mipIllumArmExtractionPars & pars){
 
-	bib::stopWatch watch;
+	njh::stopWatch watch;
 	//std::cout << "On Thread: " << std::this_thread::get_id() << std::endl;
 	SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, MipFamSamp("", pars.sampleName));
 	sampDirMaster.createExtractDirectory(pars.overWriteDirs);
@@ -32,7 +32,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 	alignerObjForFamilyDet.resetAlnCache();
 	alignerObjForFamilyDet.processAlnInfoInputNoCheck(sampDirMaster.extractAlnCacheDir_.string(), verbose_);
 	//set up sub directories
-	bfs::path filteredOffDir = bib::files::makeDir(sampDirMaster.extractDir_.string(), bib::files::MkdirPar("filteredOff"));
+	bfs::path filteredOffDir = njh::files::makeDir(sampDirMaster.extractDir_.string(), njh::files::MkdirPar("filteredOff"));
 
 	//create read stitcher
 
@@ -45,11 +45,11 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 	mipStitchedOuts.setOpenLimit(pars.fileOpenLimit_/2);
 
 	mipOuts.addReader("indeterminate",
-			SeqIOOptions(bib::files::make_path(filteredOffDir, "indeterminate").string(),  sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
+			SeqIOOptions(njh::files::make_path(filteredOffDir, "indeterminate").string(),  sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
 	mipOuts.addReader("unmatchedReads",
-			SeqIOOptions(bib::files::make_path(filteredOffDir, "unmatchedReads").string(), sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
+			SeqIOOptions(njh::files::make_path(filteredOffDir, "unmatchedReads").string(), sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
 	mipOuts.addReader("smallFragment",
-			SeqIOOptions(bib::files::make_path(filteredOffDir, "smallFragment").string(),  sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
+			SeqIOOptions(njh::files::make_path(filteredOffDir, "smallFragment").string(),  sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
 
 	//extraction counts
 	MipExtractionStats allExtractStats(pars.sampleName);
@@ -70,25 +70,25 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 
 	VecStr allMipTargets = mipMaster.getAllMipTargets();
 	for (const auto & mip : allMipTargets) {
-		bfs::path mipDirectory = bib::files::makeDir(sampDirMaster.extractDir_.string(), bib::files::MkdirPar(mip));
+		bfs::path mipDirectory = njh::files::makeDir(sampDirMaster.extractDir_.string(), njh::files::MkdirPar(mip));
 
 		mipOuts.addReader(mip,
 				SeqIOOptions(
-						bib::files::make_path(sampDirMaster.extractDir_.string(), mip, mip),
+						njh::files::make_path(sampDirMaster.extractDir_.string(), mip, mip),
 						sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
 		mipOuts.addReader(mip + "_filteredOff",
 				SeqIOOptions(
-						bib::files::make_path(mipDirectory, mip
+						njh::files::make_path(mipDirectory, mip
 								+ "_filteredOff" ), sampleIOOpts.front().outFormat_,
 										sampleIOOpts.front().out_) );
 
 		mipStitchedOuts.addReader(mip,
 				SeqIOOptions(
-						bib::files::make_path(sampDirMaster.extractDir_.string(), mip, mip),
+						njh::files::make_path(sampDirMaster.extractDir_.string(), mip, mip),
 						SeqIOOptions::outFormats::FASTQ, sampleIOOpts.front().out_));
 		mipStitchedOuts.addReader(mip + "_filteredOff",
 				SeqIOOptions(
-						bib::files::make_path(mipDirectory, mip
+						njh::files::make_path(mipDirectory, mip
 								+ "_filteredOff" ),
 						SeqIOOptions::outFormats::FASTQ, sampleIOOpts.front().out_) );
 
@@ -481,7 +481,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 
 	std::ofstream sampLog;
 	openTextFile(sampLog, sampDirMaster.extractDir_.string() + "log.txt", ".txt", false, true);
-	sampLog << "Ran on: " << bib::getCurrentDate() << std::endl;
+	sampLog << "Ran on: " << njh::getCurrentDate() << std::endl;
 	sampLog << "Number of Alignments Done: "
 			<< alignerObjForFamilyDet.numberOfAlingmentsDone_ << "\n";
 	sampLog << "Number of Alignments Done For Stitching: "
@@ -499,36 +499,36 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 		aligner & alignerObjForFamilyDet,
 		const mipIllumArmExtractionPars & pars) {
 
-	bib::stopWatch watch;
+	njh::stopWatch watch;
 	//std::cout << "On Thread: " << std::this_thread::get_id() << std::endl;
 	SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, MipFamSamp("", pars.sampleName));
 	sampDirMaster.createExtractDirectory(pars.overWriteDirs);
 	alignerObjForFamilyDet.resetAlnCache();
 	alignerObjForFamilyDet.processAlnInfoInputNoCheck(sampDirMaster.extractAlnCacheDir_.string(), verbose_);
 	//set up sub directories
-	bfs::path filteredOffDir = bib::files::makeDir(sampDirMaster.extractDir_.string(), bib::files::MkdirPar("filteredOff"));
+	bfs::path filteredOffDir = njh::files::makeDir(sampDirMaster.extractDir_.string(), njh::files::MkdirPar("filteredOff"));
 
 	//create out files
 	MultiSeqOutCache<PairedRead> mipOuts;
 	mipOuts.setOpenLimit(pars.fileOpenLimit_);
 
 	mipOuts.addReader("indeterminate",
-			SeqIOOptions(bib::files::make_path(filteredOffDir, "indeterminate").string(),  sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
+			SeqIOOptions(njh::files::make_path(filteredOffDir, "indeterminate").string(),  sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
 	mipOuts.addReader("unmatchedReads",
-			SeqIOOptions(bib::files::make_path(filteredOffDir, "unmatchedReads").string(), sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
+			SeqIOOptions(njh::files::make_path(filteredOffDir, "unmatchedReads").string(), sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
 	mipOuts.addReader("smallFragment",
-			SeqIOOptions(bib::files::make_path(filteredOffDir, "smallFragment").string(),  sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
+			SeqIOOptions(njh::files::make_path(filteredOffDir, "smallFragment").string(),  sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
 	VecStr filterOutNames = { "_failedQuality", "_failedLigation", "_failedMinLen", "_containsNs" };
 
 	VecStr allMipTargets = mipMaster.getAllMipTargets();
 	for (const auto & mip : allMipTargets) {
 		mipOuts.addReader(mip,
 				SeqIOOptions(
-						bib::files::make_path(sampDirMaster.extractDir_.string(), mip),
+						njh::files::make_path(sampDirMaster.extractDir_.string(), mip),
 						sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));
 		mipOuts.addReader(mip + "_filteredOff",
 				SeqIOOptions(
-						bib::files::make_path(filteredOffDir, mip
+						njh::files::make_path(filteredOffDir, mip
 								+ "_filteredOff" ), sampleIOOpts.front().outFormat_,
 										sampleIOOpts.front().out_) );
 	}
@@ -776,7 +776,7 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 
 	std::ofstream sampLog;
 	openTextFile(sampLog, sampDirMaster.extractDir_.string() + "log.txt", ".txt", false, true);
-	sampLog << "Ran on: " << bib::getCurrentDate() << std::endl;
+	sampLog << "Ran on: " << njh::getCurrentDate() << std::endl;
 	sampLog << "Number of Alignments Done: "
 			<< alignerObjForFamilyDet.numberOfAlingmentsDone_ << "\n";
 	sampLog << "Run Time: " << watch.timeLapFormatted(6) << std::endl;
@@ -786,4 +786,4 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 }
 
 
-} /* namespace bibseq */
+} /* namespace njhseq */

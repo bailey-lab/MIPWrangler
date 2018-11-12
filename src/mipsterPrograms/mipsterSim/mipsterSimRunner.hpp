@@ -9,18 +9,18 @@
 
 #include "mipsterSimSetUp.hpp"
 #include "mipster.h"
-namespace bibseq {
+namespace njhseq {
 
-class mipsterSimRunner : public bib::progutils::ProgramRunner {
+class mipsterSimRunner : public njh::progutils::ProgramRunner {
  public:
   mipsterSimRunner();
-  static int createArmFastaFiles(const bib::progutils::CmdArgs & inputCommands);
-  static int mipSimSetup(const bib::progutils::CmdArgs & inputCommands);
-  static int searchForArms(const bib::progutils::CmdArgs & inputCommands);
-  static int extractMipCaptureSequence(const bib::progutils::CmdArgs & inputCommands);
-  static int simMips(const bib::progutils::CmdArgs & inputCommands);
+  static int createArmFastaFiles(const njh::progutils::CmdArgs & inputCommands);
+  static int mipSimSetup(const njh::progutils::CmdArgs & inputCommands);
+  static int searchForArms(const njh::progutils::CmdArgs & inputCommands);
+  static int extractMipCaptureSequence(const njh::progutils::CmdArgs & inputCommands);
+  static int simMips(const njh::progutils::CmdArgs & inputCommands);
 
-  static int testMipExtract(const bib::progutils::CmdArgs & inputCommands);
+  static int testMipExtract(const njh::progutils::CmdArgs & inputCommands);
 
 };
-} // namespace bibseq
+} // namespace njhseq

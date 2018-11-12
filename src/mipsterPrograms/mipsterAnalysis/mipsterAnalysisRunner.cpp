@@ -8,10 +8,10 @@
 #include "mipsterAnalysisRunner.hpp"
 #include "mipsterAnalysisSetUp.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 mipsterAnalysisRunner::mipsterAnalysisRunner()
-    : bib::progutils::ProgramRunner(
+    : njh::progutils::ProgramRunner(
     		{
 	 	 	 	   addFunc("runGzExtractStitch", runGzExtractStitch, false),
 					 addFunc("mipIllumExtractByArmAndFilter", mipIllumExtractByArmAndFilter, false),
@@ -33,8 +33,8 @@ mipsterAnalysisRunner::mipsterAnalysisRunner()
            },//
           "mipsterAnalysis") {}
 /*
- * 	static int (const bib::progutils::CmdArgs & inputCommands);
-	static int (const bib::progutils::CmdArgs & inputCommands);
+ * 	static int (const njh::progutils::CmdArgs & inputCommands);
+	static int (const njh::progutils::CmdArgs & inputCommands);
  */
 
-} /* namespace bibseq */
+} /* namespace njhseq */

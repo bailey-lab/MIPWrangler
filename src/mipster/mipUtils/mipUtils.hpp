@@ -10,7 +10,7 @@
 #include "mipster/common.h"
 #include "mipster/mipUtils/MipNameSorter.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 
 /**@brief get barcode number and read number, assumes name ends with _RX_BX_
@@ -37,6 +37,6 @@ uint32_t getReadCntFromMipName(const std::string & name);
 uint32_t getBarcodeCntFromMipName(const std::string & name);
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 
 

@@ -3,14 +3,14 @@
 
 #include "mipsterPrograms.h"
 
-namespace bibseq {
+namespace njhseq {
 
-class mipsterRunner: public bib::progutils::OneRing {
+class mipsterRunner: public njh::progutils::OneRing {
 public:
 	mipsterRunner();
 };
 mipsterRunner::mipsterRunner() :
-		bib::progutils::OneRing(
+		njh::progutils::OneRing(
 				{ addRing<mipsterAnalysisRunner>(),
 					addRing<mipsterServerRunner>(),
 					addRing<mipsterUtilsRunner>(),
@@ -20,11 +20,11 @@ mipsterRunner::mipsterRunner() :
 					addRing<mipsterMipTesterRunner>()}, { }, "MIPWrangler",
 					"1", "0", "0-dev") {
 }
-} // namespace bibseq
+} // namespace njhseq
 
 int main(int argc, char* argv[]) {
 	try {
-		bibseq::mipsterRunner mRunner;
+		njhseq::mipsterRunner mRunner;
 		return mRunner.run(argc, argv);
 	} catch (std::exception & e) {
 		std::cerr << e.what() << std::endl;

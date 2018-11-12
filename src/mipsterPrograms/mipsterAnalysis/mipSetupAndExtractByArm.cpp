@@ -8,9 +8,9 @@
 #include "mipsterAnalysisSetUp.hpp"
 
 
-namespace bibseq {
+namespace njhseq {
 
-int mipsterAnalysisRunner::mipSetupAndExtractByArm(const bib::progutils::CmdArgs & inputCommands) {
+int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs & inputCommands) {
 	extractFromRawParsMultiple pars;
 	std::string mipServerName = "";
 	bool runRest = false;
@@ -26,7 +26,7 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const bib::progutils::CmdArgs
 	mipMaster.setMipArmFnp(pars.mipArmsFileName);
 	mipMaster.setMipsSampsNamesFnp(pars.mipsSamplesFile);
 	mipMaster.loadMipsSampsInfo(pars.allowableErrors);
-	mipMaster.setServerName(bib::pasteAsStr("mip", mipServerName));
+	mipMaster.setServerName(njh::pasteAsStr("mip", mipServerName));
 	mipMaster.mips_->setAllMinimumExpectedLen(pars.minLen);
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 
@@ -39,24 +39,24 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const bib::progutils::CmdArgs
 		std::stringstream ss;
 		ss << "Error in directory structure, make sure you are in the correct analysis directory" << std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error{ss.str()};
 	}
 
-	pars.dir = bib::appendAsNeededRet(pars.dir.string(), "/");
+	pars.dir = njh::appendAsNeededRet(pars.dir.string(), "/");
 
 	if(!bfs::exists(pars.dir)){
 		std::stringstream ss;
-		ss << bib::bashCT::boldRed(pars.dir.string()) << " doesn't exist";
+		ss << njh::bashCT::boldRed(pars.dir.string()) << " doesn't exist";
 		throw std::runtime_error {ss.str()};
 	}
 
 	std::ofstream logFile;
-	openTextFile(logFile, bib::files::make_path(mipMaster.directoryMaster_.logsDir_,
+	openTextFile(logFile, njh::files::make_path(mipMaster.directoryMaster_.logsDir_,
 			pars.logFilename), ".json", setUp.pars_.ioOptions_.out_);
-	setUp.startARunLog(bib::files::make_path(mipMaster.directoryMaster_.logsDir_).string());
+	setUp.startARunLog(njh::files::make_path(mipMaster.directoryMaster_.logsDir_).string());
 
-	auto files = bib::files::listAllFiles(pars.dir, false, {std::regex{R"(.*.fastq.gz)"}});
+	auto files = njh::files::listAllFiles(pars.dir, false, {std::regex{R"(.*.fastq.gz)"}});
 	if(setUp.pars_.debug_){
 		std::cout << "Files: " << std::endl;
 		printOutMapContents(files, "\t", std::cout);
@@ -67,18 +67,18 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const bib::progutils::CmdArgs
 	for(const auto & f : files){
 		auto filename = f.first.filename().string();
 		std::string sampName = filename.substr(0, filename.find("_"));
-		if(bib::in(sampName, mipMaster.names_->samples_)){
+		if(njh::in(sampName, mipMaster.names_->samples_)){
 			readPairs[sampName].emplace_back(filename);
 		}else{
 			readPairsUnrecognized[sampName].emplace_back(filename);
 		}
 	}
 	auto keys = getVectorOfMapKeys(readPairs);
-	bib::sort(keys);
+	njh::sort(keys);
 	std::vector<bfs::path> emptyFiles;
 	VecStr samplesExtracted;
 	VecStr samplesEmpty;
-	bib::concurrent::LockableQueue<std::string> filesKeys(keys);
+	njh::concurrent::LockableQueue<std::string> filesKeys(keys);
 	Json::Value logs;
 	logs["mainCommand"] = setUp.commands_.commandLine_;
 	logs["qualityFilteringPars"] = pars.qFilPars_.toJson();
@@ -109,13 +109,13 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const bib::progutils::CmdArgs
 				auto alignerObjForStitching = alignersForStitching.popAligner();
 				while(filesKeys.getVal(key)){
 					Json::Value log;
-					bib::stopWatch watch;
+					njh::stopWatch watch;
 					std::stringstream out;
 					std::stringstream err;
 					bool success = true;
 					bool allEmpty = true;
 					out << key << std::endl;
-					auto sampDir = bib::files::makeDir(outputDirectory, bib::files::MkdirPar(key));
+					auto sampDir = njh::files::makeDir(outputDirectory, njh::files::MkdirPar(key));
 					std::vector<bfs::path> r1_files;
 					std::vector<bfs::path> r2_files;
 					struct PairedFnps{
@@ -125,7 +125,7 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const bib::progutils::CmdArgs
 					std::unordered_map<std::string, PairedFnps> pairedFnpForSample;
 					for(const auto & f : readPairs.at(key)){
 						auto fqName = bfs::path(f);
-						auto inputName = bib::files::make_path(pars.dir,fqName);
+						auto inputName = njh::files::make_path(pars.dir,fqName);
 						//if the file is empty copy to an empty directory to avoid concatenating errors
 						if(0 == bfs::file_size(inputName)){
 							emptyFiles.emplace_back(inputName);
@@ -142,8 +142,8 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const bib::progutils::CmdArgs
 							ss << __PRETTY_FUNCTION__ << ", error, " << fqName << ", matched both R1 or R2 pattern" << "\n";
 							throw std::runtime_error{ss.str()};
 						}else if(matchesR1){
-							std::string r1Name = bib::pasteAsStr(r1Match[1], r1Match[2]);
-							if(bib::has(pairedFnpForSample, r1Name) && "" != pairedFnpForSample[r1Name].r1_fnp ){
+							std::string r1Name = njh::pasteAsStr(r1Match[1], r1Match[2]);
+							if(njh::has(pairedFnpForSample, r1Name) && "" != pairedFnpForSample[r1Name].r1_fnp ){
 								std::stringstream ss;
 								ss << __PRETTY_FUNCTION__ << ", error, already have " <<  pairedFnpForSample[r1Name].r1_fnp << " for " << f << " for " << r1Name << "\n";
 								throw std::runtime_error{ss.str()};
@@ -151,8 +151,8 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const bib::progutils::CmdArgs
 								pairedFnpForSample[r1Name].r1_fnp = inputName;
 							}
 						}else if(matchesR2){
-							std::string r2Name = bib::pasteAsStr(r2Match[1], r2Match[2]);
-							if(bib::has(pairedFnpForSample, r2Name) && "" != pairedFnpForSample[r2Name].r2_fnp ){
+							std::string r2Name = njh::pasteAsStr(r2Match[1], r2Match[2]);
+							if(njh::has(pairedFnpForSample, r2Name) && "" != pairedFnpForSample[r2Name].r2_fnp ){
 								std::stringstream ss;
 								ss << __PRETTY_FUNCTION__ << ", error, already have " <<  pairedFnpForSample[r2Name].r2_fnp << " for " << f << " for " << r2Name << "\n";
 								throw std::runtime_error{ss.str()};
@@ -202,7 +202,7 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const bib::progutils::CmdArgs
 					log["time"] = watch.totalTime();
 					log["out"] = out.str();
 					log["err"] = err.str();
-					log["success"] = bib::json::toJson(success);
+					log["success"] = njh::json::toJson(success);
 					currentLogs[key] = log;
 				}
 				{
@@ -223,46 +223,46 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const bib::progutils::CmdArgs
 						std::cref(readPairs)));
 	}
 
-	bib::concurrent::joinAllThreads(threads);
+	njh::concurrent::joinAllThreads(threads);
 
 	logFile << logs << std::endl;
 
 
 	//copy over resources;
 
-	bfs::copy(pars.mipArmsFileName,bib::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "mip_arm_id.tab.txt"));
-	bib::files::makeDirP(bib::files::MkdirPar(bib::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo")));
+	bfs::copy(pars.mipArmsFileName,njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "mip_arm_id.tab.txt"));
+	njh::files::makeDirP(njh::files::MkdirPar(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo")));
 	std::ofstream outSamplesFoundFile;
-	openTextFile(outSamplesFoundFile,OutOptions(bib::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/outSamplesFound.tab.txt")));
+	openTextFile(outSamplesFoundFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/outSamplesFound.tab.txt")));
 	std::ofstream outSamplesEmptyfile;
-	openTextFile(outSamplesEmptyfile,OutOptions(bib::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/outSamplesEmpty.tab.txt")));
+	openTextFile(outSamplesEmptyfile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/outSamplesEmpty.tab.txt")));
 	std::ofstream gzCatSamplesFile;
-	openTextFile(gzCatSamplesFile,OutOptions(bib::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/gzCatSamples.tab.txt")));
+	openTextFile(gzCatSamplesFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/gzCatSamples.tab.txt")));
 	std::ofstream pearExtractSamplesFile;
-	openTextFile(pearExtractSamplesFile,OutOptions(bib::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/emptyFiles.tab.txt")));
+	openTextFile(pearExtractSamplesFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/emptyFiles.tab.txt")));
 	std::ofstream samplesMissingFile;
-	openTextFile(samplesMissingFile,OutOptions(bib::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/samplesMissing.tab.txt")));
+	openTextFile(samplesMissingFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/samplesMissing.tab.txt")));
 	auto allFoundSamps = concatVecs(samplesExtracted, samplesEmpty);
-	bib::sort(allFoundSamps);
-	bib::sort(samplesEmpty);
-	bib::sort(samplesExtracted);
-	bib::sort(emptyFiles);
-	if(!allFoundSamps.empty()) outSamplesFoundFile << bib::conToStr(allFoundSamps, "\n") << std::endl;
-	if(!samplesEmpty.empty()) outSamplesEmptyfile << bib::conToStr(samplesEmpty, "\n") << std::endl;
-	if(!samplesExtracted.empty()) gzCatSamplesFile << bib::conToStr(samplesExtracted, "\n") << std::endl;
-	if(!emptyFiles.empty()) pearExtractSamplesFile << bib::conToStr(emptyFiles, "\n") << std::endl;
+	njh::sort(allFoundSamps);
+	njh::sort(samplesEmpty);
+	njh::sort(samplesExtracted);
+	njh::sort(emptyFiles);
+	if(!allFoundSamps.empty()) outSamplesFoundFile << njh::conToStr(allFoundSamps, "\n") << std::endl;
+	if(!samplesEmpty.empty()) outSamplesEmptyfile << njh::conToStr(samplesEmpty, "\n") << std::endl;
+	if(!samplesExtracted.empty()) gzCatSamplesFile << njh::conToStr(samplesExtracted, "\n") << std::endl;
+	if(!emptyFiles.empty()) pearExtractSamplesFile << njh::conToStr(emptyFiles, "\n") << std::endl;
 
 	std::ofstream allMipsSamplesFile;
-	openTextFile(allMipsSamplesFile,OutOptions(bib::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "allMipsSamplesNames.tab.txt")));
+	openTextFile(allMipsSamplesFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "allMipsSamplesNames.tab.txt")));
 	MipsSamplesNames goodSamples = *mipMaster.names_;
 	goodSamples.setSamples(samplesExtracted);
 	goodSamples.write(allMipsSamplesFile);
-	bfs::copy(pars.mipsSamplesFile,bib::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "original_allMipsSamplesNames.tab.txt"));
+	bfs::copy(pars.mipsSamplesFile,njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "original_allMipsSamplesNames.tab.txt"));
 	mipMaster.createPopClusMipDirs(pars.numThreads);
 
 	if (nullptr != mipMaster.meta_) {
 		bfs::copy_file(mipMaster.meta_->groupingsFile_,
-				bib::files::make_path(mipMaster.directoryMaster_.masterDir_,
+				njh::files::make_path(mipMaster.directoryMaster_.masterDir_,
 						"resources", "samplesMeta.tab.txt"));
 	}
 
@@ -270,44 +270,44 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const bib::progutils::CmdArgs
 
 	// run barcode correction, mipBarcodeCorrectionMultiple
 	{
-		OutOptions mipScriptOpts(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipBarcodeCorrectionMultiple.sh"));
+		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipBarcodeCorrectionMultiple.sh"));
 		std::ofstream mipScriptOut;
 		mipScriptOpts.openExecutableFile(mipScriptOut);
 		mipScriptOut << "#!/usr/bin/env bash" << "\n";
 		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipBarcodeCorrectionMultiple --masterDir "
-				<< bib::files::normalize(mipMaster.directoryMaster_.masterDir_)
+				<< njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
 		<< " --numThreads " << pars.numThreads
 		<< " --logFile mipBarcodeCorrecting_run1" << std::endl;
 	}
 	// run clustering step, mipClusteringMultiple
 	{
-		OutOptions mipScriptOpts(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipClusteringMultiple.sh"));
+		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipClusteringMultiple.sh"));
 		std::ofstream mipScriptOut;
 		mipScriptOpts.openExecutableFile(mipScriptOut);
 		mipScriptOut << "#!/usr/bin/env bash" << "\n";
 		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipClusteringMultiple --masterDir "
-				<< bib::files::normalize(mipMaster.directoryMaster_.masterDir_)
+				<< njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
 		<< " --numThreads " << pars.numThreads
 		<< " --logFile mipClustering_run1" << std::endl;
 	}
 	// run population clustering, mipPopulationClusteringMultiple
 	{
-		OutOptions mipScriptOpts(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipPopulationClusteringMultiple.sh"));
+		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipPopulationClusteringMultiple.sh"));
 		std::ofstream mipScriptOut;
 		mipScriptOpts.openExecutableFile(mipScriptOut);
 		mipScriptOut << "#!/usr/bin/env bash" << "\n";
 		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipPopulationClusteringMultiple --masterDir "
-				<< bib::files::normalize(mipMaster.directoryMaster_.masterDir_)
+				<< njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
 		<< " --numThreads " << pars.numThreads
 		<< " --logFile mipPopClustering_run1";
 		if("" != pars.refDir){
-			mipScriptOut << " --refDir " << bib::files::normalize(pars.refDir);
+			mipScriptOut << " --refDir " << njh::files::normalize(pars.refDir);
 		}
 		mipScriptOut << std::endl;
 	}
 	// run setup for viewer, mipAnalysisServerSetUp
 	{
-		OutOptions mipScriptOpts(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipAnalysisServerSetUp.sh"));
+		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipAnalysisServerSetUp.sh"));
 		std::ofstream mipScriptOut;
 		mipScriptOpts.openExecutableFile(mipScriptOut);
 		mipScriptOut << "#!/usr/bin/env bash" << "\n";
@@ -318,14 +318,14 @@ fi
 )";
 
 		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipAnalysisServerSetUp --masterDir "
-				<< bib::files::normalize(mipMaster.directoryMaster_.masterDir_)
+				<< njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
 		<< " --numThreads " << pars.numThreads
 		<< " --name mip$1 --verbose";
 		mipScriptOut << std::endl;
 	}
 	// run viewer, mav
 	{
-		OutOptions mipScriptOpts(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_viewer.sh"));
+		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_viewer.sh"));
 		std::ofstream mipScriptOut;
 		mipScriptOpts.openExecutableFile(mipScriptOut);
 		mipScriptOut << "#!/usr/bin/env bash" << "\n";
@@ -336,14 +336,14 @@ fi
 )";
 
 		mipScriptOut << "nohup " << setUp.commands_.masterProgramRaw_ << " mav --masterDir "
-				<< bib::files::normalize(mipMaster.directoryMaster_.masterDir_)
+				<< njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
 		<< " --numThreads " << pars.numThreads
 		<< " --port $((10000+$1)) --name mip$1 --verbose &";
 		mipScriptOut << std::endl;
 	}
 
 	{
-		OutOptions mipScriptOpts(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_restOfAnalysis.sh"));
+		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_restOfAnalysis.sh"));
 		std::ofstream mipScriptOut;
 		mipScriptOpts.openExecutableFile(mipScriptOut);
 		mipScriptOut << "#!/usr/bin/env bash" << "\n";
@@ -352,18 +352,18 @@ fi
     exit
 fi
 )";
-		mipScriptOut << bib::files::normalize(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipBarcodeCorrectionMultiple.sh")) << std::endl;
-		mipScriptOut << bib::files::normalize(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipClusteringMultiple.sh")) << std::endl;
-		mipScriptOut << bib::files::normalize(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipPopulationClusteringMultiple.sh")) << std::endl;
-		mipScriptOut << bib::files::normalize(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipAnalysisServerSetUp.sh")) << " " << mipServerName << std::endl;
+		mipScriptOut << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipBarcodeCorrectionMultiple.sh")) << std::endl;
+		mipScriptOut << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipClusteringMultiple.sh")) << std::endl;
+		mipScriptOut << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipPopulationClusteringMultiple.sh")) << std::endl;
+		mipScriptOut << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipAnalysisServerSetUp.sh")) << " " << mipServerName << std::endl;
 		mipScriptOut << std::endl;
 	}
 
 	if(runRest){
 		std::stringstream cmdSs;
-		cmdSs << bib::files::normalize(bib::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_restOfAnalysis.sh")) << " " << mipServerName << std::endl;
-		auto runLog = bib::sys::run(VecStr{cmdSs.str()});
-		OutOptions restOfAnalysisRunLogOpts(bib::files::make_path(mipMaster.directoryMaster_.logsDir_, "run_restOfAnalysis_log.json"));
+		cmdSs << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_restOfAnalysis.sh")) << " " << mipServerName << std::endl;
+		auto runLog = njh::sys::run(VecStr{cmdSs.str()});
+		OutOptions restOfAnalysisRunLogOpts(njh::files::make_path(mipMaster.directoryMaster_.logsDir_, "run_restOfAnalysis_log.json"));
 		OutputStream restOfAnalysisRunLogOut(restOfAnalysisRunLogOpts);
 		restOfAnalysisRunLogOut << runLog.toJson() << std::endl;
 	}
@@ -373,4 +373,4 @@ fi
 	return 0;
 }
 
-}  // namespace bibseq
+}  // namespace njhseq

@@ -9,7 +9,7 @@
 #include "mipster/mipUtils.h"
 #include <unordered_map>
 
-namespace bibseq {
+namespace njhseq {
 
 void MipCollection::setAllAllowableArmError(uint32_t allowableArmError){
 	for(auto & mip : mips_){
@@ -107,7 +107,7 @@ VecStr MipCollection::getMipFamilies() const {
 VecStr MipCollection::getMipRegionsForFams(const VecStr & mipFams) const{
 	std::set<std::string> locSet;
 	for (const auto & m : mips_) {
-		if(bib::in(m.second.familyName_, mipFams)){
+		if(njh::in(m.second.familyName_, mipFams)){
 			locSet.insert(m.second.regionGroup_);
 		}
 	}
@@ -126,7 +126,7 @@ MipCollection::MipCollection(const bfs::path & mipArmIdFile,
 			"gene_name", "mipset"};
 	VecStr columnsNotFound;
 	for (const auto & col : neededColumns) {
-		if (!bib::in(col, mipInfo.columnNames_)) {
+		if (!njh::in(col, mipInfo.columnNames_)) {
 			columnsNotFound.emplace_back(col);
 		}
 	}
@@ -144,7 +144,7 @@ MipCollection::MipCollection(const bfs::path & mipArmIdFile,
 			continue;
 		}
 		auto currentMipName = row[mipInfo.getColPos("mip_id")];
-		if(bib::in(currentMipName, mips_)){
+		if(njh::in(currentMipName, mips_)){
 			std::stringstream ss;
 			ss << "Error in: " << __PRETTY_FUNCTION__ <<  ": Collection already contains " << currentMipName << std::endl;
 			throw std::runtime_error{ss.str()};
@@ -269,12 +269,12 @@ Mip MipCollection::determineBestMipInFamily(const PairedRead & seq, Mip mip,
 }
 
 bool MipCollection::hasMipFamily(const std::string & mipFam) const {
-	return bib::in(mipFam, mipFamilies_);
+	return njh::in(mipFam, mipFamilies_);
 }
 
 bool MipCollection::hasMipTarget(const std::string & mipTar) const {
-	return bib::in(mipTar, mips_);
+	return njh::in(mipTar, mips_);
 }
 
-}  // namespace bibseq
+}  // namespace njhseq
 

@@ -8,18 +8,18 @@
 
 #include "SampleDirectoryMaster.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 SampleDirectoryMaster::SampleDirectoryMaster(
 		const MipAnalysisDirectoryMaster & masterDir, const MipFamSamp & mipSamp) :mipSamp_(mipSamp),
 		masterSampleDir_(
-				bib::files::join(masterDir.masterDir_.string(), mipSamp.samp_ + "/")),
-				extractDir_(bib::files::join(masterSampleDir_.string(), mipSamp.samp_ + "_mipExtraction/")),
-				extractAlnCacheDir_(bib::files::join(masterSampleDir_.string(), "alnCache_mipExtraction/")),
-				barCorDir_(bib::files::join(masterSampleDir_.string(), mipSamp.samp_ + "_mipBarcodeCorrection/")),
-				barCorAlnCacheDir_(bib::files::join(masterSampleDir_.string(), "alnCache_mipBarcodeCorrection/")),
-				clusDir_(bib::files::join(masterSampleDir_.string(), mipSamp.samp_ + "_mipClustering/")),
-				clusAlnCacheDir_(bib::files::join(masterSampleDir_.string(), "alnCache_mipClustering/")){
+				njh::files::join(masterDir.masterDir_.string(), mipSamp.samp_ + "/")),
+				extractDir_(njh::files::join(masterSampleDir_.string(), mipSamp.samp_ + "_mipExtraction/")),
+				extractAlnCacheDir_(njh::files::join(masterSampleDir_.string(), "alnCache_mipExtraction/")),
+				barCorDir_(njh::files::join(masterSampleDir_.string(), mipSamp.samp_ + "_mipBarcodeCorrection/")),
+				barCorAlnCacheDir_(njh::files::join(masterSampleDir_.string(), "alnCache_mipBarcodeCorrection/")),
+				clusDir_(njh::files::join(masterSampleDir_.string(), mipSamp.samp_ + "_mipClustering/")),
+				clusAlnCacheDir_(njh::files::join(masterSampleDir_.string(), "alnCache_mipClustering/")){
 }
 
 void SampleDirectoryMaster::checkForAllDirectoriesThrow() const{
@@ -77,21 +77,21 @@ void SampleDirectoryMaster::checkForClusDirectoryThrow() const{
 
 
 void SampleDirectoryMaster::createExtractDirectory(bool overWrite) const{
-	bib::files::makeDir(bib::files::MkdirPar(extractDir_.string(), overWrite));
+	njh::files::makeDir(njh::files::MkdirPar(extractDir_.string(), overWrite));
 }
 
 void SampleDirectoryMaster::ensureBarCorDirectoryExist() const{
-	bib::files::makeDirP(bib::files::MkdirPar(barCorDir_.string()));
-	bib::files::makeDirP(bib::files::MkdirPar(barCorAlnCacheDir_.string()));
+	njh::files::makeDirP(njh::files::MkdirPar(barCorDir_.string()));
+	njh::files::makeDirP(njh::files::MkdirPar(barCorAlnCacheDir_.string()));
 }
 
 void SampleDirectoryMaster::ensureClusDirectoryExist() const{
-	bib::files::makeDirP(bib::files::MkdirPar(clusDir_.string()));
-	bib::files::makeDirP(bib::files::MkdirPar(clusAlnCacheDir_.string()));
+	njh::files::makeDirP(njh::files::MkdirPar(clusDir_.string()));
+	njh::files::makeDirP(njh::files::MkdirPar(clusAlnCacheDir_.string()));
 }
 
 bfs::path SampleDirectoryMaster::getClusteredHapFnp(const std::string & mipName)const{
-	return bib::files::make_path(clusDir_.string(), mipName,
+	return njh::files::make_path(clusDir_.string(), mipName,
 			mipName + "_clustered.fastq");
 }
 
@@ -99,5 +99,5 @@ bfs::path SampleDirectoryMaster::getClusteredHapFnp(const std::string & mipName)
 
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 

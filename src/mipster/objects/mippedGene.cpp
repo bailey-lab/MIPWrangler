@@ -7,7 +7,7 @@
 
 #include "mippedGene.hpp"
 #include <elucidator/simulation.h>
-namespace bibseq {
+namespace njhseq {
 
 
 
@@ -64,7 +64,7 @@ std::unordered_map<std::string, mipTargetReads> processMipReads(
 		}
 	}
 	auto targetNames = getVectorOfMapKeys(mReads);
-	bib::sort(targetNames);
+	njh::sort(targetNames);
 	for(auto & targetReadName : targetNames){
 		auto & targetReads = mReads.at(targetReadName);
 		targetReads.setGeneralStartStop();
@@ -76,7 +76,7 @@ std::unordered_map<std::string, mipTargetReads> processMipReads(
 
 void mippedGene::setUpGraph(aligner & alignerObj, comparison comp){
 	auto targetNames = getVectorOfMapKeys(processedReads_);
-	bib::sort(targetNames);
+	njh::sort(targetNames);
 
 	for(const auto & tName : targetNames){
 		const auto & reads = processedReads_.at(tName);
@@ -131,7 +131,7 @@ void mippedGene::printAllPaths(std::ostream & out)const {
 void mippedGene::printLociInfo(std::ostream & out)const {
 	out << "LOCI " << processedReads_.size() << "\n";
 	auto keys = getVectorOfMapKeys(processedReads_);
-	bib::sort(keys);
+	njh::sort(keys);
 	for(const auto & kPos : iter::range(keys.size())){
 		out << "L" << kPos + 1 << " " << processedReads_.at(keys[kPos]).reads_.size()  << "\n";
 	}
@@ -154,17 +154,17 @@ void mippedGene::setGroups(){
 	uint32_t parGroup = 0;
 	uint32_t childGroup = 0;
 	auto targetNames = getVectorOfMapKeys(processedReads_);
-	bib::sort(targetNames);
+	njh::sort(targetNames);
 	for(const auto & targetName : targetNames){
 		auto & target = processedReads_.at(targetName);
 		std::unordered_map<std::string, VecStr> parentInfo;
 		std::unordered_map<std::string, VecStr> childInfo;
 		for(const auto & read : target.reads_){
 			auto pNames = overlapGraph_.nameToNode_[read->seqBase_.name_]->getChildrenNames();
-			bib::sort(pNames);
+			njh::sort(pNames);
 			parentInfo[vectorToString(overlapGraph_.nameToNode_[read->seqBase_.name_]->getParentNames(), ",")].emplace_back(read->seqBase_.name_);
 			auto cNames = overlapGraph_.nameToNode_[read->seqBase_.name_]->getChildrenNames();
-			bib::sort(cNames);
+			njh::sort(cNames);
 			childInfo[vectorToString(cNames, ",")].emplace_back(read->seqBase_.name_);
 		}
 		for(const auto & pInfo : parentInfo){
@@ -188,7 +188,7 @@ void mippedGene::printGroupInfo()const{
 		groups[n->groupByChildren_].emplace_back(n->value_->seqBase_.name_);
 	}
 	auto groupNumbers = getVectorOfMapKeys(groups);
-	bib::sort(groupNumbers);
+	njh::sort(groupNumbers);
 	for(const auto & g : groupNumbers){
 		std::cout << "Group: " << g << "\n";
 		std::cout << "\t" << vectorToString(groups[g], ", ") << "\n";
@@ -212,7 +212,7 @@ std::vector<readObject> mippedGene::getAlignedTargets(aligner & alignerObj) {
 	std::vector<readObject> ret;
 	ret.emplace_back(genomicDna_);
 	auto keys = getVectorOfMapKeys(processedReads_);
-	bib::sort(keys);
+	njh::sort(keys);
 	for(const auto & key : keys){
 		const auto & reads = processedReads_.at(key);
 		for(const auto & read :reads.reads_){
@@ -296,7 +296,7 @@ std::unordered_map<std::string, table> mippedGene::findSnps(aligner & alignerObj
 				row[target.second.getColPos("RefChar")],
 				row[target.second.getColPos("SeqChar")],
 				row[target.second.getColPos("Chrom")],
-				row[target.second.getColPos("inCoding")]}, "DELIM")].emplace_back(bib::lexical_cast<double>(row[target.second.getColPos("frac")]));
+				row[target.second.getColPos("inCoding")]}, "DELIM")].emplace_back(njh::lexical_cast<double>(row[target.second.getColPos("frac")]));
 		}
 	}
 	for(const auto & info : allInfos){
@@ -368,7 +368,7 @@ std::unordered_map<std::string, table> mippedGene::findProteinSnps(aligner & ali
 		for(const auto & row : target.second.content_){
 			allInfos[vectorToString(VecStr{row[target.second.getColPos("ProteinPos")],
 				row[target.second.getColPos("RefProtein")],
-				row[target.second.getColPos("VariantProtein")]}, "DELIM")].emplace_back(bib::lexical_cast<double>(row[target.second.getColPos("frac")]));
+				row[target.second.getColPos("VariantProtein")]}, "DELIM")].emplace_back(njh::lexical_cast<double>(row[target.second.getColPos("frac")]));
 
 		}
 	}
@@ -396,11 +396,11 @@ std::unordered_map<std::string, table> mippedGene::findProteinSnps(aligner & ali
 		for(const auto & row : target.second.content_){
 			allInfos[vectorToString(VecStr{row[target.second.getColPos("ProteinPos")],
 				row[target.second.getColPos("RefProtein")],
-				row[target.second.getColPos("VariantProtein")]}, "DELIM")].emplace_back(bib::lexical_cast<double>(row[target.second.getColPos("frac")]));
+				row[target.second.getColPos("VariantProtein")]}, "DELIM")].emplace_back(njh::lexical_cast<double>(row[target.second.getColPos("frac")]));
 
 			allInfosFreq[vectorToString(VecStr{row[target.second.getColPos("ProteinPos")],
 							row[target.second.getColPos("RefProtein")],
-							row[target.second.getColPos("VariantProtein")]}, "DELIM")].emplace_back(bib::lexical_cast<double>(row[target.second.getColPos("freq")]));
+							row[target.second.getColPos("VariantProtein")]}, "DELIM")].emplace_back(njh::lexical_cast<double>(row[target.second.getColPos("freq")]));
 		}
 	}*/
 	for(const auto & info : allInfos){
@@ -484,4 +484,4 @@ seqInfo mippedGene::getMutatedProtein(const std::map<uint32_t, mismatch> & misma
 }
 
 
-} /* namespace bibseq */
+} /* namespace njhseq */

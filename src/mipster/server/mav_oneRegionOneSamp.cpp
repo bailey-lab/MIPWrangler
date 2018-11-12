@@ -10,7 +10,7 @@
 #include <elucidator/objects/dataContainers/graphs.h>
 
 
-namespace bibseq {
+namespace njhseq {
 
 
 void mav::regionInfoForSampPageHandler(
@@ -22,7 +22,7 @@ void mav::regionInfoForSampPageHandler(
 	std::stringstream ss;
 	bool redirecting = false;
 		//check region
-	if (!bib::in(region, mipMaster_->getMipGroupings())) {
+	if (!njh::in(region, mipMaster_->getMipGroupings())) {
 		ss << "Region name wasn't found :" << region << std::endl;
 		redirecting = true;
 	}
@@ -49,14 +49,14 @@ void mav::getMipOverlapGraphDataHandler(std::shared_ptr<restbed::Session> sessio
 	auto sample = request->get_path_parameter("sample");
 	auto region = request->get_path_parameter("region");
 	Json::Value ret;
-	if (bib::in(region, mipMaster_->getMipGroupings())) {
+	if (njh::in(region, mipMaster_->getMipGroupings())) {
 		//check for sample @todo check to see if region specifically has info on sample
 		if (popClusInfoBySample_.find(sample) != popClusInfoBySample_.end()) {
 			auto mipFams = mipMaster_->mips_->getMipFamsForRegion(region);
 			std::vector<std::shared_ptr<seqInfo>> finalSeqs;
 			for (const auto & mipName : mipFams) {
 				std::string searchTerm = mipName + "_" + sample + "_final";
-				if (bib::in(searchTerm, seqs_->cache_)) {
+				if (njh::in(searchTerm, seqs_->cache_)) {
 					addOtherVec(finalSeqs,
 							seqs_->cache_.at(searchTerm).ioOpts_.getPtrs<seqInfo>());
 				} else {
@@ -70,15 +70,15 @@ void mav::getMipOverlapGraphDataHandler(std::shared_ptr<restbed::Session> sessio
 			SeqOverlapGraph graph;
 
 			for (const auto & seq : finalSeqs) {
-				//std::cout << bib::json::writeAsOneLine(seq->toJsonJustInfo()) << std::endl;
+				//std::cout << njh::json::writeAsOneLine(seq->toJsonJustInfo()) << std::endl;
 				readVec::getMaxLength(seq, maxSize);
 
 				std::unordered_map<std::string, std::string> meta;
 				seq->processNameForMeta(meta);
-				if (bib::has(meta, "mipFam")) {
-					auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
+				if (njh::has(meta, "mipFam")) {
+					auto mipFamToks = njh::tokenizeString(meta.at("mipFam"), "_");
 					uint32_t mipNum = estd::stou(
-							bib::replaceString(mipFamToks.back(), "mip", ""));
+							njh::replaceString(mipFamToks.back(), "mip", ""));
 					seqsByMipNum[mipNum].push_back(seq);
 				} else {
 					std::stringstream ss;
@@ -181,8 +181,8 @@ void mav::getMipOverlapGraphDataHandler(std::shared_ptr<restbed::Session> sessio
 					maxNum = len(seqs.second);
 				}
 			}
-			auto outColors = bib::njhColors(maxNum);
-			bibseq::VecStr outColorsStrs;
+			auto outColors = njh::njhColors(maxNum);
+			njhseq::VecStr outColorsStrs;
 			outColorsStrs.reserve(outColors.size());
 			for (const auto & c : outColors) {
 				outColorsStrs.emplace_back("#" + c.hexStr_);
@@ -192,10 +192,10 @@ void mav::getMipOverlapGraphDataHandler(std::shared_ptr<restbed::Session> sessio
 				std::unordered_map<std::string, std::string> meta;
 				seqInfo seq(node["name"].asString(), "A");
 				seq.processNameForMeta(meta);
-				if (bib::has(meta, "mipFam")) {
-					auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
+				if (njh::has(meta, "mipFam")) {
+					auto mipFamToks = njh::tokenizeString(meta.at("mipFam"), "_");
 					uint32_t mipNum = estd::stou(
-							bib::replaceString(mipFamToks.back(), "mip", ""));
+							njh::replaceString(mipFamToks.back(), "mip", ""));
 					node["mipNum"] = mipNum;
 					std::string clusterId = seq.name_.substr(seq.name_.find("].") + 2,
 							seq.name_.rfind("_R") - (seq.name_.find("].") + 2));
@@ -214,7 +214,7 @@ void mav::getMipOverlapGraphDataHandler(std::shared_ptr<restbed::Session> sessio
 		std::cerr << "Region name wasn't found :" << region << std::endl;
 	}
 
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -253,7 +253,7 @@ std::shared_ptr<restbed::Resource> mav::getMipOverlapGraphData(){
 
 /*
 void mav::showGeneInfoForSampData(std::string geneName, std::string sampName){
-	bib::scopedMessage mess(messStrFactory(__PRETTY_FUNCTION__, {{"geneName", geneName},{"sampName", sampName}}), std::cout, debug_);
+	njh::scopedMessage mess(messStrFactory(__PRETTY_FUNCTION__, {{"geneName", geneName},{"sampName", sampName}}), std::cout, debug_);
 	if(popClusInfoBySample_.find(sampName) == popClusInfoBySample_.end()){
 		std::cerr << __PRETTY_FUNCTION__ << ": Sample Name wasn't found: " << sampName << std::endl;
 		auto search = pages_.find("redirectPage");
@@ -265,10 +265,10 @@ void mav::showGeneInfoForSampData(std::string geneName, std::string sampName){
 }
 
 void mav::mipOverlapGraphData(std::string geneName, std::string sampleName){
-	bib::scopedMessage mess(messStrFactory(__PRETTY_FUNCTION__, { { "geneName",
+	njh::scopedMessage mess(messStrFactory(__PRETTY_FUNCTION__, { { "geneName",
 			geneName }, {"sampleName", sampleName} }), std::cout, debug_);
 	ret_json();
-	if (!bib::in(geneName, mipMaster_->getMipGroupings())) {
+	if (!njh::in(geneName, mipMaster_->getMipGroupings())) {
 		std::cerr << "Gene name wasn't found :" << geneName << std::endl;
 		response().out() << "";
 	} else {
@@ -276,8 +276,8 @@ void mav::mipOverlapGraphData(std::string geneName, std::string sampleName){
 		auto mipFams = mipMaster_->mips_->getMipFamsForRegion(geneName);
 		std::vector<std::shared_ptr<seqInfo>> finalSeqs;
 		for(const auto & mipName : mipFams ){
-			if(bib::in(mipName, finalHapsByTarSamp_)){
-				if(bib::in(sampleName, finalHapsByTarSamp_.at(mipName))){
+			if(njh::in(mipName, finalHapsByTarSamp_)){
+				if(njh::in(sampleName, finalHapsByTarSamp_.at(mipName))){
 					addOtherVec(finalSeqs, finalHapsByTarSamp_.at(mipName).at(sampleName).getPtrs<seqInfo>());
 				}else{
 					std::cerr << "Mip fam name wasn't found :" << mipName << std::endl;
@@ -297,9 +297,9 @@ void mav::mipOverlapGraphData(std::string geneName, std::string sampleName){
 
 			std::unordered_map<std::string, std::string> meta;
 			seq->processNameForMeta(meta);
-			if(bib::has(meta, "mipFam")){
-				auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
-				uint32_t mipNum = estd::stou(bib::replaceString(mipFamToks.back(), "mip", ""));
+			if(njh::has(meta, "mipFam")){
+				auto mipFamToks = njh::tokenizeString(meta.at("mipFam"), "_");
+				uint32_t mipNum = estd::stou(njh::replaceString(mipFamToks.back(), "mip", ""));
 				seqsByMipNum[mipNum].push_back(seq);
 			}else{
 				std::stringstream ss;
@@ -393,8 +393,8 @@ void mav::mipOverlapGraphData(std::string geneName, std::string sampleName){
 				maxNum = len(seqs.second);
 			}
 		}
-		auto outColors = bib::njhColors(maxNum);
-		bibseq::VecStr outColorsStrs;
+		auto outColors = njh::njhColors(maxNum);
+		njhseq::VecStr outColorsStrs;
 		outColorsStrs.reserve(outColors.size());
 		for(const auto & c : outColors) {
 			outColorsStrs.emplace_back("#" + c.hexStr_);
@@ -405,10 +405,10 @@ void mav::mipOverlapGraphData(std::string geneName, std::string sampleName){
 			std::unordered_map<std::string, std::string> meta;
 			seqInfo seq(node["name"].asString(), "A");
 			seq.processNameForMeta(meta);
-			if (bib::has(meta, "mipFam")) {
-				auto mipFamToks = bib::tokenizeString(meta.at("mipFam"), "_");
+			if (njh::has(meta, "mipFam")) {
+				auto mipFamToks = njh::tokenizeString(meta.at("mipFam"), "_");
 				uint32_t mipNum = estd::stou(
-						bib::replaceString(mipFamToks.back(), "mip", ""));
+						njh::replaceString(mipFamToks.back(), "mip", ""));
 				node["mipNum"] = mipNum;
 				std::string clusterId = seq.name_.substr(seq.name_.find("].") + 2, seq.name_.rfind("_R") - (seq.name_.find("].") + 2));
 				node["color"] = outColorsStrs[estd::stou(clusterId)];
@@ -424,4 +424,4 @@ void mav::mipOverlapGraphData(std::string geneName, std::string sampleName){
 }
 */
 
-}  // namespace bibseq
+}  // namespace njhseq

@@ -7,7 +7,7 @@
 
 #include "BarcodeFilterStats.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 BarcodeFilterStats::BarcodeFilterStat::BarcodeFilterStat(const std::string & mipTarget,
 		const std::string & mipFamily) :
@@ -19,7 +19,7 @@ uint32_t BarcodeFilterStats::BarcodeFilterStat::totalFilter() const {
 }
 
 std::string BarcodeFilterStats::BarcodeFilterStat::printInfoHeader(const std::string & delim){
-	return bib::conToStr(
+	return njh::conToStr(
 			toVecStr("sample", "mipTarget", "mipFamily", "initialReadCnt", "finalReadCnt",
 					"uniqueBarCnt", "avgBarCov", "medianBarCov", "totalReadCntFilter",
 					"ligationBarFilterCnt", "barFilterCnt"), delim);
@@ -28,7 +28,7 @@ std::string BarcodeFilterStats::BarcodeFilterStat::printInfoHeader(const std::st
 void BarcodeFilterStats::BarcodeFilterStat::printInfo(std::ostream & out,
 		const std::string & sampName, const std::string & delim) const {
 	out
-			<< bib::conToStr(
+			<< njh::conToStr(
 					toVecStr(sampName, mipTarget_, mipFamily_, initial_,
 							getPercentageString(final_, initial_), barCoverage_.size(),
 							vectorMean(barCoverage_), vectorMedianCopy(barCoverage_),
@@ -39,7 +39,7 @@ void BarcodeFilterStats::BarcodeFilterStat::printInfo(std::ostream & out,
 }
 
 void BarcodeFilterStats::addFilterStat(const BarcodeFilterStat & stat) {
-	if (bib::in(stat.mipTarget_, allStats_)) {
+	if (njh::in(stat.mipTarget_, allStats_)) {
 		throw std::runtime_error { "Error in : " + std::string(__PRETTY_FUNCTION__)
 				+ " already contain stat for " + stat.mipTarget_ };
 	}
@@ -55,11 +55,11 @@ void BarcodeFilterStats::printInfo(std::ostream & out,
 		const std::string & delim) const {
 	out << BarcodeFilterStat::printInfoHeader(delim) << std::endl;
 	auto keys = getVectorOfMapKeys(allStats_);
-	bib::sort(keys);
+	njh::sort(keys);
 	for (const auto & key : keys) {
 		allStats_.at(key).printInfo(out,sampName_, delim);
 	}
 }
 
-}  // namespace bibseq
+}  // namespace njhseq
 

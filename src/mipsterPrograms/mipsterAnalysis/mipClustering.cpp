@@ -11,7 +11,7 @@
 #include "mipsterAnalysisSetUp.hpp"
 
 
-namespace bibseq {
+namespace njhseq {
 
 
 
@@ -162,11 +162,11 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 		aligner & alignerObj,
 		collapser collapserObj){
 	SeqIOOptions options = SeqIOOptions::genFastqIn(
-			bib::files::join(
+			njh::files::join(
 					VecStr { sampDirMaster.barCorDir_.string(), mipSampName.mipFam_,
 							mipSampName.mipFam_ + "_all.fastq" }));
 	if (options.inExists()) {
-		bib::stopWatch watch;
+		njh::stopWatch watch;
 		SeqInput reader(options);
 		reader.openIn();
 		std::vector<std::shared_ptr<readObject>> allReads = reader.readAllReadsPtrs<
@@ -184,13 +184,13 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 		//now check to see if there are any reads to cluster
 		//if all of them were contamination this should be zero
 		if(!identicalClusters.empty()){
-			bfs::path mipFamilyDir = bib::files::makeDir(
-					sampDirMaster.clusDir_.string(), bib::files::MkdirPar(mipSampName.mipFam_,
+			bfs::path mipFamilyDir = njh::files::makeDir(
+					sampDirMaster.clusDir_.string(), njh::files::MkdirPar(mipSampName.mipFam_,
 					pars.overWriteDirs));
 			alignerObj.resetAlnCache();
 			if(pars.cacheAlignments){
 				alignerObj.processAlnInfoInputNoCheck(
-						bib::files::join(sampDirMaster.clusAlnCacheDir_.string(), mipSampName.mipFam_).string(),seqPars.debug_);
+						njh::files::join(sampDirMaster.clusAlnCacheDir_.string(), mipSampName.mipFam_).string(),seqPars.debug_);
 			}
 			alignerObj.numberOfAlingmentsDone_ = 0;
 			std::unordered_map<std::string, uint32_t> idenToIndex;
@@ -228,20 +228,20 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 			}
 			if(pars.cacheAlignments){
 				alignerObj.processAlnInfoOutputNoCheck(
-						bib::files::join(sampDirMaster.clusAlnCacheDir_.string(),
+						njh::files::join(sampDirMaster.clusAlnCacheDir_.string(),
 								mipSampName.mipFam_).string(), seqPars.debug_);
 			}
 			SeqIOOptions opts = SeqIOOptions::genFastqOut(
-					bib::files::make_path(mipFamilyDir,  mipSampName.mipFam_).string() + "_clustered");
+					njh::files::make_path(mipFamilyDir,  mipSampName.mipFam_).string() + "_clustered");
 
 			renameReadNames(clusters, "[samp=" + mipSampName.samp_ + ";" + "mipFam=" + mipSampName.mipFam_ +"]",
 					true, true, true);
 			bfs::path mipFamilyAllClustersDir = "";
 			if(pars.writeOutClusters){
-				mipFamilyAllClustersDir = bib::files::makeDir(mipFamilyDir, bib::files::MkdirPar("allInputClusters"));
+				mipFamilyAllClustersDir = njh::files::makeDir(mipFamilyDir, njh::files::MkdirPar("allInputClusters"));
 			}
 
-			OutputStream outInfoFile(OutOptions(bib::files::make_path(mipFamilyDir,"info.tab.txt")));
+			OutputStream outInfoFile(OutOptions(njh::files::make_path(mipFamilyDir,"info.tab.txt")));
 			outInfoFile
 					<< "clusterName\tbarcodes\tbarcodeFraction\treads\treadsFraction"
 					<< std::endl;
@@ -265,7 +265,7 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 				readAmounts[clus.seqBase_.name_] = readAmount;
 				if(pars.writeOutClusters){
 					SeqIOOptions outOpts = opts;
-					outOpts.out_.outFilename_ = bib::files::make_path(mipFamilyAllClustersDir, clus.seqBase_.name_);
+					outOpts.out_.outFilename_ = njh::files::make_path(mipFamilyAllClustersDir, clus.seqBase_.name_);
 					SeqOutput clusWriter(outOpts);
 					clusWriter.openWrite(begReads);
 				}
@@ -280,11 +280,11 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 			}
 			SeqOutput::write(clusters, opts);
 			if(pars.writeOutClusters){
-				auto mipFamilyClustersDir = bib::files::makeDir(mipFamilyDir, bib::files::MkdirPar("clusters"));
+				auto mipFamilyClustersDir = njh::files::makeDir(mipFamilyDir, njh::files::MkdirPar("clusters"));
 				clusterVec::allWriteClustersInDir(clusters, mipFamilyClustersDir.string(), opts);
 			}
-			OutputStream logfile(OutOptions(bib::files::make_path(mipFamilyDir, "log.txt")));
-			logfile << "Ran on: " << bib::getCurrentDate() << std::endl;
+			OutputStream logfile(OutOptions(njh::files::make_path(mipFamilyDir, "log.txt")));
+			logfile << "Ran on: " << njh::getCurrentDate() << std::endl;
 			logfile << "Number of Alignments Done: " << alignerObj.numberOfAlingmentsDone_ << "\n";
 			logfile << "Run Length: " << watch.totalTimeFormatted(6) << std::endl;
 		}
@@ -293,7 +293,7 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 
 
 int mipsterAnalysisRunner::mipClustering(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 	mipsterAnalysisSetUp setUp(inputCommands);
 	mipClusteringPars pars;
 	setUp.setUpMipClustering(pars);
@@ -327,7 +327,7 @@ int mipsterAnalysisRunner::mipClustering(
 }
 
 
-int mipsterAnalysisRunner::mipClusteringMultiple(const bib::progutils::CmdArgs & inputCommands){
+int mipsterAnalysisRunner::mipClusteringMultiple(const njh::progutils::CmdArgs & inputCommands){
 	mipsterAnalysisSetUp setUp(inputCommands);
 	mipClusteringParsMultiple pars;
 	setUp.setUpMipClusteringMultiple(pars);
@@ -341,14 +341,14 @@ int mipsterAnalysisRunner::mipClusteringMultiple(const bib::progutils::CmdArgs &
 		std::stringstream ss;
 		ss << "Error in directory structure, make sure you are in the correct analysis directory" << std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error{ss.str()};
 	}
 
 	Json::Value logInfo;
 	std::ofstream logFile;
 	openTextFile(logFile,
-			bib::files::make_path(mipMaster.directoryMaster_.logsDir_, pars.logFilename), ".json",
+			njh::files::make_path(mipMaster.directoryMaster_.logsDir_, pars.logFilename), ".json",
 			pars.overWriteLog, true);
 	logInfo["date"] = getCurrentDate();
 	logInfo["workingDir"] = inputCommands.workingDir_;
@@ -367,7 +367,7 @@ int mipsterAnalysisRunner::mipClusteringMultiple(const bib::progutils::CmdArgs &
 	alnPool.initAligners();
 
 	std::vector<MipFamSamp> allPairings = mipMaster.getPairsWithBarCor(pars.numThreads);
-	bib::concurrent::LockableQueue<MipFamSamp> pairQueue(allPairings);
+	njh::concurrent::LockableQueue<MipFamSamp> pairQueue(allPairings);
 
 	auto & pairingLog = logInfo["PerMipSample"];
 	std::mutex logMut;
@@ -381,7 +381,7 @@ int mipsterAnalysisRunner::mipClusteringMultiple(const bib::progutils::CmdArgs &
 
 		while(pairQueue.getVal(mipSamp)){
 //			std::cout << std::this_thread::get_id() << " samp: " << mipSamp.samp_ << " mipFam: " << mipSamp.mipFam_  << __LINE__ << std::endl;
-			bib::stopWatch watch;
+			njh::stopWatch watch;
 			auto sampPars = pars.createForSample(mipSamp.samp_);
 			SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, mipSamp);
 			sampDirMaster.checkForClusDirectoryThrow();

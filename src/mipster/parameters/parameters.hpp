@@ -10,7 +10,7 @@
 #include "mipster/common.h"
 #include <SeekDeep/objects/PairedReadProcessor.hpp>
 
-namespace bibseq {
+namespace njhseq {
 
 struct mipCorePars{
 
@@ -230,7 +230,7 @@ struct mipPopulationClusteringParsMultiple : public mipPopulationClusteringPars{
 
 
 		ret.mipName = newMipName;
-		auto refPopFile = bib::files::make_path(ret.previousPopDir, ret.mipName + ".fasta");
+		auto refPopFile = njh::files::make_path(ret.previousPopDir, ret.mipName + ".fasta");
 		if(bfs::exists(refPopFile)){
 			ret.previousPopFilename = refPopFile.string();
 			ret.refIoOptions = SeqIOOptions::genFastaIn(refPopFile);
@@ -263,5 +263,5 @@ struct mipCorrectForContamWithSameBarcodesParsMultiple : public mipCorrectForCon
 
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 

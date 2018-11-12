@@ -11,7 +11,7 @@
 #include "mipster/common.h"
 
 
-namespace bibseq {
+namespace njhseq {
 
 
 bool checkForFileDirExistence(const bfs::path & fnp, VecStr & warnings);
@@ -22,6 +22,6 @@ bool checkForFileDirExistence(const bfs::path & fnp, VecStr & warnings);
 
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 
 

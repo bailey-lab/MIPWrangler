@@ -8,7 +8,7 @@
 
 #include "mipster/common.h"
 
-namespace bibseq {
+namespace njhseq {
 
 class BarcodeFilterStats {
 public:
@@ -35,5 +35,5 @@ public:
 	void printInfo(std::ostream & out, const std::string & delim) const;
 };
 
-}  // namespace bibseq
+}  // namespace njhseq
 

@@ -8,7 +8,7 @@
 
 #include "mipUtils.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 void processNameForBarReadCounts(const std::string & name,
 		uint32_t & barNum, uint32_t & readNum){
@@ -34,4 +34,4 @@ uint32_t getBarcodeCntFromMipName(const std::string & name) {
 	return estd::stou(name.substr(bPos + 2, underPos - bPos - 2));
 }
 
-}  // namespace bibseq
+}  // namespace njhseq

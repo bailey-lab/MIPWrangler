@@ -7,10 +7,10 @@
  */
 
 
-#include <bibseq.h>
+#include <njhseq.h>
 #include "mipster/common.h"
 
-namespace bibseq {
+namespace njhseq {
 
 VecStr processMipExtractInfoFile(table info);
 table getSampleStats(const std::string & dirName, bool verbose);
@@ -162,6 +162,6 @@ PopClusTabs printMipSampleCollapseInfo(
 		collapse::SampleCollapseCollection & sampCollapses, bool checkingExpected,
 		std::string targetName);
 
-} /* namespace bibseq */
+} /* namespace njhseq */
 
 

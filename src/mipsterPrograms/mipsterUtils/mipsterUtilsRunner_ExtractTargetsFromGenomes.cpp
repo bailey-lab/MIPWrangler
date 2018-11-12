@@ -11,11 +11,11 @@
 #include <SeekDeep/utils.h>
 
 
-namespace bibseq {
+namespace njhseq {
 
 
 int mipsterUtilsRunner::ExtractTargetsFromGenomes(
-		const bib::progutils::CmdArgs & inputCommands) {
+		const njh::progutils::CmdArgs & inputCommands) {
 
 	bfs::path mipArmsFnp;
 	extractBetweenSeqsPars pars;
@@ -27,11 +27,11 @@ int mipsterUtilsRunner::ExtractTargetsFromGenomes(
 	pars.setUpCoreOptions(setUp);
 	setUp.finishSetUp(std::cout);
 
-	bib::files::makeDir(pars.outputDirPars);
+	njh::files::makeDir(pars.outputDirPars);
 	auto topDir = pars.outputDirPars.dirName_;
-	pars.outputDirPars.dirName_ = bib::files::make_path(pars.outputDirPars.dirName_, "extractions");
+	pars.outputDirPars.dirName_ = njh::files::make_path(pars.outputDirPars.dirName_, "extractions");
 
-	OutOptions outOpts(bib::files::make_path(topDir, "mip_targets_as_primers.tab.txt"));
+	OutOptions outOpts(njh::files::make_path(topDir, "mip_targets_as_primers.tab.txt"));
 	MipCollection mips(mipArmsFnp, 6);
 	{
 		//write out mip arms
@@ -61,16 +61,16 @@ int mipsterUtilsRunner::ExtractTargetsFromGenomes(
 	setUp.startARunLog(topDir.string());
 
 
-	auto forMIPWranglerDir = bib::files::make_path(topDir, "forMIPWrangler");
+	auto forMIPWranglerDir = njh::files::make_path(topDir, "forMIPWrangler");
 
-	bib::files::makeDir(bib::files::MkdirPar{forMIPWranglerDir});
-	auto refSeqsDir = bib::files::make_path(forMIPWranglerDir, "refSeqs");
-	bib::files::makeDir(bib::files::MkdirPar{refSeqsDir});
-	OutOptions lenCutOffsOpts(bib::files::make_path(forMIPWranglerDir, "lenCutOffs.txt"));
+	njh::files::makeDir(njh::files::MkdirPar{forMIPWranglerDir});
+	auto refSeqsDir = njh::files::make_path(forMIPWranglerDir, "refSeqs");
+	njh::files::makeDir(njh::files::MkdirPar{refSeqsDir});
+	OutOptions lenCutOffsOpts(njh::files::make_path(forMIPWranglerDir, "lenCutOffs.txt"));
 	OutputStream lenCutOffsOut(lenCutOffsOpts);
 	lenCutOffsOut << "target\tminlen\tmaxlen" << "\n";
 
-	OutOptions overlapStatusOpts(bib::files::make_path(forMIPWranglerDir, "overlapStatuses.txt"));
+	OutOptions overlapStatusOpts(njh::files::make_path(forMIPWranglerDir, "overlapStatuses.txt"));
 	OutputStream overlapStatusOut(overlapStatusOpts);
 	overlapStatusOut << "target\tstatus" << "\n";
 
@@ -79,12 +79,12 @@ int mipsterUtilsRunner::ExtractTargetsFromGenomes(
 	for(const auto & familyName : familyNames){
 		auto tarNames = mips.getMipsForFamily(familyName);
 		std::vector<uint32_t> readLengths;
-		auto primersRemovedFinalFnp = bib::files::make_path(refSeqsDir, familyName + ".fasta");
+		auto primersRemovedFinalFnp = njh::files::make_path(refSeqsDir, familyName + ".fasta");
 		auto finalFamilySeqOpts = SeqIOOptions::genFastaOut(primersRemovedFinalFnp);
 		SeqOutput finalWriter(finalFamilySeqOpts);
 		for(const auto & tar : tarNames){
-			auto primersRemovedFnp =      bib::files::make_path(pars.outputDirPars.dirName_, tar, tar + "_primersRemoved.fasta");
-			auto extractedSeqsFnp =       bib::files::make_path(pars.outputDirPars.dirName_, tar, tar + ".fasta");
+			auto primersRemovedFnp =      njh::files::make_path(pars.outputDirPars.dirName_, tar, tar + "_primersRemoved.fasta");
+			auto extractedSeqsFnp =       njh::files::make_path(pars.outputDirPars.dirName_, tar, tar + ".fasta");
 			if(bfs::exists(primersRemovedFnp)){
 				{
 					SeqInput reader(SeqIOOptions::genFastaIn(primersRemovedFnp));
@@ -128,5 +128,5 @@ int mipsterUtilsRunner::ExtractTargetsFromGenomes(
 	return 0;
 }
 
-}  //namespace bibseq
+}  //namespace njhseq
 

@@ -9,44 +9,44 @@
 
 #include "mipsterUtilsSetUp.hpp"
 #include "mipster.h"
-namespace bibseq {
+namespace njhseq {
 
-class mipsterUtilsRunner : public bib::progutils::ProgramRunner {
+class mipsterUtilsRunner : public njh::progutils::ProgramRunner {
  public:
   mipsterUtilsRunner();
   
-	static int processProcessedMips(const bib::progutils::CmdArgs & inputCommands);
-	static int alignTargets(const bib::progutils::CmdArgs & inputCommands);
+	static int processProcessedMips(const njh::progutils::CmdArgs & inputCommands);
+	static int alignTargets(const njh::progutils::CmdArgs & inputCommands);
 
 
-	static int scanForContam(const bib::progutils::CmdArgs & inputCommands);
+	static int scanForContam(const njh::progutils::CmdArgs & inputCommands);
 
-	static int writeOutPossibleHaplotypes(const bib::progutils::CmdArgs & inputCommands);
-	static int processMipOverlapGraph(const bib::progutils::CmdArgs & inputCommands);
-	static int processMipOverlapGraphSingle(const bib::progutils::CmdArgs & inputCommands);
-
-
-	static int rearmTargetsAndCombine(const bib::progutils::CmdArgs & inputCommands);
-
-	static int createExtArmFastas(const bib::progutils::CmdArgs & inputCommands);
-	static int createLigArmFastas(const bib::progutils::CmdArgs & inputCommands);
+	static int writeOutPossibleHaplotypes(const njh::progutils::CmdArgs & inputCommands);
+	static int processMipOverlapGraph(const njh::progutils::CmdArgs & inputCommands);
+	static int processMipOverlapGraphSingle(const njh::progutils::CmdArgs & inputCommands);
 
 
-	static int mipFastasToSeqTable(const bib::progutils::CmdArgs & inputCommands);
-	static int extractPossibleMipCapturesFromGenome(const bib::progutils::CmdArgs & inputCommands);
-	static int creatingMipArmsFromSeqs(const bib::progutils::CmdArgs & inputCommands);
-	static int fixingMipBedFiles(const bib::progutils::CmdArgs & inputCommands);
+	static int rearmTargetsAndCombine(const njh::progutils::CmdArgs & inputCommands);
 
-	static int createPrimerFileFromArmFile(const bib::progutils::CmdArgs & inputCommands);
-
-	static int creatingSeqTableFromDirectory(const bib::progutils::CmdArgs & inputCommands);
-
-	static int createMipArmFromSelectedMips(const bib::progutils::CmdArgs & inputCommands);
+	static int createExtArmFastas(const njh::progutils::CmdArgs & inputCommands);
+	static int createLigArmFastas(const njh::progutils::CmdArgs & inputCommands);
 
 
-	static int typeFinalHaplotypes(const bib::progutils::CmdArgs & inputCommands);
+	static int mipFastasToSeqTable(const njh::progutils::CmdArgs & inputCommands);
+	static int extractPossibleMipCapturesFromGenome(const njh::progutils::CmdArgs & inputCommands);
+	static int creatingMipArmsFromSeqs(const njh::progutils::CmdArgs & inputCommands);
+	static int fixingMipBedFiles(const njh::progutils::CmdArgs & inputCommands);
 
-	static int ExtractTargetsFromGenomes(const bib::progutils::CmdArgs & inputCommands);
+	static int createPrimerFileFromArmFile(const njh::progutils::CmdArgs & inputCommands);
+
+	static int creatingSeqTableFromDirectory(const njh::progutils::CmdArgs & inputCommands);
+
+	static int createMipArmFromSelectedMips(const njh::progutils::CmdArgs & inputCommands);
+
+
+	static int typeFinalHaplotypes(const njh::progutils::CmdArgs & inputCommands);
+
+	static int ExtractTargetsFromGenomes(const njh::progutils::CmdArgs & inputCommands);
 
 };
-} // namespace bibseq
+} // namespace njhseq

@@ -7,10 +7,10 @@
  */
 
 #include "mipster/objects/MipCollection.hpp"
-#include <bibseq/objects/BioDataObject/reading.hpp>
+#include <njhseq/objects/BioDataObject/reading.hpp>
 #include <SeekDeep/utils.h>
 
-namespace bibseq {
+namespace njhseq {
 
 class MipsOnGenome {
 public:
@@ -114,5 +114,5 @@ public:
 
 };
 
-}  // namespace bibseq
+}  // namespace njhseq
 

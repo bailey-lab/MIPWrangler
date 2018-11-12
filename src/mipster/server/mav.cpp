@@ -12,16 +12,16 @@
 #include "mipster/parameters.h"
 
 
-namespace bibseq {
+namespace njhseq {
 
 
 
 
 
 mav::mav(const Json::Value & config) :
-				bibseq::SeqApp(config){
+				njhseq::SeqApp(config){
 
-	serverResourceDir_ = bib::appendAsNeededRet(config["resources"].asString(),"/");
+	serverResourceDir_ = njh::appendAsNeededRet(config["resources"].asString(),"/");
 	masterDir_ = config["masterDir"].asString();
 	mipArmsFileName_ = config["mipArmsFileName"].asString();
 	mipsSamplesFile_ = config["mipsSamplesFile"].asString();
@@ -37,7 +37,7 @@ mav::mav(const Json::Value & config) :
 		mipMaster_->setMetaData(config["sampleMetaFnp"].asString());
 	}
 
-	bib::stopWatch watch;
+	njh::stopWatch watch;
 	watch.setLapName("Extraction Info");
 	{
 		//set up extraction info
@@ -108,13 +108,13 @@ mav::mav(const Json::Value & config) :
 	watch.startNewLap("URL mapping set up");
 	//add html pages
 	jsFiles_->addFiles(
-			bib::files::gatherFiles(bib::files::make_path(serverResourceDir_, "mav/js"), ".js"));
+			njh::files::gatherFiles(njh::files::make_path(serverResourceDir_, "mav/js"), ".js"));
 	cssFiles_->addFiles(
-			bib::files::gatherFiles(bib::files::make_path(serverResourceDir_, "mav/css"), ".css"));
+			njh::files::gatherFiles(njh::files::make_path(serverResourceDir_, "mav/css"), ".css"));
 
 
 
-	addScripts(bib::files::make_path(serverResourceDir_, "mav"));
+	addScripts(njh::files::make_path(serverResourceDir_, "mav"));
 
 
 	if(debug_){
@@ -147,19 +147,19 @@ void mav::getAllNamesHandler(std::shared_ptr<restbed::Session> session){
 	Json::Value ret;
 
 	auto samps = mipMaster_->names_->samples_;
-	bib::sort(samps);
-	ret["samples"] = bib::json::toJson(samps);
+	njh::sort(samps);
+	ret["samples"] = njh::json::toJson(samps);
 	auto groupings = mipMaster_->getMipGroupings();
-	//bib::sort(groupings);
-	ret["mipRegions"] = bib::json::toJson(groupings);
+	//njh::sort(groupings);
+	ret["mipRegions"] = njh::json::toJson(groupings);
 	auto famlies = mipMaster_->getAllMipFamilies();
-	//bib::sort(famlies);
-	ret["mipFamilies"] = bib::json::toJson(famlies);
+	//njh::sort(famlies);
+	ret["mipFamilies"] = njh::json::toJson(famlies);
 	auto targets = mipMaster_->getAllMipTargets();
-	//bib::sort(targets);
-	ret["mipTargets"] = bib::json::toJson(targets);
+	//njh::sort(targets);
+	ret["mipTargets"] = njh::json::toJson(targets);
 
-	auto body = bib::json::writeAsOneLine(ret);
+	auto body = njh::json::writeAsOneLine(ret);
 	const std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(body);
 	session->close(restbed::OK, body, headers);
@@ -168,7 +168,7 @@ void mav::getAllNamesHandler(std::shared_ptr<restbed::Session> session){
 void mav::getRawInfoHandler(std::shared_ptr<restbed::Session> session){
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	auto request = session->get_request();
-	auto rawInfoGzFnp =  bib::files::make_path(
+	auto rawInfoGzFnp =  njh::files::make_path(
 			mipMaster_->getMipSerDir().string() + "popClusInfo/allInfo.tab.txt.gz");
 	std::string body;
 	std::ifstream in(rawInfoGzFnp.string(), std::ios::binary | std::ios::in);
@@ -314,12 +314,12 @@ void errorHandler(const int statusCode, const std::exception& exception,
 	}
 }
 
-int mavRunner(const bib::progutils::CmdArgs & inputCommands){
-	bibseq::seqSetUp setUp(inputCommands);
+int mavRunner(const njh::progutils::CmdArgs & inputCommands){
+	njhseq::seqSetUp setUp(inputCommands);
 	SeqAppCorePars seqServerCorePars;
 	seqServerCorePars.name_ = "mip0";
 	seqServerCorePars.port_ = 10000;
-	bfs::path resourceDirName = bib::files::make_path(MIPWrangler_INSTALLDIR,
+	bfs::path resourceDirName = njh::files::make_path(MIPWrangler_INSTALLDIR,
 			"etc/serverResources");
 	mipCorePars mipCorepars;
 	mipCorepars.processDefaults(setUp);
@@ -330,7 +330,7 @@ int mavRunner(const bib::progutils::CmdArgs & inputCommands){
 			!bfs::exists(resourceDirName));
 	setUp.setOption(mipCorepars.seqFileSuffix, "--seqFileSuffix",
 			"The ending of the sequence append to sample name");
-	resourceDirName = bib::appendAsNeededRet(resourceDirName.string(), "/");
+	resourceDirName = njh::appendAsNeededRet(resourceDirName.string(), "/");
 	setUp.processVerbose();
 	setUp.processDebug();
 	seqServerCorePars.setCoreOptions(setUp);
@@ -350,13 +350,13 @@ int mavRunner(const bib::progutils::CmdArgs & inputCommands){
 		std::stringstream ss;
 		ss << "Error in directory structure, make sure you are in the correct analysis directory" << std::endl;
 		ss << "Following warnings;" << std::endl;
-		ss << bib::conToStr(warnings, "\n") << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error{ss.str()};
 	}
 
   //check for html/js/css resource files
   checkExistenceThrow(resourceDirName);
-  checkExistenceThrow(bib::files::make_path(resourceDirName,"mav/"));
+  checkExistenceThrow(njh::files::make_path(resourceDirName,"mav/"));
 
   //prepare servers
   mipMaster.prepareMipAnalysisServer(mipCorepars.numThreads);
@@ -370,10 +370,10 @@ int mavRunner(const bib::progutils::CmdArgs & inputCommands){
   Json::Value appConfig;
   seqServerCorePars.addCoreOpts(appConfig);
   mipCorepars.addCorePathsToConfig(appConfig);
-  appConfig["resources"] = bib::json::toJson(resourceDirName);
-  appConfig["samplesExtracted"] = bib::json::toJson(samplesExtracted);
-  appConfig["mipFamsPopClustered"] = bib::json::toJson(mipFamsPopClustered);
-  appConfig["mipFamsSampsPopClustered"] = bib::json::toJson(mipFamsSampsPopClustered);
+  appConfig["resources"] = njh::json::toJson(resourceDirName);
+  appConfig["samplesExtracted"] = njh::json::toJson(samplesExtracted);
+  appConfig["mipFamsPopClustered"] = njh::json::toJson(mipFamsPopClustered);
+  appConfig["mipFamsSampsPopClustered"] = njh::json::toJson(mipFamsSampsPopClustered);
   if(setUp.pars_.verbose_){
   	std::cout << seqServerCorePars.getAddress() << std::endl;
   }
@@ -400,4 +400,4 @@ int mavRunner(const bib::progutils::CmdArgs & inputCommands){
 	return 0;
 }
 
-}  // namespace bibseq
+}  // namespace njhseq

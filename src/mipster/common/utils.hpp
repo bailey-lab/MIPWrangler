@@ -12,7 +12,7 @@
 #include "mipster/common/allSystemIncludes.h"
 
 
-namespace bibseq {
+namespace njhseq {
 
 namespace bfs = boost::filesystem;
 void checkExistenceThrow(const bfs::path & dirName, const std::string & funcName);
@@ -22,5 +22,5 @@ void checkExistenceThrow(const bfs::path & dirName);
 bool requireExternalProgramThrow(const std::string & program);
 
 
-}  // namespace bibseq
+}  // namespace njhseq
 

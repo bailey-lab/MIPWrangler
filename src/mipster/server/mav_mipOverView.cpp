@@ -8,14 +8,14 @@
 
 #include "mav.hpp"
 
-namespace bibseq {
+namespace njhseq {
 
 
 void mav::oneMipFamPageHandler(std::shared_ptr<restbed::Session> session){
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	auto request = session->get_request();
 	auto mipFam = request->get_path_parameter("mipFam");
-	if (bib::in(mipFam,popClusInfoByTar_)) {
+	if (njh::in(mipFam,popClusInfoByTar_)) {
 		auto body = genHtmlDoc(rootName_, pages_.at("oneMipInfo.js"));
 		const std::multimap<std::string, std::string> headers =
 				HeaderFactory::initiateTxtHtmlHeader(body);
@@ -34,7 +34,7 @@ void mav::getNamesForMipFamHandler(std::shared_ptr<restbed::Session> session){
 	auto request = session->get_request();
 	auto mipFam = request->get_path_parameter("mipFam");
 	Json::Value ret;
-	if (bib::in(mipFam,popClusInfoByTar_)) {
+	if (njh::in(mipFam,popClusInfoByTar_)) {
 		std::set<std::string> sampNames;
 		auto search = popClusInfoByTar_.find(mipFam);
 		if (search != popClusInfoByTar_.end()) {
@@ -43,13 +43,13 @@ void mav::getNamesForMipFamHandler(std::shared_ptr<restbed::Session> session){
 					std::inserter(sampNames, sampNames.end()));
 		}
 		ret["regionName"] = mipMaster_->getGroupForMipFam(mipFam);
-		ret["samples"] = bib::json::toJson(sampNames);
+		ret["samples"] = njh::json::toJson(sampNames);
 	}else{
 		std::cerr << __PRETTY_FUNCTION__ << ": error, no information for mip "
 				<< mipFam << "\n";
 	}
 
-	auto body = bib::json::writeAsOneLine(ret);
+	auto body = njh::json::writeAsOneLine(ret);
 	const std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(body);
 	session->close(restbed::OK, body, headers);
@@ -86,6 +86,6 @@ std::shared_ptr<restbed::Resource> mav::getNamesForMipFam() {
 
 
 
-} //namesapce bibseq
+} //namesapce njhseq
 
 

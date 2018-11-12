@@ -15,7 +15,7 @@
 
 
 
-namespace bibseq {
+namespace njhseq {
 
 
 
@@ -23,18 +23,18 @@ MipsOnGenome::MipsOnGenome(const pars & inputParameters) :
 		inputParameters_(inputParameters),
 		gMapper_(inputParameters.gMapperPars_) {
 
-	//std::cout << bib::json::toJson(inputParameters.gMapperPars_) << std::endl;
+	//std::cout << njh::json::toJson(inputParameters.gMapperPars_) << std::endl;
 
-	bib::files::makeDirP(bib::files::MkdirPar { inputParameters_.mainDir });
-	mapDir_ = bib::files::makeDirP(inputParameters_.mainDir, bib::files::MkdirPar("mapped"));
-	bedsDir_ = bib::files::makeDirP(inputParameters_.mainDir, bib::files::MkdirPar("beds"));
-	bedsPerGenomeDir_ = bib::files::makeDirP(bedsDir_, bib::files::MkdirPar("perGenome"));
+	njh::files::makeDirP(njh::files::MkdirPar { inputParameters_.mainDir });
+	mapDir_ = njh::files::makeDirP(inputParameters_.mainDir, njh::files::MkdirPar("mapped"));
+	bedsDir_ = njh::files::makeDirP(inputParameters_.mainDir, njh::files::MkdirPar("beds"));
+	bedsPerGenomeDir_ = njh::files::makeDirP(bedsDir_, njh::files::MkdirPar("perGenome"));
 
-	fastaDir_ = bib::files::makeDirP(inputParameters_.mainDir, bib::files::MkdirPar("fastas"));
-	fastaByFamilyDir_ = bib::files::makeDirP(fastaDir_, bib::files::MkdirPar("byFamily"));
-	armsDir_ = bib::files::makeDirP(inputParameters_.mainDir, bib::files::MkdirPar("arms"));
-	logDir_ = bib::files::makeDirP(inputParameters_.mainDir, bib::files::MkdirPar("logs"));
-	tablesDir_ = bib::files::makeDirP(inputParameters_.mainDir, bib::files::MkdirPar("tables"));
+	fastaDir_ = njh::files::makeDirP(inputParameters_.mainDir, njh::files::MkdirPar("fastas"));
+	fastaByFamilyDir_ = njh::files::makeDirP(fastaDir_, njh::files::MkdirPar("byFamily"));
+	armsDir_ = njh::files::makeDirP(inputParameters_.mainDir, njh::files::MkdirPar("arms"));
+	logDir_ = njh::files::makeDirP(inputParameters_.mainDir, njh::files::MkdirPar("logs"));
+	tablesDir_ = njh::files::makeDirP(inputParameters_.mainDir, njh::files::MkdirPar("tables"));
 
 	checkInputThrow();
 
@@ -49,7 +49,7 @@ void MipsOnGenome::checkInputThrow() const {
 	auto checkForPath = [&failed,&ss](const bfs::path & fnp ) {
 		if(!bfs::exists(fnp)) {
 			failed = true;
-			ss << bib::bashCT::boldRed(fnp.string())<< " needs to exist "<< "\n";
+			ss << njh::bashCT::boldRed(fnp.string())<< " needs to exist "<< "\n";
 		}
 	};
 	checkForPath(inputParameters_.inputDir);
@@ -72,23 +72,23 @@ void MipsOnGenome::loadInArms(){
 
 void MipsOnGenome::createArmFiles(){
 	OutOptions opts(armsDir_);
-	bib::files::makeDirP(bib::files::MkdirPar(bib::files::make_path(armsDir_, "md5s")));
+	njh::files::makeDirP(njh::files::MkdirPar(njh::files::make_path(armsDir_, "md5s")));
 	opts.overWriteFile_ = true;
 
 	for(const auto & m : mipArms_->mips_){
 		if(!opts.outExists()){
 			m.second.writeOutArms(opts);
 		}else{
-			OutOptions md5sumFile(bib::files::make_path(armsDir_, "md5s", m.first));
+			OutOptions md5sumFile(njh::files::make_path(armsDir_, "md5s", m.first));
 			if(!md5sumFile.outExists()){
-				auto md5Sum = bib::md5(m.second.extentionArm_ + m.second.ligationArm_);
+				auto md5Sum = njh::md5(m.second.extentionArm_ + m.second.ligationArm_);
 				std::ofstream outMd5File;
 				md5sumFile.openFile(outMd5File);
 				outMd5File << md5Sum;
 				m.second.writeOutArms(opts);
 			}else{
-				auto md5Sum = bib::md5(m.second.extentionArm_ + m.second.ligationArm_);
-				auto md5SumFromFile = bib::files::get_file_contents(md5sumFile.outName(), false);
+				auto md5Sum = njh::md5(m.second.extentionArm_ + m.second.ligationArm_);
+				auto md5SumFromFile = njh::files::get_file_contents(md5sumFile.outName(), false);
 //				std::cout << md5Sum << std::endl;
 //				std::cout << md5SumFromFile << std::endl;
 				if(md5Sum != md5SumFromFile){
@@ -105,7 +105,7 @@ std::string MipsOnGenome::GenomeMip::uid(const std::string & sep) const {
 
 
 void MipsOnGenome::setMipArmsFnp(const bfs::path & mipArmsFnp){
-	bib::files::checkExistenceThrow(mipArmsFnp, __PRETTY_FUNCTION__);
+	njh::files::checkExistenceThrow(mipArmsFnp, __PRETTY_FUNCTION__);
 	inputParameters_.mipArmsFnp = mipArmsFnp;
 }
 
@@ -118,42 +118,42 @@ void MipsOnGenome::mapArmsToGenomes() {
 			pairs.emplace_back(GenomeMip{gen.first, m.second.name_});
 		}
 	}
-	bib::concurrent::LockableQueue<GenomeMip> pairsQueue(pairs);
+	njh::concurrent::LockableQueue<GenomeMip> pairsQueue(pairs);
 	std::mutex logMut;
 	Json::Value log;
-	log["date"] = bib::getCurrentDateFull();
+	log["date"] = njh::getCurrentDateFull();
 	auto mapArm = [this, &pairsQueue,&logMut,&log](){
 		GenomeMip pair;
 		while(pairsQueue.getVal(pair)){
 			std::stringstream ss;
 			bool succes = false;
-			std::string outStub = bib::files::make_path(mapDir_,
+			std::string outStub = njh::files::make_path(mapDir_,
 					pair.uid()).string();
 			std::string outCheckExt = outStub + "_ext.sorted.bam";
 			std::string outCheckLig = outStub + "_lig.sorted.bam";
 			if (!  bfs::exists(outCheckExt)
-					|| bib::files::firstFileIsOlder(outCheckExt, gMapper_.genomes_.at(pair.genome_)->fnp_)
-					|| bib::files::firstFileIsOlder(outCheckExt, pathToMipExtArmFasta(pair.mip_)) ||
+					|| njh::files::firstFileIsOlder(outCheckExt, gMapper_.genomes_.at(pair.genome_)->fnp_)
+					|| njh::files::firstFileIsOlder(outCheckExt, pathToMipExtArmFasta(pair.mip_)) ||
 					!  bfs::exists(outCheckLig)
-					|| bib::files::firstFileIsOlder(outCheckLig, gMapper_.genomes_.at(pair.genome_)->fnp_)
-					|| bib::files::firstFileIsOlder(outCheckLig, pathToMipLigArmFasta(pair.mip_))) {
+					|| njh::files::firstFileIsOlder(outCheckLig, gMapper_.genomes_.at(pair.genome_)->fnp_)
+					|| njh::files::firstFileIsOlder(outCheckLig, pathToMipLigArmFasta(pair.mip_))) {
 				std::stringstream bowtie2CmdExt;
 				bowtie2CmdExt
 						<< " bowtie2 -D 20 -R 3 -N 1 -L 15 -i S,1,0.5 -a --end-to-end "
-						<< "-x " << bib::files::make_path(inputParameters_.gMapperPars_.genomeDir_, pair.genome_)
-						<< " -f -U " << bib::files::make_path(armsDir_, pair.mip_)
+						<< "-x " << njh::files::make_path(inputParameters_.gMapperPars_.genomeDir_, pair.genome_)
+						<< " -f -U " << njh::files::make_path(armsDir_, pair.mip_)
 						<< "_ext-arm.fasta" << " | samtools view - -b | samtools sort - -o " << outStub << "_ext.sorted.bam"
 						<< " " << "&& samtools index " << outStub << "_ext.sorted.bam";
 				std::stringstream bowtie2CmdLig;
 				bowtie2CmdLig
 						<< " bowtie2 -D 20 -R 3 -N 1 -L 15 -i S,1,0.5 -a --end-to-end "
-						<< "-x " << bib::files::make_path(inputParameters_.gMapperPars_.genomeDir_, pair.genome_)
-						<< " -f -U " << bib::files::make_path(armsDir_, pair.mip_)
+						<< "-x " << njh::files::make_path(inputParameters_.gMapperPars_.genomeDir_, pair.genome_)
+						<< " -f -U " << njh::files::make_path(armsDir_, pair.mip_)
 						<< "_lig-arm.fasta" << " | samtools view - -b | samtools sort - -o " << outStub << "_lig.sorted.bam"
 						<< " " << "&& samtools index " << outStub << "_lig.sorted.bam";
 
-				auto bowtie2CmdExtRunOutput = bib::sys::run( { bowtie2CmdExt.str() });
-				auto bowtie2CmdLigRunOutput = bib::sys::run( { bowtie2CmdLig.str() });
+				auto bowtie2CmdExtRunOutput = njh::sys::run( { bowtie2CmdExt.str() });
+				auto bowtie2CmdLigRunOutput = njh::sys::run( { bowtie2CmdLig.str() });
 				if (!bowtie2CmdExtRunOutput.success_) {
 					ss << "Failed to map extension arm of " << pair.mip_ << " to "
 							<< pair.genome_ << std::endl;
@@ -184,8 +184,8 @@ void MipsOnGenome::mapArmsToGenomes() {
 		t.join();
 	}
 	std::ofstream outFile;
-	OutOptions logOpts(bib::files::make_path(logDir_, "mapLog-" + bib::getCurrentDate() + ".json"));
-	logOpts.outFilename_ = bib::files::findNonexitantFile(logOpts.outFilename_);
+	OutOptions logOpts(njh::files::make_path(logDir_, "mapLog-" + njh::getCurrentDate() + ".json"));
+	logOpts.outFilename_ = njh::files::findNonexitantFile(logOpts.outFilename_);
 	openTextFile(outFile, logOpts);
 	outFile << log << std::endl;
 }
@@ -195,28 +195,28 @@ void MipsOnGenome::mapArmsToGenomes() {
 
 
 void MipsOnGenome::genFastas(){
-	const VecStr mips = bib::getVecOfMapKeys( mipArms_->mips_);
-	const VecStr genomes = bib::getVecOfMapKeys( gMapper_.genomes_	);
-	bib::concurrent::LockableQueue<std::string> mipQueue(mips);
+	const VecStr mips = njh::getVecOfMapKeys( mipArms_->mips_);
+	const VecStr genomes = njh::getVecOfMapKeys( gMapper_.genomes_	);
+	njh::concurrent::LockableQueue<std::string> mipQueue(mips);
 	std::mutex logMut;
 	Json::Value log;
-	log["date"] = bib::getCurrentDateFull();
+	log["date"] = njh::getCurrentDateFull();
 	auto genFastasFunc = [this, &mipQueue,&genomes,&logMut,&log](){
 		std::string mipName;
 		while(mipQueue.getVal(mipName)){
 			std::stringstream ss;
 			bool succes = false;
-			auto outOpts = SeqIOOptions::genFastaOut(bib::files::make_path(fastaDir_, mipName + "_withArms"));
+			auto outOpts = SeqIOOptions::genFastaOut(njh::files::make_path(fastaDir_, mipName + "_withArms"));
 			outOpts.out_.overWriteFile_ = true;
-			auto trimmedOutOpts = SeqIOOptions::genFastaOut(bib::files::make_path(fastaDir_, mipName));
+			auto trimmedOutOpts = SeqIOOptions::genFastaOut(njh::files::make_path(fastaDir_, mipName));
 			trimmedOutOpts.out_.overWriteFile_ = true;
 			std::unordered_map<std::string, std::shared_ptr<InOptions>> bedOpts;
 			bool needsUpdate = false;
 			for(const auto & genome : genomes){
-				std::shared_ptr<InOptions> bedOpt = std::make_shared<InOptions>(bib::files::make_path(bedsDir_, genome + "_" + mipName + ".bed"));
+				std::shared_ptr<InOptions> bedOpt = std::make_shared<InOptions>(njh::files::make_path(bedsDir_, genome + "_" + mipName + ".bed"));
 				//there is a possibility that the bed creatin failed due to bad mapping but this also doesn't take into account if the beds haven't been created yet
 				if(bedOpt->inExists()){
-					if(outOpts.out_.outExists() && bib::files::firstFileIsOlder(outOpts.out_.outName(), bedOpt->inFilename_)){
+					if(outOpts.out_.outExists() && njh::files::firstFileIsOlder(outOpts.out_.outName(), bedOpt->inFilename_)){
 						needsUpdate = true;
 					}
 					bedOpts[genome] = bedOpt;
@@ -236,8 +236,8 @@ void MipsOnGenome::genFastas(){
 						const std::string genome = bedOpt.first;
 
 						std::vector<GenomicRegion> regions =    bedPtrsToGenomicRegs(getBeds(bedOpt.second->inFilename_.string()));
-						std::vector<GenomicRegion> extRegions = bedPtrsToGenomicRegs(getBeds(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-ext.bed")));
-						std::vector<GenomicRegion> ligRegions = bedPtrsToGenomicRegs(getBeds(bib::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-lig.bed")));
+						std::vector<GenomicRegion> extRegions = bedPtrsToGenomicRegs(getBeds(njh::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-ext.bed")));
+						std::vector<GenomicRegion> ligRegions = bedPtrsToGenomicRegs(getBeds(njh::replaceString(bedOpt.second->inFilename_.string(), ".bed", "-lig.bed")));
 						if(regions.empty()){
 							succes = false;
 							ss << "Error in parsing " << bedOpt.second->inFilename_ << ", it was empty\n";
@@ -246,11 +246,11 @@ void MipsOnGenome::genFastas(){
 							ss << "Error in parsing " << bedOpt.second->inFilename_ << ", the number of ext regions doesn't equal full regions or lig regions don't equal full regions\n";
 						}else{
 							for(const auto & regPos : iter::range(regions.size())){
-								TwoBit::TwoBitFile twoBitFile(bib::files::make_path(inputParameters_.gMapperPars_.genomeDir_, genome + ".2bit"));
+								TwoBit::TwoBitFile twoBitFile(njh::files::make_path(inputParameters_.gMapperPars_.genomeDir_, genome + ".2bit"));
 								std::string seq = "";
 								twoBitFile[regions[regPos].chrom_]->getSequence(seq, regions[regPos].start_, regions[regPos].end_);
 								//consider leaving lower case
-								bib::strToUpper(seq);
+								njh::strToUpper(seq);
 								if(regions[regPos].reverseSrand_){
 									seq = seqUtil::reverseComplement(seq, "DNA");
 								}
@@ -306,9 +306,9 @@ void MipsOnGenome::genFastas(){
 							}
 							for(auto & outSeq : outputSeqs){
 								if(std::string::npos != outSeq.name_.find('-')){
-									auto gs = bib::tokenizeString(outSeq.name_, "-");
-									bib::sort(gs);
-									outSeq.name_ = bib::conToStr(gs, "-");
+									auto gs = njh::tokenizeString(outSeq.name_, "-");
+									njh::sort(gs);
+									outSeq.name_ = njh::conToStr(gs, "-");
 								}
 							}
 							return outputSeqs;
@@ -333,14 +333,14 @@ void MipsOnGenome::genFastas(){
 		for(uint32_t t = 0; t < inputParameters_.gMapperPars_.numThreads_; ++t){
 			threads.emplace_back(std::thread(genFastasFunc));
 		}
-		bib::concurrent::joinAllJoinableThreads(threads);
+		njh::concurrent::joinAllJoinableThreads(threads);
 	}
 
 
 	//combine for mip families
 	auto mipFamilies = mipArms_->getMipFamilies();
 
-	bib::concurrent::LockableQueue<std::string> mipFamilyQueue(mipFamilies);
+	njh::concurrent::LockableQueue<std::string> mipFamilyQueue(mipFamilies);
 	auto combineMipTars = [this,&mipFamilyQueue](){
 		std::string mipFamily = "";
 		while(mipFamilyQueue.getVal(mipFamily)){
@@ -352,7 +352,7 @@ void MipsOnGenome::genFastas(){
 					}
 				}
 //				std::cout << mipFamily << std::endl;
-//				std::cout << "\t" << bib::conToStr(files, ", ") << std::endl;
+//				std::cout << "\t" << njh::conToStr(files, ", ") << std::endl;
 				if(!files.empty()){
 					OutOptions fastaOut(pathToMipFamilyFastaWithoutArms(mipFamily));
 					fastaOut.overWriteFile_ = true;
@@ -379,11 +379,11 @@ void MipsOnGenome::genFastas(){
 		for(uint32_t t = 0; t < inputParameters_.gMapperPars_.numThreads_; ++t){
 			threads.emplace_back(std::thread(combineMipTars));
 		}
-		bib::concurrent::joinAllJoinableThreads(threads);
+		njh::concurrent::joinAllJoinableThreads(threads);
 	}
 
-	OutOptions logOpts(bib::files::make_path(logDir_, "fastaLog-" + bib::getCurrentDate() + ".json"));
-	logOpts.outFilename_ = bib::files::findNonexitantFile(logOpts.outFilename_);
+	OutOptions logOpts(njh::files::make_path(logDir_, "fastaLog-" + njh::getCurrentDate() + ".json"));
+	logOpts.outFilename_ = njh::files::findNonexitantFile(logOpts.outFilename_);
 	OutputStream outFile(logOpts);
 	outFile << log << std::endl;
 }
@@ -391,11 +391,11 @@ void MipsOnGenome::genFastas(){
 
 
 table MipsOnGenome::getGenomeLocsForMipTar(const std::string & tar) const{
-	if(!bib::in(tar, mipArms_->mips_)){
+	if(!njh::in(tar, mipArms_->mips_)){
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__ << ": error, no information for regionName "
 				<< tar << "\n";
-		ss << "Options are " << bib::conToStr(mipArms_->getMipTars(), ", ") << "\n";
+		ss << "Options are " << njh::conToStr(mipArms_->getMipTars(), ", ") << "\n";
 		throw std::runtime_error{ss.str()};
 	}
 	SeqInput seqReader(SeqIOOptions::genFastaIn(pathToMipFasta(tar)));
@@ -409,14 +409,14 @@ table MipsOnGenome::getGenomeLocsForMipTar(const std::string & tar) const{
 	}
 	table locs(VecStr{"genome","chrom","start", "stop", "strand", "length",  "GCContent", "longestHomopolymer" });
 	for(const auto & genome : gMapper_.genomes_){
-		auto bedFnp = bib::files::make_path(pathToMipBed(tar, genome.first));
+		auto bedFnp = njh::files::make_path(pathToMipBed(tar, genome.first));
 		if(bfs::exists(bedFnp)){
 			Bed6RecordCore bedCore;
 			BioDataFileIO<Bed6RecordCore> bedReader((IoOptions(InOptions(bedFnp))));
 			bedReader.openIn();
 			uint32_t longestHomopolymer = 0;
 			double gcContent = 0;
-			if (bib::in(genome.first, seqsByName)) {
+			if (njh::in(genome.first, seqsByName)) {
 				seqsByName[genome.first]->setLetterCount();
 				seqsByName[genome.first]->counter_.resetAlphabet(true);
 				seqsByName[genome.first]->counter_.setFractions();
@@ -449,14 +449,14 @@ table MipsOnGenome::getGenomeLocsForAllMipTars() const {
 			}
 		}
 		for(const auto & genome : getGenomes()){
-			auto bedFnp = bib::files::make_path(bedsDir_, genome + "_" + tar + ".bed");
+			auto bedFnp = njh::files::make_path(bedsDir_, genome + "_" + tar + ".bed");
 			if (bfs::exists(bedFnp)) {
 				Bed6RecordCore bedCore;
 				BioDataFileIO<Bed6RecordCore> bedReader((IoOptions(InOptions(bedFnp))));
 				bedReader.openIn();
 				uint32_t longestHomopolymer = 0;
 				double gcContent = 0;
-				if (bib::in(genome, seqsByName)) {
+				if (njh::in(genome, seqsByName)) {
 					seqsByName[genome]->setLetterCount();
 					seqsByName[genome]->counter_.resetAlphabet(true);
 					seqsByName[genome]->counter_.setFractions();
@@ -479,17 +479,17 @@ table MipsOnGenome::getGenomeLocsForAllMipTars() const {
 }
 
 table MipsOnGenome::getGenomeLocsForGenome(const std::string & genome) const {
-	if (!bib::in(genome, gMapper_.genomes_)) {
+	if (!njh::in(genome, gMapper_.genomes_)) {
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__ << ": error, no information for genome " << genome
 				<< "\n";
-		ss << "Options are " << bib::conToStr(getGenomes(), ", ") << "\n";
+		ss << "Options are " << njh::conToStr(getGenomes(), ", ") << "\n";
 		throw std::runtime_error { ss.str() };
 	}
 	table locs(VecStr { "genome", "region", "target", "chrom", "start", "end",
 			"strand", "length", "GCContent", "longestHomopolymer" });
 	for (const auto & tar : getMips()) {
-		auto bedFnp = bib::files::make_path(bedsDir_, genome + "_" + tar + ".bed");
+		auto bedFnp = njh::files::make_path(bedsDir_, genome + "_" + tar + ".bed");
 		if (bfs::exists(bedFnp)) {
 			SeqInput seqReader(SeqIOOptions::genFastaIn(pathToMipFasta(tar)));
 			auto seqs = seqReader.readAllReadsPtrs<readObject>();
@@ -505,7 +505,7 @@ table MipsOnGenome::getGenomeLocsForGenome(const std::string & genome) const {
 			bedReader.openIn();
 			uint32_t longestHomopolymer = 0;
 			double gcContent = 0;
-			if (bib::in(genome, seqsByName)) {
+			if (njh::in(genome, seqsByName)) {
 				seqsByName[genome]->setLetterCount();
 				seqsByName[genome]->counter_.resetAlphabet(true);
 				seqsByName[genome]->counter_.setFractions();
@@ -579,7 +579,7 @@ table MipsOnGenome::getMipTarStatsForGenomes(const VecStr & genomes,
 			lengthVariation = true;
 		}
 		for(const auto & genome : genomes){
-			auto bedFnp = bib::files::make_path(pathToMipBed(mipTar, genome));
+			auto bedFnp = njh::files::make_path(pathToMipBed(mipTar, genome));
 			if(!bfs::exists(bedFnp)){
 				continue;
 			}
@@ -700,7 +700,7 @@ table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
 		if (maxLen - minLen > 4) {
 			lengthVariation = true;
 		}
-		auto bedFnp = bib::files::make_path(pathToMipBed(mipTar, genome));
+		auto bedFnp = njh::files::make_path(pathToMipBed(mipTar, genome));
 		if (!bfs::exists(bedFnp)) {
 			continue;
 		}
@@ -786,14 +786,14 @@ void MipsOnGenome::genBeds(const comparison & allowableError) {
 			pairs.emplace_back(GenomeMip{gen.first, m.second.name_});
 		}
 	}
-	bib::concurrent::LockableQueue<GenomeMip> pairsQueue(pairs);
+	njh::concurrent::LockableQueue<GenomeMip> pairsQueue(pairs);
 	std::mutex logMut;
 	Json::Value log;
-	log["date"] = bib::getCurrentDateFull();
+	log["date"] = njh::getCurrentDateFull();
 	auto genBedsFunc = [this, &pairsQueue,&logMut,&log,&allowableError](){
 		GenomeMip pair;
 		while(pairsQueue.getVal(pair)){
-			std::string outStub = bib::files::make_path(mapDir_,
+			std::string outStub = njh::files::make_path(mapDir_,
 					pair.genome_ + "_" + pair.mip_).string();
 			std::string outCheckExt = outStub + "_ext.sorted.bam";
 			std::string outCheckLig = outStub + "_lig.sorted.bam";
@@ -806,7 +806,7 @@ void MipsOnGenome::genBeds(const comparison & allowableError) {
 			}else{
 				uint32_t insertSizeCutoff = 1000;
 				//temporary fix
-				if(bib::containsSubString(pair.mip_, "full")){
+				if(njh::containsSubString(pair.mip_, "full")){
 					insertSizeCutoff = 10000;
 				}
 				std::vector<std::shared_ptr<AlignmentResults>> alnResultsExt = gatherMapResults(
@@ -824,18 +824,18 @@ void MipsOnGenome::genBeds(const comparison & allowableError) {
 						<< pair.genome_ << std::endl;
 					}
 				} else {
-					OutOptions bedOpts   (bib::files::make_path(bedsDir_, pair.genome_ + "_" + pair.mip_ + ".bed"));
-					OutOptions bedExtOpts(bib::files::make_path(bedsDir_, pair.genome_ + "_" + pair.mip_ + "-ext.bed"));
-					OutOptions bedLigOpts(bib::files::make_path(bedsDir_, pair.genome_ + "_" + pair.mip_ + "-lig.bed"));
+					OutOptions bedOpts   (njh::files::make_path(bedsDir_, pair.genome_ + "_" + pair.mip_ + ".bed"));
+					OutOptions bedExtOpts(njh::files::make_path(bedsDir_, pair.genome_ + "_" + pair.mip_ + "-ext.bed"));
+					OutOptions bedLigOpts(njh::files::make_path(bedsDir_, pair.genome_ + "_" + pair.mip_ + "-lig.bed"));
 					if(bedOpts.outExists() &&
-							bib::files::firstFileIsOlder(outCheckExt ,bedOpts.outName()) &&
-							bib::files::firstFileIsOlder(outCheckLig ,bedOpts.outName())){
+							njh::files::firstFileIsOlder(outCheckExt ,bedOpts.outName()) &&
+							njh::files::firstFileIsOlder(outCheckLig ,bedOpts.outName())){
 						succes = true;
 						ss << bedOpts.outName() << " already up to date" << "\n";
 					}else{
 						auto extractions = getPossibleGenomeExtracts(alnResultsExt, alnResultsLig, insertSizeCutoff);
 						//this sort should put the better matching extraction on top and giving them the lower extraction counts
-						bib::sort(extractions, [](const GenomeExtractResult & result1, const GenomeExtractResult & result2){
+						njh::sort(extractions, [](const GenomeExtractResult & result1, const GenomeExtractResult & result2){
 							return result1.ext_->comp_.distances_.eventBasedIdentity_ + result1.lig_->comp_.distances_.eventBasedIdentity_ >
 										 result2.ext_->comp_.distances_.eventBasedIdentity_ + result2.lig_->comp_.distances_.eventBasedIdentity_;
 						});
@@ -888,24 +888,24 @@ void MipsOnGenome::genBeds(const comparison & allowableError) {
 		for(uint32_t t = 0; t < inputParameters_.gMapperPars_.numThreads_; ++t){
 			threads.emplace_back(std::thread(genBedsFunc));
 		}
-		bib::concurrent::joinAllJoinableThreads(threads);
+		njh::concurrent::joinAllJoinableThreads(threads);
 	}
 	{
 		auto genomeNames = getGenomes();
-		bib::concurrent::LockableQueue<std::string> genomeQueue(genomeNames);
+		njh::concurrent::LockableQueue<std::string> genomeQueue(genomeNames);
 
 		auto combineBedsPerGenomes = [this,&genomeQueue](){
 			std::string genome = "";
 			while(genomeQueue.getVal(genome)){
 				std::vector<std::shared_ptr<Bed6RecordCore>> regions;
-				OutOptions outOpts(bib::files::make_path(bedsPerGenomeDir_, genome + ".bed"));
+				OutOptions outOpts(njh::files::make_path(bedsPerGenomeDir_, genome + ".bed"));
 				bool needUpdate = false;
 				if(outOpts.outExists()){
-					auto writeTime = bib::files::last_write_time(outOpts.outName());
+					auto writeTime = njh::files::last_write_time(outOpts.outName());
 					for(const auto & mip : mipArms_->mips_){
-						auto mipBedFnp = bib::files::make_path(bedsDir_, bib::pasteAsStr(genome, "_", mip.first, ".bed"));
+						auto mipBedFnp = njh::files::make_path(bedsDir_, njh::pasteAsStr(genome, "_", mip.first, ".bed"));
 						if(bfs::exists(mipBedFnp)){
-							if(bib::files::last_write_time(mipBedFnp) < writeTime){
+							if(njh::files::last_write_time(mipBedFnp) < writeTime){
 								needUpdate = true;
 								break;
 							}
@@ -918,7 +918,7 @@ void MipsOnGenome::genBeds(const comparison & allowableError) {
 				OutputStream outOut(outOpts);
 
 				for(const auto & mip : mipArms_->mips_){
-					auto mipBedFnp = bib::files::make_path(bedsDir_, bib::pasteAsStr(genome, "_", mip.first, ".bed"));
+					auto mipBedFnp = njh::files::make_path(bedsDir_, njh::pasteAsStr(genome, "_", mip.first, ".bed"));
 					if(bfs::exists(mipBedFnp)){
 						addOtherVec(regions, getBeds(mipBedFnp));
 					}
@@ -930,7 +930,7 @@ void MipsOnGenome::genBeds(const comparison & allowableError) {
 					intersectBedLocsWtihGffRecords(regions, intersectPars);
 				}
 				//sort
-				bib::sort(regions, [](const std::shared_ptr<Bed6RecordCore> & b1, const std::shared_ptr<Bed6RecordCore> & b2){
+				njh::sort(regions, [](const std::shared_ptr<Bed6RecordCore> & b1, const std::shared_ptr<Bed6RecordCore> & b2){
 					if(b1->chrom_ == b1->chrom_){
 						if(b1->chromStart_ == b2->chromStart_){
 							if(b1->chromEnd_ == b2->chromEnd_){
@@ -954,13 +954,13 @@ void MipsOnGenome::genBeds(const comparison & allowableError) {
 		for(uint32_t t = 0; t < inputParameters_.gMapperPars_.numThreads_; ++t){
 			threads.emplace_back(std::thread(combineBedsPerGenomes));
 		}
-		bib::concurrent::joinAllJoinableThreads(threads);
+		njh::concurrent::joinAllJoinableThreads(threads);
 
 	}
 
 	std::ofstream outFile;
-	OutOptions logOpts(bib::files::make_path(logDir_, "bedLog-" + bib::getCurrentDate() + ".json"));
-	logOpts.outFilename_ = bib::files::findNonexitantFile(logOpts.outFilename_);
+	OutOptions logOpts(njh::files::make_path(logDir_, "bedLog-" + njh::getCurrentDate() + ".json"));
+	logOpts.outFilename_ = njh::files::findNonexitantFile(logOpts.outFilename_);
 	openTextFile(outFile, logOpts);
 	outFile << log << std::endl;
 
@@ -982,115 +982,115 @@ std::vector<MipsOnGenome::GenomeMip> MipsOnGenome::genGenomeMipPairs() const {
 
 
 bfs::path MipsOnGenome::pathToMipBed(const std::string & mipName, const std::string & genome)const{
-	if(!bib::in(mipName, mipArms_->mips_)){
+	if(!njh::in(mipName, mipArms_->mips_)){
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__ << ": Error, no mip found matching " << mipName << "\n";
-		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
+		ss << "Options are: " << njh::conToStr(njh::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
 		throw std::runtime_error{ss.str()};
 	}
-	if(!bib::in(genome, gMapper_.genomes_)){
+	if(!njh::in(genome, gMapper_.genomes_)){
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__ << ": Error, no genome found matching " << genome << "\n";
-		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(gMapper_.genomes_), ", ") << "\n";
+		ss << "Options are: " << njh::conToStr(njh::getVecOfMapKeys(gMapper_.genomes_), ", ") << "\n";
 		throw std::runtime_error{ss.str()};
 	}
-	return bib::files::make_path(bedsDir_, genome + "_" + mipName + ".bed");
+	return njh::files::make_path(bedsDir_, genome + "_" + mipName + ".bed");
 }
 
 
 bfs::path MipsOnGenome::pathToAllInfoPrimaryGenome() const {
-	return bib::files::make_path(tablesDir_,
+	return njh::files::make_path(tablesDir_,
 			"allTarInfo_" + inputParameters_.gMapperPars_.primaryGenome_ + ".tab.txt");
 }
 
 bfs::path MipsOnGenome::pathToAllInfoForGenome(
 		const std::string & genome) const {
-	return bib::files::make_path(tablesDir_, "allTarInfo_" + genome + ".tab.txt");
+	return njh::files::make_path(tablesDir_, "allTarInfo_" + genome + ".tab.txt");
 }
 
 bfs::path MipsOnGenome::pathToAllInfoAllGenomes() const {
-	return bib::files::make_path(tablesDir_,
+	return njh::files::make_path(tablesDir_,
 			"allTarInfo_allGenomes.tab.txt");
 }
 
 bfs::path MipsOnGenome::pathToExtractionCounts() const{
-	return bib::files::make_path(tablesDir_,
+	return njh::files::make_path(tablesDir_,
 			"extractionCountsTable.tab.txt");
 }
 
 
 bfs::path MipsOnGenome::pathToMipFasta(const std::string & mipName)const{
-	if(!bib::in(mipName, mipArms_->mips_)){
+	if(!njh::in(mipName, mipArms_->mips_)){
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__ << ": Error, no mip found matching " << mipName << "\n";
-		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
+		ss << "Options are: " << njh::conToStr(njh::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
 		throw std::runtime_error{ss.str()};
 	}
-	return bib::files::make_path(fastaDir_, mipName + "_withArms.fasta");
+	return njh::files::make_path(fastaDir_, mipName + "_withArms.fasta");
 }
 
 bfs::path MipsOnGenome::pathToMipFastaWithoutArms(const std::string & mipName)const{
-	if(!bib::in(mipName, mipArms_->mips_)){
+	if(!njh::in(mipName, mipArms_->mips_)){
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__ << ": Error, no mip found matching " << mipName << "\n";
-		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
+		ss << "Options are: " << njh::conToStr(njh::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
 		throw std::runtime_error{ss.str()};
 	}
-	return bib::files::make_path(fastaDir_, mipName + ".fasta");
+	return njh::files::make_path(fastaDir_, mipName + ".fasta");
 }
 
 bfs::path MipsOnGenome::pathToMipFamilyFasta(const std::string & mipFamily)const{
-	if(!bib::in(mipFamily, mipArms_->mipFamilies_)){
+	if(!njh::in(mipFamily, mipArms_->mipFamilies_)){
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__ << ": Error, no mip found matching " << mipFamily << "\n";
-		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
+		ss << "Options are: " << njh::conToStr(njh::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
 		throw std::runtime_error{ss.str()};
 	}
-	return bib::files::make_path(fastaByFamilyDir_, mipFamily + "_withArms.fasta");
+	return njh::files::make_path(fastaByFamilyDir_, mipFamily + "_withArms.fasta");
 }
 
 bfs::path MipsOnGenome::pathToMipFamilyFastaWithoutArms(const std::string & mipFamily)const{
-	if(!bib::in(mipFamily, mipArms_->mipFamilies_)){
+	if(!njh::in(mipFamily, mipArms_->mipFamilies_)){
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__ << ": Error, no mip found matching " << mipFamily << "\n";
-		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
+		ss << "Options are: " << njh::conToStr(njh::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
 		throw std::runtime_error{ss.str()};
 	}
-	return bib::files::make_path(fastaByFamilyDir_, mipFamily + ".fasta");
+	return njh::files::make_path(fastaByFamilyDir_, mipFamily + ".fasta");
 }
 
 
 
 bfs::path MipsOnGenome::pathToMipExtArmFasta(const std::string & mipName) const{
-	if(!bib::in(mipName, mipArms_->mips_)){
+	if(!njh::in(mipName, mipArms_->mips_)){
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__ << ": Error, no mip found matching " << mipName << "\n";
-		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
+		ss << "Options are: " << njh::conToStr(njh::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
 		throw std::runtime_error{ss.str()};
 	}
-	return bib::files::make_path(armsDir_, mipName + "_ext-arm.fasta");
+	return njh::files::make_path(armsDir_, mipName + "_ext-arm.fasta");
 }
 
 bfs::path MipsOnGenome::pathToMipLigArmFasta(const std::string & mipName) const{
-	if(!bib::in(mipName, mipArms_->mips_)){
+	if(!njh::in(mipName, mipArms_->mips_)){
 		std::stringstream ss;
 		ss << __PRETTY_FUNCTION__ << ": Error, no mip found matching " << mipName << "\n";
-		ss << "Options are: " << bib::conToStr(bib::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
+		ss << "Options are: " << njh::conToStr(njh::getVecOfMapKeys(mipArms_->mips_), ", ") << "\n";
 		throw std::runtime_error{ss.str()};
 	}
-	return bib::files::make_path(armsDir_, mipName + "_lig-arm.fasta");
+	return njh::files::make_path(armsDir_, mipName + "_lig-arm.fasta");
 }
 //,
 
 VecStr MipsOnGenome::getMips() const {
-	auto ret = bib::getVecOfMapKeys(mipArms_->mips_);
+	auto ret = njh::getVecOfMapKeys(mipArms_->mips_);
 	MipNameSorter::sort(ret);
 	return ret;
 }
 
 VecStr MipsOnGenome::getGenomes() const{
-	VecStr genomes = bib::getVecOfMapKeys(gMapper_.genomes_);
-	bib::sort(genomes);
+	VecStr genomes = njh::getVecOfMapKeys(gMapper_.genomes_);
+	njh::sort(genomes);
 	return genomes;
 }
 
@@ -1099,12 +1099,12 @@ VecStr MipsOnGenome::getGenomes() const{
 
 void MipsOnGenome::genTables() const{
 	auto genomeNames = getGenomes();
-	bib::concurrent::LockableQueue<std::string> genomeQueue(genomeNames);
+	njh::concurrent::LockableQueue<std::string> genomeQueue(genomeNames);
 	std::mutex allInfoMut;
 	OutOptions allTabOpts (pathToAllInfoAllGenomes());
 	allTabOpts.overWriteFile_ = true;
 	OutputStream allTabOut(allTabOpts);
-	allTabOut << bib::conToStr(getMipTarStatsForGenomeHeader_, "\t") << std::endl;
+	allTabOut << njh::conToStr(getMipTarStatsForGenomeHeader_, "\t") << std::endl;
 
 	auto getGenomeInfo = [this,&genomeQueue,&allInfoMut,&allTabOut](){
 		std::string genome = "";
@@ -1125,11 +1125,11 @@ void MipsOnGenome::genTables() const{
 	for(uint32_t t = 0; t < inputParameters_.gMapperPars_.numThreads_; ++t){
 		threads.emplace_back(std::thread(getGenomeInfo));
 	}
-	bib::concurrent::joinAllJoinableThreads(threads);
+	njh::concurrent::joinAllJoinableThreads(threads);
 
-	OutOptions genomeOpts(bib::files::make_path(tablesDir_, "genomes.txt"));
+	OutOptions genomeOpts(njh::files::make_path(tablesDir_, "genomes.txt"));
 	genomeOpts.overWriteFile_ = true;
-	OutOptions targetsOpts(bib::files::make_path(tablesDir_, "mipTargets.txt"));
+	OutOptions targetsOpts(njh::files::make_path(tablesDir_, "mipTargets.txt"));
 	targetsOpts.overWriteFile_ = true;
 
 	OutputStream genomeOut(genomeOpts);
@@ -1153,4 +1153,4 @@ void MipsOnGenome::genTables() const{
 
 
 
-}  // namespace bibseq
+}  // namespace njhseq

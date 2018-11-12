@@ -12,21 +12,21 @@
 
 #include <elucidator/objects/BioDataObject.h>
 
-namespace bibseq {
+namespace njhseq {
 mgv::mgv(const Json::Value & config) :
 		SeqApp(config) {
 	mainDir_ = config["masterDir"].asString();
-	serverResourceDir_ = bib::appendAsNeededRet(config["resources"].asString(),
+	serverResourceDir_ = njh::appendAsNeededRet(config["resources"].asString(),
 			"/");
 	MipsOnGenome::pars mogPars;
 	mogPars.mainDir = mainDir_;
 	mogPars.inputDir = config["inputDir"].asString();
-	mogPars.gMapperPars_.genomeDir_ = bib::files::make_path(mogPars.inputDir, "genomes");
-	mogPars.gMapperPars_.gffDir_ = bib::files::make_path(mogPars.inputDir, "info/gff");
+	mogPars.gMapperPars_.genomeDir_ = njh::files::make_path(mogPars.inputDir, "genomes");
+	mogPars.gMapperPars_.gffDir_ = njh::files::make_path(mogPars.inputDir, "info/gff");
 
 	mogPars.gMapperPars_.numThreads_= config["numThreads"].asUInt();
 	if (config.isMember("selectedGenomes")) {
-		auto selectedGenomes = bib::json::jsonArrayToSet<std::string>(
+		auto selectedGenomes = njh::json::jsonArrayToSet<std::string>(
 				config["selectedGenomes"],
 				[](const Json::Value & val) {return val.asString();});
 
@@ -46,14 +46,14 @@ mgv::mgv(const Json::Value & config) :
 
 
 	jsFiles_->addFiles(
-			bib::files::gatherFiles(
-					bib::files::make_path(serverResourceDir_, "mgv/js"), ".js"));
+			njh::files::gatherFiles(
+					njh::files::make_path(serverResourceDir_, "mgv/js"), ".js"));
 
 	cssFiles_->addFiles(
-			bib::files::gatherFiles(
-					bib::files::make_path(serverResourceDir_, "mgv/css"), ".css"));
+			njh::files::gatherFiles(
+					njh::files::make_path(serverResourceDir_, "mgv/css"), ".css"));
 
-	addScripts(bib::files::make_path(serverResourceDir_, "mgv"));
+	addScripts(njh::files::make_path(serverResourceDir_, "mgv"));
 
 	//register mip seqs
 	for (const auto & mipName : mipsInfo_->getMips()) {
@@ -118,18 +118,18 @@ void mgv::getAllNamesHandler(std::shared_ptr<restbed::Session> session) {
 	Json::Value ret;
 
 	auto genomes = mipsInfo_->getGenomes();
-	bib::sort(genomes);
-	ret["genomes"] = bib::json::toJson(genomes);
+	njh::sort(genomes);
+	ret["genomes"] = njh::json::toJson(genomes);
 	auto mips = mipsInfo_->getMips();
 	MipNameSorter::sort(mips);
-	ret["mips"] = bib::json::toJson(mips);
+	ret["mips"] = njh::json::toJson(mips);
 	auto regions = mipsInfo_->mipArms_->getMipRegions();
 	MipNameSorter::sort(regions, MipNameSorter::regionNamePat);
-	ret["mipRegions"] = bib::json::toJson(regions);
+	ret["mipRegions"] = njh::json::toJson(regions);
 
-	ret["primaryGenome"] = bib::json::toJson(mipsInfo_->gMapper_.pars_.primaryGenome_);
+	ret["primaryGenome"] = njh::json::toJson(mipsInfo_->gMapper_.pars_.primaryGenome_);
 
-	auto body = bib::json::writeAsOneLine(ret);
+	auto body = njh::json::writeAsOneLine(ret);
 	const std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(body);
 	session->close(restbed::OK, body, headers);
@@ -147,16 +147,16 @@ void mgv::getMipsForRegionHandler(std::shared_ptr<restbed::Session> session) {
 	auto regionName = request->get_path_parameter("regionName");
 	auto regions = mipsInfo_->mipArms_->getMipRegions();
 	Json::Value ret;
-	if (bib::in(regionName, regions)) {
+	if (njh::in(regionName, regions)) {
 		VecStr mipNames = mipsInfo_->mipArms_->getMipTarsForRegion(regionName);
 		MipNameSorter::sort(mipNames);
-		ret["mips"] = bib::json::toJson(mipNames);
+		ret["mips"] = njh::json::toJson(mipNames);
 	} else {
 		std::cerr << __PRETTY_FUNCTION__ << ": error, no information for regionName "
 				<< regionName << "\n";
-		std::cerr << "Options are " << bib::conToStr(regions, ", ") << "\n";
+		std::cerr << "Options are " << njh::conToStr(regions, ", ") << "\n";
 	}
-	auto body = bib::json::writeAsOneLine(ret);
+	auto body = njh::json::writeAsOneLine(ret);
 	const std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(body);
 	session->close(restbed::OK, body, headers);
@@ -267,7 +267,7 @@ void mgv::showRegionInfoHandler(std::shared_ptr<restbed::Session> session) {
 	auto regionName = request->get_path_parameter("regionName");
 	auto regions = mipsInfo_->mipArms_->getMipRegions();
 	Json::Value ret;
-	if (bib::in(regionName, regions)) {
+	if (njh::in(regionName, regions)) {
 		auto body = genHtmlDoc(rootName_, pages_.at("showRegionInfo.js"));
 		const std::multimap<std::string, std::string> headers =
 				HeaderFactory::initiateTxtHtmlHeader(body);
@@ -276,7 +276,7 @@ void mgv::showRegionInfoHandler(std::shared_ptr<restbed::Session> session) {
 		std::stringstream ss;
 		ss << "Mip Name wasn't found: " << regionName << "\n";
 		ss << "options are "
-				<< bib::conToStr(regions, ", ")
+				<< njh::conToStr(regions, ", ")
 				<< "\n";
 		ss << "Redirecting....";
 		redirect(session, ss.str());
@@ -288,11 +288,11 @@ void mgv::showMipSeqsHandler(std::shared_ptr<restbed::Session> session) {
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	const auto request = session->get_request();
 	auto mipTar = request->get_path_parameter("mip");
-	if (!bib::in(mipTar, mipsInfo_->mipArms_->mips_)) {
+	if (!njh::in(mipTar, mipsInfo_->mipArms_->mips_)) {
 		std::stringstream ss;
 		ss << "Mip Name wasn't found: " << mipTar << "\n";
 		ss << "options are "
-				<< bib::conToStr(bib::getVecOfMapKeys(mipsInfo_->mipArms_->mips_), ", ")
+				<< njh::conToStr(njh::getVecOfMapKeys(mipsInfo_->mipArms_->mips_), ", ")
 				<< "\n";
 		ss << "Redirecting....";
 		redirect(session, ss.str());
@@ -412,7 +412,7 @@ void mgv::getMipGenomeLocsHandler(std::shared_ptr<restbed::Session> session) {
 	auto mipTar = request->get_path_parameter("mipTar");
 
 	Json::Value ret;
-	if (bib::in(mipTar, mipsInfo_->mipArms_->mips_)) {
+	if (njh::in(mipTar, mipsInfo_->mipArms_->mips_)) {
 		auto locs = mipsInfo_->getGenomeLocsForMipTar(mipTar);
 		//locs.sortTable("genome", false);
 		ret = tableToJsonByRow(locs, "genome");
@@ -420,9 +420,9 @@ void mgv::getMipGenomeLocsHandler(std::shared_ptr<restbed::Session> session) {
 	} else {
 		std::cerr << __PRETTY_FUNCTION__ << ": error, no information for regionName "
 				<< mipTar << "\n";
-		std::cerr << "Options are " << bib::conToStr(mipsInfo_->mipArms_->getMipTars(), ", ") << "\n";
+		std::cerr << "Options are " << njh::conToStr(mipsInfo_->mipArms_->getMipTars(), ", ") << "\n";
 	}
-	auto body = bib::json::writeAsOneLine(ret);
+	auto body = njh::json::writeAsOneLine(ret);
 	const std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(body);
 	session->close(restbed::OK, body, headers);
@@ -434,7 +434,7 @@ void mgv::getInfoMipArmsInfoHandler(std::shared_ptr<restbed::Session> session) {
 
 	table mipArms(mipsInfo_->inputParameters_.mipArmsFnp, "\t", true);
 
-	auto body = bib::json::writeAsOneLine(tableToJsonByRow(mipArms, "mip_family"));
+	auto body = njh::json::writeAsOneLine(tableToJsonByRow(mipArms, "mip_family"));
 	const std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(body);
 	session->close(restbed::OK, body, headers);
@@ -446,7 +446,7 @@ void mgv::getAllMipTarInfoAllGenomesHandler(std::shared_ptr<restbed::Session> se
 
 	table allInfo(mipsInfo_->pathToAllInfoAllGenomes(), "\t", true);
 
-	auto body = bib::json::writeAsOneLine(tableToJsonByRow(allInfo, "region"));
+	auto body = njh::json::writeAsOneLine(tableToJsonByRow(allInfo, "region"));
 	const std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(body);
 	session->close(restbed::OK, body, headers);
@@ -478,26 +478,26 @@ void mgv::getGenomeLensPostHandler(std::shared_ptr<restbed::Session> session,
 		const restbed::Bytes & body) {
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	auto request = session->get_request();
-	const auto postData = bib::json::parse(std::string(body.begin(), body.end()));
-	bib::json::MemberChecker checker(postData);
+	const auto postData = njh::json::parse(std::string(body.begin(), body.end()));
+	njh::json::MemberChecker checker(postData);
 	Json::Value ret;
 	if (checker.failMemberCheck( { "genomes" }, __PRETTY_FUNCTION__)) {
 		std::cerr << checker.message_.str() << std::endl;
 	} else {
-		auto genomes = bib::json::jsonArrayToVec<std::string>(postData["genomes"], [](const Json::Value & val){ return val.asString();});
+		auto genomes = njh::json::jsonArrayToVec<std::string>(postData["genomes"], [](const Json::Value & val){ return val.asString();});
 		VecStr missingGenomes;
 		for(const auto & genome : genomes){
-			if(!bib::in(genome, mipsInfo_->gMapper_.genomes_)){
+			if(!njh::in(genome, mipsInfo_->gMapper_.genomes_)){
 				missingGenomes.emplace_back(genome);
 			}else{
 				ret[genome] = mipsInfo_->gMapper_.genomes_.at(genome)->chromosomeLengths();
 			}
 		}
 		if(!missingGenomes.empty()){
-			std::cerr << "Missing info for genomes " << bib::conToStr(missingGenomes, ", ") << std::endl;
+			std::cerr << "Missing info for genomes " << njh::conToStr(missingGenomes, ", ") << std::endl;
 		}
 	}
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -525,21 +525,21 @@ void mgv::getMipRegionInfoForGenomePostHandler(std::shared_ptr<restbed::Session>
 		const restbed::Bytes & body) {
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	auto request = session->get_request();
-	const auto postData = bib::json::parse(std::string(body.begin(), body.end()));
-	bib::json::MemberChecker checker(postData);
+	const auto postData = njh::json::parse(std::string(body.begin(), body.end()));
+	njh::json::MemberChecker checker(postData);
 	Json::Value ret;
 	if (checker.failMemberCheck( { "genome" }, __PRETTY_FUNCTION__)) {
 		std::cerr << checker.message_.str() << std::endl;
 	} else {
 		std::string genome = postData["genome"].asString();
-		if (!bib::in(genome, mipsInfo_->gMapper_.genomes_)) {
+		if (!njh::in(genome, mipsInfo_->gMapper_.genomes_)) {
 			std::cerr << "Missing info for genomes " << genome << std::endl;
 		} else {
 			auto retTab = mipsInfo_->getMipRegionStatsForGenome(genome);
 			ret = tableToJsonByRow(retTab, "region");
 		}
 	}
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -567,38 +567,38 @@ void mgv::getMipTarInfoForGenomePostHandler(std::shared_ptr<restbed::Session> se
 		const restbed::Bytes & body) {
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	auto request = session->get_request();
-	const auto postData = bib::json::parse(std::string(body.begin(), body.end()));
-	bib::json::MemberChecker checker(postData);
+	const auto postData = njh::json::parse(std::string(body.begin(), body.end()));
+	njh::json::MemberChecker checker(postData);
 	Json::Value ret;
 	if (checker.failMemberCheck( { "genome", "mipTars" }, __PRETTY_FUNCTION__)) {
 		std::cerr << checker.message_.str() << std::endl;
 	} else {
 		std::string genome = postData["genome"].asString();
-		auto mipTars = bib::json::jsonArrayToVec<std::string>(postData["mipTars"], [](const Json::Value & val){return val.asString();});
-		if (!bib::in(genome, mipsInfo_->gMapper_.genomes_)) {
+		auto mipTars = njh::json::jsonArrayToVec<std::string>(postData["mipTars"], [](const Json::Value & val){return val.asString();});
+		if (!njh::in(genome, mipsInfo_->gMapper_.genomes_)) {
 			std::cerr << "Missing info for genomes " << genome << std::endl;
 		} else {
 			VecStr missingTars;
 			VecStr presentMipTars;
 			for(const auto & mipTar : mipTars){
-				if(!bib::in(mipTar, mipsInfo_->mipArms_->mips_)){
+				if(!njh::in(mipTar, mipsInfo_->mipArms_->mips_)){
 					missingTars.emplace_back(mipTar);
 				}else{
 					presentMipTars.emplace_back(mipTar);
 				}
 			}
 			if(!missingTars.empty()){
-				std::cerr << "Missing info for mip targets " << bib::conToStr(getVectorOfMapKeys(mipsInfo_->mipArms_->mips_), ", ") << std::endl;
+				std::cerr << "Missing info for mip targets " << njh::conToStr(getVectorOfMapKeys(mipsInfo_->mipArms_->mips_), ", ") << std::endl;
 			}
 			MipNameSorter::sort(presentMipTars);
 			//auto retTab = mipsInfo_->getMipTarStatsForGenome(genome, presentMipTars);
 			auto retTab =
 					allTarInfo_->get().extractByComp("target",
-							[&presentMipTars](const std::string & row) {return bib::in(row, presentMipTars);});
+							[&presentMipTars](const std::string & row) {return njh::in(row, presentMipTars);});
 			ret = tableToJsonByRow(retTab, "region");
 		}
 	}
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -613,13 +613,13 @@ void mgv::getMipSeqsPostHandler(std::shared_ptr<restbed::Session> session,
 	auto mess = messFac_->genLogMessage(__PRETTY_FUNCTION__);
 	auto request = session->get_request();
 	auto mipTar = request->get_path_parameter("mip");
-	const auto postData = bib::json::parse(std::string(body.begin(), body.end()));
+	const auto postData = njh::json::parse(std::string(body.begin(), body.end()));
 	Json::Value ret;
-	if (!bib::in(mipTar, mipsInfo_->mipArms_->mips_)) {
+	if (!njh::in(mipTar, mipsInfo_->mipArms_->mips_)) {
 		std::cerr << __PRETTY_FUNCTION__ << " error, no matching mip to " << mipTar
 				<< std::endl;
 		std::cerr << "options are "
-				<< bib::conToStr(bib::getVecOfMapKeys(mipsInfo_->mipArms_->mips_), ", ")
+				<< njh::conToStr(njh::getVecOfMapKeys(mipsInfo_->mipArms_->mips_), ", ")
 				<< "\n";
 	} else {
 		uint32_t sesUid = std::numeric_limits<uint32_t>::max();
@@ -630,20 +630,20 @@ void mgv::getMipSeqsPostHandler(std::shared_ptr<restbed::Session> session,
 			sesUid = postData["sessionUID"].asUInt();
 		}
 		/* could select just for certain genomes here
-		 VecStr popUIDs = bib::json::jsonArrayToVec<std::string>(postData["popUIDs"],
+		 VecStr popUIDs = njh::json::jsonArrayToVec<std::string>(postData["popUIDs"],
 		 [](const Json::Value & val) {return val.asString();});
 		 seqsBySession_[sesUid]->cache_.at(mipFam).reload();
 		 seqsBySession_[sesUid]->cache_.at(mipFam).toggleSeqs(
 		 [&popUIDs](const readObject & seq) {
-		 return bib::in(seq.seqBase_.getStubName(false), popUIDs);
+		 return njh::in(seq.seqBase_.getStubName(false), popUIDs);
 		 });
 		 */
 		//make sure seqs aren't empty, viewer doesn't know how to handle that, if it isn't make sure to remove the placeholder seq if it is there
 		seqsBySession_[sesUid]->cache_.at(mipTar).ensureNonEmptyReads();
 		ret = seqsBySession_[sesUid]->getJson(mipTar);
-		ret["sessionUID"] = bib::json::toJson(sesUid);
+		ret["sessionUID"] = njh::json::toJson(sesUid);
 	}
-	auto retBody = bib::json::writeAsOneLine(ret);
+	auto retBody = njh::json::writeAsOneLine(ret);
 	std::multimap<std::string, std::string> headers =
 			HeaderFactory::initiateAppJsonHeader(retBody);
 	headers.emplace("Connection", "close");
@@ -659,5 +659,5 @@ void mgv::mgvErrorHandler(const int statusCode, const std::exception& exception,
 	}
 }
 
-}  // namespace bibseq
+}  // namespace njhseq
 
