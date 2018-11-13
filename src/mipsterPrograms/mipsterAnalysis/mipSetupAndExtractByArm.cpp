@@ -222,15 +222,11 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 						std::cref(mipMaster.directoryMaster_.masterDir_.string()),
 						std::cref(readPairs)));
 	}
-
 	njh::concurrent::joinAllThreads(threads);
-
 	logFile << logs << std::endl;
 
-
 	//copy over resources;
-
-	bfs::copy(pars.mipArmsFileName,njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "mip_arm_id.tab.txt"));
+	bfs::copy_file(pars.mipArmsFileName, njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "mip_arm_id.tab.txt"));
 	njh::files::makeDirP(njh::files::MkdirPar(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo")));
 	std::ofstream outSamplesFoundFile;
 	openTextFile(outSamplesFoundFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/outSamplesFound.tab.txt")));
@@ -251,13 +247,12 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 	if(!samplesEmpty.empty()) outSamplesEmptyfile << njh::conToStr(samplesEmpty, "\n") << std::endl;
 	if(!samplesExtracted.empty()) gzCatSamplesFile << njh::conToStr(samplesExtracted, "\n") << std::endl;
 	if(!emptyFiles.empty()) pearExtractSamplesFile << njh::conToStr(emptyFiles, "\n") << std::endl;
-
 	std::ofstream allMipsSamplesFile;
 	openTextFile(allMipsSamplesFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "allMipsSamplesNames.tab.txt")));
 	MipsSamplesNames goodSamples = *mipMaster.names_;
 	goodSamples.setSamples(samplesExtracted);
 	goodSamples.write(allMipsSamplesFile);
-	bfs::copy(pars.mipsSamplesFile,njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "original_allMipsSamplesNames.tab.txt"));
+	bfs::copy_file(pars.mipsSamplesFile,njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "original_allMipsSamplesNames.tab.txt"));
 	mipMaster.createPopClusMipDirs(pars.numThreads);
 
 	if (nullptr != mipMaster.meta_) {
@@ -265,6 +260,7 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 				njh::files::make_path(mipMaster.directoryMaster_.masterDir_,
 						"resources", "samplesMeta.tab.txt"));
 	}
+
 
 	// set up scripts
 

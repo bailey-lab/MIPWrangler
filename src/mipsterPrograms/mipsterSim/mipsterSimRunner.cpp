@@ -685,7 +685,7 @@ int mipsterSimRunner::simMips(const njh::progutils::CmdArgs & inputCommands) {
 	bfs::path pcrSimsDir = njh::files::makeDir(setUp.pars_.directoryName_, njh::files::MkdirPar("pcrSims"));
 	bfs::path sequenceSimsDir = njh::files::makeDir(setUp.pars_.directoryName_, njh::files::MkdirPar("sequenceSims"));
 	bfs::path idFilesDir = njh::files::makeDir(setUp.pars_.directoryName_, njh::files::MkdirPar("id_files"));
-	bfs::copy(mipFile, njh::files::make_path(idFilesDir, bfs::path(mipFile).filename().string()));
+	bfs::copy_file(mipFile, njh::files::make_path(idFilesDir, bfs::path(mipFile).filename().string()));
 	MipsSamplesNames names(mCol.getMipFamsForRegions(regions), getVectorOfMapKeys(libraryAbundances));
 	std::ofstream sampleNamesFile;
 	openTextFile(sampleNamesFile, OutOptions(njh::files::make_path(idFilesDir, "allMipsSamplesNames.tab.txt")));

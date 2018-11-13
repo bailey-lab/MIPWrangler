@@ -118,7 +118,7 @@ int mipsterAnalysisRunner::runGzExtractStitch(const njh::progutils::CmdArgs & in
 						//if the file is empty copy to an empty directory to avoid concatenating errors
 						if(bfs::file_size(inputName) == 0){
 							std::string emptyDir = njh::files::makeDirP(sampDir, njh::files::MkdirPar("emptyFiles")).string();
-							bfs::copy(inputName, njh::files::join(emptyDir, bfs::path(inputName).filename().string()));
+							bfs::copy_file(inputName, njh::files::join(emptyDir, bfs::path(inputName).filename().string()));
 							continue;
 						}
 						allEmpty = false;
@@ -462,7 +462,7 @@ int mipsterAnalysisRunner::runGzExtractStitch(const njh::progutils::CmdArgs & in
 	}
 	//copy over resources;
 
-	bfs::copy(pars.mipArmsFileName,njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "mip_arm_id.tab.txt"));
+	bfs::copy_file(pars.mipArmsFileName,njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "mip_arm_id.tab.txt"));
 	njh::files::makeDirP(njh::files::MkdirPar(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo")));
 	std::ofstream outSamplesFoundFile;
 	openTextFile(outSamplesFoundFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/outSamplesFound.tab.txt")));
@@ -495,7 +495,7 @@ int mipsterAnalysisRunner::runGzExtractStitch(const njh::progutils::CmdArgs & in
 	MipsSamplesNames goodSamples = *mipMaster.names_;
 	goodSamples.setSamples(samplesStitched);
 	goodSamples.write(allMipsSamplesFile);
-	bfs::copy(pars.mipsSamplesFile,njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "original_allMipsSamplesNames.tab.txt"));
+	bfs::copy_file(pars.mipsSamplesFile,njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "original_allMipsSamplesNames.tab.txt"));
 	mipMaster.createPopClusMipDirs(pars.numThreads);
 
 	if (nullptr != mipMaster.meta_) {
