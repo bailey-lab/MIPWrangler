@@ -343,11 +343,6 @@ fi
 		std::ofstream mipScriptOut;
 		mipScriptOpts.openExecutableFile(mipScriptOut);
 		mipScriptOut << "#!/usr/bin/env bash" << "\n";
-		mipScriptOut << R"(if [[ $# -ne 1 ]]; then 
-    echo "Illegal number of parameters, needs 1 argument, 1) name of mip server number"
-    exit
-fi
-)";
 		mipScriptOut << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipBarcodeCorrectionMultiple.sh")) << std::endl;
 		mipScriptOut << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipClusteringMultiple.sh")) << std::endl;
 		mipScriptOut << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipPopulationClusteringMultiple.sh")) << std::endl;
