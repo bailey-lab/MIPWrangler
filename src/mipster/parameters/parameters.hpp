@@ -74,6 +74,7 @@ struct mipIllumArmExtractionPars : mipCorePars{
   uint32_t smallFragmentLength = 50;
   QualFilteringPars qFilPars_;
 	bool cacheAlignments = false;
+	bool keepIntermediateFiles = false;
 
 	bfs::path refDir = "";
 
@@ -99,6 +100,7 @@ struct mipIllumArmExtractionParsMultiple : public mipIllumArmExtractionPars {
 		ret.sampleName = newSampleName;
 		ret.qFilPars_ = qFilPars_;
 		ret.cacheAlignments = cacheAlignments;
+		ret.keepIntermediateFiles = keepIntermediateFiles;
 		ret.processPairPars_ = processPairPars_;
 		ret.refDir = refDir;
 		ret.copyCore(*this);
@@ -143,6 +145,10 @@ struct mipBarcodeCorrectionPars : mipCorePars{
 
 	std::string qualRep = "median";
 
+	bool keepIntermediateFiles = false;
+	bool cacheAlignments = false;
+
+
 };
 
 struct mipBarcodeCorrectionParsMultiple : public mipBarcodeCorrectionPars  {
@@ -155,6 +161,11 @@ struct mipBarcodeCorrectionParsMultiple : public mipBarcodeCorrectionPars  {
 		ret.barcodeIdentity = barcodeIdentity;
 		ret.writeExtra = writeExtra;
 		ret.qualRep = qualRep;
+
+		ret.keepIntermediateFiles = keepIntermediateFiles;
+		ret.cacheAlignments = cacheAlignments;
+
+
 		ret.sampleName = newSampleName;
 
 		ret.copyCore(*this);
@@ -172,6 +183,9 @@ struct mipClusteringPars : mipCorePars{
 	bool writeOutClusters = false;
 	bool cacheAlignments = false;
 
+	bool keepIntermediateFiles = false;
+
+
 };
 
 struct mipClusteringParsMultiple : mipClusteringPars{
@@ -184,6 +198,9 @@ struct mipClusteringParsMultiple : mipClusteringPars{
 		ret.qualRep = qualRep;
 		ret.writeOutClusters = writeOutClusters;
 		ret.cacheAlignments = cacheAlignments;
+
+		ret.keepIntermediateFiles = keepIntermediateFiles;
+
 		ret.sampleName = newSampleName;
 
 		ret.copyCore(*this);
@@ -210,6 +227,9 @@ struct mipPopulationClusteringPars : mipCorePars{
 	std::string seqFileSuffix = "_clustered.fastq";
 	std::string mipName = "";
 
+	bool keepIntermediateFiles = false;
+	bool cacheAlignments = false;
+
 };
 
 struct mipPopulationClusteringParsMultiple : public mipPopulationClusteringPars{
@@ -228,6 +248,8 @@ struct mipPopulationClusteringParsMultiple : public mipPopulationClusteringPars{
 
 		ret.previousPopDir = previousPopDir;
 
+		ret.keepIntermediateFiles = keepIntermediateFiles;
+		ret.cacheAlignments = cacheAlignments;
 
 		ret.mipName = newMipName;
 		auto refPopFile = njh::files::make_path(ret.previousPopDir, ret.mipName + ".fasta");

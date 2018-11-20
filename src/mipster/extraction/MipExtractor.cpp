@@ -466,6 +466,12 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 	auto mipNameKeys = getVectorOfMapKeys(pairStitchingCounts);
 	MipNameSorter::sort(mipNameKeys);
 	for(const auto & mipKey : mipNameKeys){
+		if(0 == pairStitchingCounts[mipKey].r1EndsInR2Combined && !pars.keepIntermediateFiles){
+			auto extractionDirForMipKey = njh::files::make_path(sampDirMaster.extractDir_, mipKey);
+			if(bfs::exists(extractionDirForMipKey)){
+				njh::files::rmDirForce(extractionDirForMipKey);
+			}
+		}
 		stitchInfoByTarget.addRow(pars.sampleName,
 				mipKey,
 				mipMaster.mips_->getFamilyForTarget(mipKey),

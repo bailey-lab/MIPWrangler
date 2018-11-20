@@ -130,6 +130,9 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		if(seqPars.verbose_){
 			std::cout << "Ending: " << samp << std::endl;
 		}
+		if (bfs::exists(sampDirMaster.getClusteredHapFnp(pars.mipName).parent_path()) && !pars.keepIntermediateFiles) {
+			njh::files::rmDirForce(sampDirMaster.getClusteredHapFnp(pars.mipName).parent_path() );
+		}
 	}
 
 	if(!allSamples.empty()){
@@ -195,8 +198,25 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		}
 	}
 
-
-	alignerObj.processAlnInfoOutputNoCheck(alnCacheDir.string(), seqPars.debug_);
+	if(pars.cacheAlignments){
+		alignerObj.processAlnInfoOutputNoCheck(alnCacheDir.string(), seqPars.debug_);
+	}
+	if(!pars.keepIntermediateFiles){
+		auto clustersDir = njh::files::make_path(mipFamilyDir, "population", "clusters");
+		if (bfs::exists(clustersDir) ) {
+			njh::files::rmDirForce(clustersDir);
+		}
+		for (const auto & samp : foundSamples) {
+			auto excludedClustersDir = njh::files::make_path(mipFamilyDir, "samplesOutput", samp, "excluded");
+			if (bfs::exists(excludedClustersDir) ) {
+				njh::files::rmDirForce(excludedClustersDir);
+			}
+			auto finalInputClustersDir = njh::files::make_path(mipFamilyDir, "samplesOutput", samp, "final", "clusters");
+			if (bfs::exists(finalInputClustersDir) ) {
+				njh::files::rmDirForce(finalInputClustersDir);
+			}
+		}
+	}
 
 	std::ofstream logfile;
 	openTextFile(logfile, OutOptions(njh::files::make_path(mipFamilyDir,"log.txt")));

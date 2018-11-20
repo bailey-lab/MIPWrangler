@@ -64,6 +64,8 @@ void mipsterAnalysisSetUp::setUpExtractFromRawMultiple(extractFromRawParsMultipl
 	setOption(pars.processPairPars_.r1Trim_, "--r1Trim", "Number of Bases to trim off at the end of the r1 read");
 	setOption(pars.processPairPars_.r2Trim_, "--r2Trim", "Number of Bases to trim off at the end of the r2 read");
 
+  setOption(pars.keepIntermediateFiles, "--keepIntermediateFiles", "Keep Intermediate Files");
+
 
 	pars.fileOpenLimit_ = (pars.fileOpenLimit_ - pars.numThreads) /pars.numThreads;
 	pars_.gap_ = "5,1";
@@ -230,6 +232,10 @@ void mipsterAnalysisSetUp::setUpMipBarcodeCorrection(mipBarcodeCorrectionPars & 
 	setOption(pars.barcodeIdentity, "--barcodeIdentity", "The amount of identity between reads to allow for same barcode clustering");
 	setOption(pars.qualRep, "--qualCalculation", "How to calculate the per base quality scores");
 	processAlignerDefualts();
+
+  setOption(pars.keepIntermediateFiles, "--keepIntermediateFiles", "Keep Intermediate Files");
+
+
 	finishSetUp(std::cout);
 }
 
@@ -247,6 +253,10 @@ void mipsterAnalysisSetUp::setUpMipBarcodeCorrectionMultiple(mipBarcodeCorrectio
 	setOption(pars.barcodeIdentity, "--barcodeIdentity", "The amount of identity between reads to allow for same barcode clustering");
 	setOption(pars.qualRep, "--qualCalculation", "How to calculate the per base quality scores");
 	processAlignerDefualts();
+
+  setOption(pars.keepIntermediateFiles, "--keepIntermediateFiles", "Keep Intermediate Files");
+
+
 	finishSetUp(std::cout);
 	//getOneMipPopSeqsPostHandler
 }
@@ -274,6 +284,9 @@ void mipsterAnalysisSetUp::setUpMipClustering(mipClusteringPars & pars) {
 			pars.iterMap = processIteratorMap(pars.parameterFile);
 		}
 	}
+  setOption(pars.keepIntermediateFiles, "--keepIntermediateFiles", "Keep Intermediate Files");
+
+
 	finishSetUp(std::cout);
 }
 
@@ -301,6 +314,10 @@ void mipsterAnalysisSetUp::setUpMipClusteringMultiple(mipClusteringParsMultiple 
 			pars.iterMap = processIteratorMap(pars.parameterFile);
 		}
 	}
+
+  setOption(pars.keepIntermediateFiles, "--keepIntermediateFiles", "Keep Intermediate Files");
+
+
 	finishSetUp(std::cout);
 }
 
@@ -330,6 +347,9 @@ void mipsterAnalysisSetUp::setUpMipPopulationClustering(
   setOption(pars_.chiOpts_.checkChimeras_, "-markChimeras", "MarkChimeras");
   setOption(pars.keepChimeras, "-keepChimeras", "KeepChimeras");
   setOption(pars_.chiOpts_.parentFreqs_, "-parfreqs", "ParentFrequence_multiplier_cutoff");
+
+
+  setOption(pars.keepIntermediateFiles, "--keepIntermediateFiles", "Keep Intermediate Files");
 
 
   pars_.ioOptions_.lowerCaseBases_ = "upper";
@@ -390,6 +410,8 @@ void mipsterAnalysisSetUp::setUpMipPopulationClusteringMultiple(
   setOption(pars_.chiOpts_.checkChimeras_, "-markChimeras", "MarkChimeras");
   setOption(pars.keepChimeras, "-keepChimeras", "KeepChimeras");
   setOption(pars_.chiOpts_.parentFreqs_, "-parfreqs", "ParentFrequence_multiplier_cutoff");
+
+  setOption(pars.keepIntermediateFiles, "--keepIntermediateFiles", "Keep Intermediate Files");
 
 
 

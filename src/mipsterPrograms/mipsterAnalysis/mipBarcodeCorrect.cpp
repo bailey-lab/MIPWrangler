@@ -166,6 +166,9 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 			extBarCounter.outPutInfo(extBarCompOutFile, false);
 			filterStats.addFilterStat(tarStat);
 		}
+		if (bfs::exists(options.firstName_.parent_path()) && !pars.keepIntermediateFiles) {
+			njh::files::rmDirForce(options.firstName_.parent_path());
+		}
 	}
 	if (foundNone) {
 		//didn't find any extracted reads remove the directory created so it doesn't look like we did
@@ -177,9 +180,11 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 				OutOptions(njh::files::make_path(mipFamilyDir , "barcodeFilterStats.tab.txt")));
 		filterStats.printInfo(filterInfoFile, "\t");
 
-		alignerObj.processAlnInfoOutputNoCheck(
-				njh::files::join(sampDirMaster.barCorAlnCacheDir_.string(),
-						mipSampName.mipFam_).string(), setUpPars.debug_);
+		if(pars.cacheAlignments){
+			alignerObj.processAlnInfoOutputNoCheck(
+					njh::files::join(sampDirMaster.barCorAlnCacheDir_.string(),
+							mipSampName.mipFam_).string(), setUpPars.debug_);
+		}
 		std::ofstream logfile;
 		openTextFile(logfile, OutOptions(njh::files::make_path(mipFamilyDir, "log.txt")));
 		logfile << "Ran on: " << njh::getCurrentDate() << std::endl;

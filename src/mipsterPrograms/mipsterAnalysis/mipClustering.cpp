@@ -289,6 +289,9 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 			logfile << "Run Length: " << watch.totalTimeFormatted(6) << std::endl;
 		}
 	}
+	if (bfs::exists(options.firstName_.parent_path()) && !pars.keepIntermediateFiles) {
+		njh::files::rmDirForce(options.firstName_.parent_path());
+	}
 }
 
 
@@ -386,6 +389,7 @@ int mipsterAnalysisRunner::mipClusteringMultiple(const njh::progutils::CmdArgs &
 			SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, mipSamp);
 			sampDirMaster.checkForClusDirectoryThrow();
 			runClusteringForMipFamForSamp(mipSamp, sampDirMaster, pars, setUp.pars_, *curAlignerObj, collapserObj);
+
 			auto & currentPair = currrentPairingLog[mipSamp.samp_ + "_" + mipSamp.mipFam_];
 			currentPair["sample"] = mipSamp.samp_;
 			currentPair["mip"] = mipSamp.mipFam_;
