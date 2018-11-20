@@ -20,26 +20,26 @@ namespace njhseq {
 
 
 mipsterUtilsRunner::mipsterUtilsRunner()
-    : njh::progutils::ProgramRunner({addFunc("alignTarget", alignTargets, false),
-	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 addFunc("processProcessedMips", processProcessedMips, false),
-																		 addFunc("scanForContam", scanForContam, false),
+    : njh::progutils::ProgramRunner({addFunc("alignTarget", alignTargets, true),
+	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 addFunc("processProcessedMips", processProcessedMips, true),
+																		 addFunc("scanForContam", scanForContam, true),
 																		 addFunc("processMipOverlapGraph", processMipOverlapGraph, false),
 																		 addFunc("processMipOverlapGraphSingle", processMipOverlapGraphSingle, false),
 																		 addFunc("rearmTargetsAndCombine", rearmTargetsAndCombine, false),
 																		 addFunc("createExtArmFastas", createExtArmFastas, false),
 																		 addFunc("createLigArmFastas", createLigArmFastas, false),
 																		 addFunc("mipFastasToSeqTable", mipFastasToSeqTable, false),
-																		 addFunc("extractPossibleMipCapturesFromGenome", extractPossibleMipCapturesFromGenome, false),
-																		 addFunc("creatingMipArmsFromSeqs", creatingMipArmsFromSeqs, false),
-																		 addFunc("fixingMipBedFiles", fixingMipBedFiles, false),
+																		 addFunc("extractPossibleMipCapturesFromGenome", extractPossibleMipCapturesFromGenome, true),
+																		 addFunc("creatingMipArmsFromSeqs", creatingMipArmsFromSeqs, true),
+																		 addFunc("fixingMipBedFiles", fixingMipBedFiles, true),
 																		 addFunc("writeOutPossibleHaplotypes", writeOutPossibleHaplotypes, false),
-																		 addFunc("creatingSeqTableFromDirectory", creatingSeqTableFromDirectory, false),
-																		 addFunc("createMipArmFromSelectedMips", createMipArmFromSelectedMips, false),
+																		 addFunc("creatingSeqTableFromDirectory", creatingSeqTableFromDirectory, true),
+																		 addFunc("createMipArmFromSelectedMips", createMipArmFromSelectedMips, true),
 																		 addFunc("typeFinalHaplotypes", typeFinalHaplotypes, false),
 																		 addFunc("createPrimerFileFromArmFile", createPrimerFileFromArmFile, false),
-																		 addFunc("ExtractTargetsFromGenomes", ExtractTargetsFromGenomes, false),
+																		 addFunc("ExtractTargetsFromGenomes", ExtractTargetsFromGenomes, true),
 },
-                    "mipsterUtils") {}
+                    "MIPWranglerUtils") {}
 
 //
 

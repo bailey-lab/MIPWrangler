@@ -12,15 +12,15 @@ namespace njhseq {
 
 mipsterSetUpRunner::mipsterSetUpRunner()
     : njh::progutils::ProgramRunner({
-																		 addFunc("makeMipPopClusDirectories", makeMipPopClusDirectories, false),
+																		 addFunc("makeMipPopClusDirectories", makeMipPopClusDirectories, true),
 																		 addFunc("checkDirectoryStructure", checkDirectoryStructure, false),
-																		 addFunc("createSkeletonDirectoryStructure", createSkeletonDirectoryStructure, false),
-	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 addFunc("checkForRawData", checkForRawData, false),
-																		 addFunc("checkForExtracted", checkForExtracted, false),
-																		 addFunc("checkForBarCor", checkForBarCor, false),
-																		 addFunc("checkForClustered", checkForClustered, false),
+																		 addFunc("createSkeletonDirectoryStructure", createSkeletonDirectoryStructure, true),
+	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 addFunc("checkForRawData", checkForRawData, true),
+																		 addFunc("checkForExtracted", checkForExtracted, true),
+																		 addFunc("checkForBarCor", checkForBarCor, true),
+																		 addFunc("checkForClustered", checkForClustered, true),
 																		 addFunc("cloneAnalysisDirectory", cloneAnalysisDirectory, false)},
-                    "mipsterSetUp") {}//
+                    "MIPWranglerSetUp") {}//
 
 
 

@@ -23,8 +23,8 @@ mipsterSimRunner::mipsterSimRunner()
 		addFunc("createArmFastaFiles", createArmFastaFiles, false),
 		addFunc("searchForArms", searchForArms, false),
 		addFunc("mipSimSetup", mipSimSetup, false),
-		addFunc("testMipExtract", testMipExtract, false)
-	}, "mipsterSim") {
+		addFunc("testMipExtract", testMipExtract, true)
+	}, "MIPWranglerSim") {
 
 }//
 

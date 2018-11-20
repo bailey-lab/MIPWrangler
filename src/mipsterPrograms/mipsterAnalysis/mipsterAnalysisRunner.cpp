@@ -13,25 +13,25 @@ namespace njhseq {
 mipsterAnalysisRunner::mipsterAnalysisRunner()
     : njh::progutils::ProgramRunner(
     		{
-	 	 	 	   addFunc("runGzExtractStitch", runGzExtractStitch, false),
-					 addFunc("mipIllumExtractByArmAndFilter", mipIllumExtractByArmAndFilter, false),
-					 addFunc("mipIllumExtractByArmAndFilterMultiple", mipIllumExtractByArmAndFilterMultiple, false),
-					 addFunc("mipIllumExtractByArmAndFilterPaired", mipIllumExtractByArmAndFilterPaired, false),
-					 addFunc("mipIllumExtractByArmAndFilterMultiplePaired", mipIllumExtractByArmAndFilterMultiplePaired, false),
-					 addFunc("mipBarcodeCorrection", mipBarcodeCorrection, false),
+	 	 	 	   addFunc("runGzExtractStitch", runGzExtractStitch, true),
+					 addFunc("mipIllumExtractByArmAndFilter", mipIllumExtractByArmAndFilter, true),
+					 addFunc("mipIllumExtractByArmAndFilterMultiple", mipIllumExtractByArmAndFilterMultiple, true),
+					 addFunc("mipIllumExtractByArmAndFilterPaired", mipIllumExtractByArmAndFilterPaired, true),
+					 addFunc("mipIllumExtractByArmAndFilterMultiplePaired", mipIllumExtractByArmAndFilterMultiplePaired, true),
+					 addFunc("mipBarcodeCorrection", mipBarcodeCorrection, true),
 					 addFunc("mipBarcodeCorrectionMultiple", mipBarcodeCorrectionMultiple, false),
-					 addFunc("mipClustering", mipClustering, false),
+					 addFunc("mipClustering", mipClustering, true),
 					 addFunc("mipClusteringMultiple", mipClusteringMultiple, false),
-					 addFunc("mipPopulationClustering", mipPopulationClustering, false),
+					 addFunc("mipPopulationClustering", mipPopulationClustering, true),
 					 addFunc("mipPopulationClusteringMultiple", mipPopulationClusteringMultiple, false),
-					 addFunc("mipCorrectForContamWithSameBarcodes", mipCorrectForContamWithSameBarcodes, false),
+					 addFunc("mipCorrectForContamWithSameBarcodes", mipCorrectForContamWithSameBarcodes, true),
 					 addFunc("mipCorrectForContamWithSameBarcodesMultiple", mipCorrectForContamWithSameBarcodesMultiple, false),
-					 addFunc("mipSkipBarcodeCorrection", mipSkipBarcodeCorrection, false),
+					 addFunc("mipSkipBarcodeCorrection", mipSkipBarcodeCorrection, true),
 					 addFunc("mipSkipBarcodeCorrectionMultiple", mipSkipBarcodeCorrectionMultiple, false),
-					 addFunc("extractFromRaw", extractFromRaw, false),
+					 addFunc("extractFromRaw", extractFromRaw, true),
 					 addFunc("mipSetupAndExtractByArm", mipSetupAndExtractByArm, false),
            },//
-          "mipsterAnalysis") {}
+          "MIPWranglerAnalysis") {}
 /*
  * 	static int (const njh::progutils::CmdArgs & inputCommands);
 	static int (const njh::progutils::CmdArgs & inputCommands);
