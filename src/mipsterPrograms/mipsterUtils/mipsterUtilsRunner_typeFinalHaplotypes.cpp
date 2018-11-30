@@ -24,16 +24,15 @@
 //
 
 #include "mipsterUtilsRunner.hpp"
-#include <elucidator/seqToolsUtils.h>
-#include <elucidator/objects/BioDataObject.h>
+//#include <elucidator/seqToolsUtils.h>
+#include <njhseq/objects/BioDataObject.h>
 #include <njhseq/objects/Gene/GeneFromGffs.hpp>
-#include <elucidator/BamToolsUtils.h>
+#include <njhseq/BamToolsUtils.h>
 
 #include <njhseq/objects/Gene/GenomicAminoAcidPositionTyper.hpp>
 
 #include <TwoBit.h>
 
-#include <unordered_map>
 
 
 namespace njhseq {

@@ -24,8 +24,8 @@
 // along with MIPWrangler.  If not, see <http://www.gnu.org/licenses/>.
 //
 #include "mipsterUtilsRunner.hpp"
-#include <elucidator/seqToolsUtils.h>
-#include <elucidator/objects/BioDataObject.h>
+//#include <elucidator/seqToolsUtils.h>
+#include <njhseq/objects/BioDataObject.h>
 
 
 #include <unordered_map>

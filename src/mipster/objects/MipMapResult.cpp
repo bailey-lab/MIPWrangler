@@ -26,7 +26,7 @@
 
 
 #include "MipMapResult.hpp"
-#include <elucidator/BamToolsUtils.h>
+#include <njhseq/BamToolsUtils.h>
 
 
 
