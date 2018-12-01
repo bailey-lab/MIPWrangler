@@ -1,6 +1,6 @@
 MIPWrangler
 ========
-Version 1.0.1
+Version 1.0.2-dev
 
 Bioinformatics tools to analyze molecular inversion probe (MIP) sequencing results Bailey Lab
 
@@ -18,7 +18,7 @@ Need to have a c++ compiler, by default g++-7 (Ubuntu,RedHat) and clang++ (MAC O
 
 Also though MIPWrangler does not use cmake, several of the libraries it uses do depend on cmake so it needs to be present.  
 
-## To Install Version 1.0.0 (latest) using g++-7 (defaults to clang on Mac)     
+## To Install Latest Version    
 
 The install.sh script will download other c++ libraries and compile them and then compile MIPWrangler. 
 
