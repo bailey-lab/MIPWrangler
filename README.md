@@ -1,13 +1,13 @@
 MIPWrangler
 ========
-Version 1.0.0
+Version 1.0.1
 
 Bioinformatics tools to analyze molecular inversion probe (MIP) sequencing results Bailey Lab
 
 Checkout the website bellow for more details  
 [http://baileylab.brown.edu/MIPWrangler/](http://baileylab.brown.edu/MIPWrangler/)
 
-Please cite the folowing citation:  Aydemir O, et al. (2018) Drug-Resistance and Population Structure of Plasmodium falciparum Across the Democratic Republic of Congo Using High-Throughput Molecular Inversion Probes. J Infect Dis 218(6):946–955.
+Publications:  Aydemir O, et al. (2018) Drug-Resistance and Population Structure of Plasmodium falciparum Across the Democratic Republic of Congo Using High-Throughput Molecular Inversion Probes. J Infect Dis 218(6):946–955.
 
 # Installing  
  
