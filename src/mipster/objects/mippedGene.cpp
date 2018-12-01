@@ -23,7 +23,7 @@
 // along with MIPWrangler.  If not, see <http://www.gnu.org/licenses/>.
 //
 #include "mippedGene.hpp"
-#include <elucidator/simulation.h>
+
 namespace njhseq {
 
 

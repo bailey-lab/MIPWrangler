@@ -27,7 +27,7 @@
 
 #include "mipster/mipUtils.h"
 
-#include <elucidator/objects/BioDataObject.h>
+#include <njhseq/objects/BioDataObject.h>
 
 namespace njhseq {
 mgv::mgv(const Json::Value & config) :

@@ -24,10 +24,10 @@
     
 #include "mipsterSimRunner.hpp"
 
-#include <elucidator/BamToolsUtils.h>
-#include <elucidator/objects/BioDataObject.h>
-#include <elucidator/simulation.h>
-#include <elucidator/seqToolsUtils.h>
+#include <njhseq/BamToolsUtils.h>
+#include <njhseq/objects/BioDataObject.h>
+//#include <elucidator/simulation.h>
+//#include <elucidator/seqToolsUtils.h>
 
 
 namespace njhseq {
@@ -468,333 +468,342 @@ void checkLibraryAbundancesThrow(const std::map<std::string, LibAdundInfo> & lib
 	}
 }
 
-namespace sim{
-
-
-void simMipLib(const LibAdundInfo & libInfo,
-		const MipCollection & mCol,
-		const VecStr & regions,
-		const std::unordered_map<std::string, std::unordered_map<std::string, seqInfo>> & seqs,
-				const std::string & workingDir,
-				double captureEfficiency,
-				uint64_t intErrorRate,
-				uint32_t finalReadAmount,
-				uint32_t pcrRounds,
-				uint32_t initialPcrRounds,
-				uint32_t numThreads,
-				bool verbose) {
-	if(initialPcrRounds >= pcrRounds){
-		std::stringstream ss;
-		ss << "Error in " << __PRETTY_FUNCTION__ << std::endl;
-		ss << "initialPcrRounds should be less than pcrRounds" << std::endl;
-		ss << "pcrRounds:" << pcrRounds << std::endl;
-		ss << "initialPcrRounds:" << initialPcrRounds << std::endl;
-		throw std::runtime_error{ss.str()};
-	}
-
-	std::ofstream libOutFile;
-	openTextFile(libOutFile, OutOptions(njh::files::make_path(workingDir, libInfo.libName_ + ".fasta")));
-	std::mutex seqFileLock;
-
-
-	if(verbose){
-		std::cout << "Simulating library " << libInfo.libName_ << std::endl;
-	}
-	njh::randomGenerator gen;
-	std::unordered_map<std::string,std::unordered_map<std::string, uint64_t>> allSeqCounts;
-	std::unordered_map<std::string,std::string> barcodedSeqs;
-	std::unordered_map<std::string,std::pair<uint64_t,uint64_t>> templateNonMutated;
-	auto genomesToSample = libInfo.genomeNamesForStartingTemplate();
-	uint32_t captureAmount = std::round(genomesToSample.size() * captureEfficiency);
-	if (0 == captureAmount) {
-		std::stringstream ss;
-		ss << "Error in " << __PRETTY_FUNCTION__ << std::endl;
-		ss << "With capture efficiency of" << captureEfficiency
-				<< " and starting template amount: " << genomesToSample.size()
-				<< " the capture amount would be zero" << std::endl;
-		throw std::runtime_error { ss.str() };
-	}
-	for(const auto & region : regions){
-
-
-//		for(const auto & gAbund : libInfo.genomesRelAbundance_){
-//			SeqIOOptions inOpts = SeqIOOptions::genFastaIn(njh::files::make_path(mipArmsDir, gAbund.genome_ + "_" + region + "-mips.fasta").string());
-//			seqInfo seq;
-//			SeqInput reader(inOpts);
-//			reader.openIn();
-//			while(reader.readNextRead(seq)){
-//				std::unordered_map<std::string, std::string> meta;
-//				seq.processNameForMeta(meta);
-//				seqs[meta["genome"]][meta["mipTar"]] = seq;
-//			}
-//		}
-		auto mips = mCol.getMipTarsForRegion(region);
-		for(const auto & mipName : mips){
-			auto mip = mCol.mips_.at(mipName);
-			auto capturedGenomes = gen.unifRandSelectionVec(genomesToSample, captureAmount, false);
-			uint32_t count = 0;
-			if(verbose){
-				std::cout << "\tSimulating " << mipName << std::endl;
-			}
-			njh::ProgressBar pBar(capturedGenomes.size());
-			for(const auto & genome : capturedGenomes){
-				if(verbose){
-					pBar.outputProgAdd(std::cout, 1, true);
-				}
-				std::string extBarcode = simulation::evenRandStr(mip.extBarcodeLen_, std::vector<char>{'A', 'C', 'G', 'T'}, gen);
-				std::string ligBarcode = simulation::evenRandStr(mip.ligBarcodeLen_, std::vector<char>{'A', 'C', 'G', 'T'}, gen);
-				std::string seq = extBarcode + seqs.at(genome).at(mipName).seq_ + ligBarcode;
-				std::unordered_map<std::string, uint64_t> seqCounts;
-				std::mutex seqMapLock;
-				std::stringstream nameStream;
-				nameStream << "["
-						<< "genome=" << genome << ";"
-						<< "mipTar=" << mipName << ";"
-						<< "mipFam=" << mip.familyName_ << ";"
-						<< "region=" << region << ";"
-						<< "extBarcode=" << extBarcode << ";"
-						<< "ligBarcode=" << ligBarcode << ";"
-						<< "libName=" << libInfo.libName_ << ";"
-						<< "simCount=" << count << ";"
-						<< "]";
-				std::string name = nameStream.str();
-				auto finalAmount = runPcr(intErrorRate, numThreads, initialPcrRounds, seq,
-						1, name, seqCounts, seqMapLock,
-						false);
-				uint64_t finalPerfectAmount = 1 * std::pow(2, initialPcrRounds);
-				templateNonMutated[name] = {finalAmount, finalPerfectAmount};
-				barcodedSeqs[name] = seq;
-				allSeqCounts[name] = seqCounts;
-				++count;
-			}
-		}
-	}
-
-	auto sampleNumber = sampleReadsWithoutReplacementFinishPCR(barcodedSeqs,
-			allSeqCounts, finalReadAmount, libOutFile, seqFileLock,
-			pcrRounds - initialPcrRounds, intErrorRate, numThreads, verbose);
-	if(verbose){
-		/*
-		{
-
-			std::cout << "PCR amounts: " << std::endl;
-			uint64_t nonMutated = 0;
-			uint64_t mutated = 0;
-			for (const auto & read : reads) {
-				std::cout << read->name_ << std::endl;
-				nonMutated += templateNonMutated[read->name_].first;
-				mutated += templateNonMutated[read->name_].second
-						- templateNonMutated[read->name_].first;
-				std::cout << "\t"
-						<< getPercentageString(templateNonMutated[read->name_].first,
-								templateNonMutated[read->name_].second) << std::endl;
-			}
-			std::cout << "Total: " << nonMutated + mutated << std::endl;
-			std::cout << "\t" << getPercentageString(nonMutated, nonMutated + mutated)
-					<< std::endl;
-			std::cout << "\t" << getPercentageString(mutated, nonMutated + mutated)
-					<< std::endl;
-
-		}
-		std::cout << "Sampling Amounts:" << std::endl;
-		uint64_t nonMutated = 0;
-		uint64_t mutated = 0;
-		for(const auto & read : reads){
-			std::cout << read->name_ << std::endl;
-			auto total = sampleNumber[read->name_].first + sampleNumber[read->name_].second;
-			nonMutated+= sampleNumber[read->name_].first;
-			mutated+= sampleNumber[read->name_].second;
-			std::cout << "\tSampled     : " << getPercentageString(total, finalReadAmountCounts[read->name_])<< std::endl;
-			std::cout << "\tNon-Mutated : " << getPercentageString(sampleNumber[read->name_].first, total) << std::endl;
-			std::cout << "\tMutated     : " << getPercentageString(sampleNumber[read->name_].second, total) << std::endl;
-		}
-		std::cout << "Total\t       : " << nonMutated + mutated << std::endl;
-		std::cout << "\tNon-Mutated : " << getPercentageString(nonMutated, nonMutated + mutated) << std::endl;
-		std::cout << "\tMutated     : " << getPercentageString(mutated, nonMutated + mutated) << std::endl;
-		 */
-	}
-	libOutFile.close();
-}
-
-} // namesapce sim
-
-
 int mipsterSimRunner::simMips(const njh::progutils::CmdArgs & inputCommands) {
   seqSetUp setUp(inputCommands);
-
-
-  uint32_t startingTemplate = 3000;
-	double captureEfficiency = 0.10;
-	uint32_t finalReadAmount = 5000;
-	uint32_t pcrRounds = 20;
-	uint32_t initialPcrRounds = 10;
-	long double errorRate = 3.5e-06;
-	uint32_t numThreads = 2;
-
-	bfs::path genomeDir = "";
-	std::string genomesName = "";
-	std::string regionsName = "";
-	std::string mgvDirectory = "";
-	std::string abundanceFile = "";
-
-	bool sim454 = false;
-
-	uint32_t pairedEndReadLength = 250;
-	std::string mipFile = "";
-	std::string outDir = "";
-
-
-	setUp.setOption(captureEfficiency, "--captureEfficiency", "Efficiency of capture of the starting template, percent of starting template that actually gets captured");
-	setUp.setOption(genomeDir, "--genomeDir", "Genome Directory containing the genome files", true);
-	setUp.setOption(mgvDirectory, "--mgvDirectory", "Directory with Reference Files to simulate off of", true);
-	setUp.setOption(mipFile, "--mipArmsFilename", "Mip Arms File", true);
-	setUp.setOption(genomesName, "--genomes", "Genomes To Simulate", true);
-	setUp.setOption(regionsName, "--regions", "Regions To Simulate", true);
-	setUp.setOption(abundanceFile, "--abundanceFile", "Abundance File, first column Genome names, each additonal column is genome abundance", true);
-	setUp.setOption(pairedEndReadLength, "--pairedEndReadLength", "Paired End Read Length For illumina simulation");
-	setUp.setOption(sim454, "--sim454", "Simulate 454 as well as illumina");
-	setUp.setOption(startingTemplate, "--startingTemplate", "Staring Template Amount");
-	setUp.setOption(pcrRounds, "--pcrRounds", "Number of PCR rounds");
-	setUp.setOption(initialPcrRounds, "--initialPcrRounds", "Number of Initial rounds of PCR before sampling");
-	setUp.setOption(errorRate, "--errorRate", "Polymerase Error Rate");
-	setUp.setOption(numThreads, "--numThreads", "Number of Threads to Use");
-	setUp.setOption(finalReadAmount, "--finalReadAmount", "Final Read Amount to Sample Per Simulation Library");
-	setUp.processDirectoryOutputName("simMips_TODAY", true);
-	setUp.processVerbose();
-	setUp.processWritingOptions();
 	setUp.finishSetUp(std::cout);
-	setUp.startARunLog(setUp.pars_.directoryName_);
-	setUp.writeParametersFile(setUp.pars_.directoryName_ + "parameters.tab.txt", false, true);
-	MipCollection mCol(mipFile, 6);
-	njh::randomGenerator gen;
-	uint64_t intErrorRate = errorRate * std::numeric_limits<uint64_t>::max();
 
-	std::stringstream ss;
-	bool fail = false;
-	ss << __PRETTY_FUNCTION__ << ", error the following files need to exist" << "\n";
-	auto checkDir = [&fail,&ss](const bfs::path & fnp){
-		if(!bfs::exists(fnp)){
-			ss << fnp << "\n";
-			fail = true;
-		}
-	};
-	checkDir(abundanceFile);
-	checkDir(mgvDirectory);
-	checkDir(njh::files::make_path(mgvDirectory, "beds"));
-	checkDir(genomeDir);
-	if(fail){
-		throw std::runtime_error{ss.str()};
-	}
-
-
-	VecStr genomes = njh::tokenizeString(genomesName, ",");
-	VecStr regions = njh::tokenizeString(regionsName, ",");
-
-	VecStr libNames;
-	VecStr libDirNames;
-	auto libraryAbundances = processAbundanceLibaries(abundanceFile, genomes);
-	checkLibraryAbundancesThrow(libraryAbundances, startingTemplate);
-	//set starting template amounts
-	for (auto & lib : libraryAbundances) {
-		lib.second.setTemplateAmount(startingTemplate);
-	}
-	bfs::path pcrSimsDir = njh::files::makeDir(setUp.pars_.directoryName_, njh::files::MkdirPar("pcrSims"));
-	bfs::path sequenceSimsDir = njh::files::makeDir(setUp.pars_.directoryName_, njh::files::MkdirPar("sequenceSims"));
-	bfs::path idFilesDir = njh::files::makeDir(setUp.pars_.directoryName_, njh::files::MkdirPar("id_files"));
-	bfs::copy_file(mipFile, njh::files::make_path(idFilesDir, bfs::path(mipFile).filename().string()));
-	MipsSamplesNames names(mCol.getMipFamsForRegions(regions), getVectorOfMapKeys(libraryAbundances));
-	std::ofstream sampleNamesFile;
-	openTextFile(sampleNamesFile, OutOptions(njh::files::make_path(idFilesDir, "allMipsSamplesNames.tab.txt")));
-	names.write(sampleNamesFile);
-	std::ofstream logFile;
-	Json::Value jsonLog;
-	openTextFile(logFile, OutOptions(bfs::path(setUp.pars_.directoryName_ + "simProgramLogs.json")));
-
-	std::unordered_map<std::string, std::unordered_map<std::string, seqInfo>> seqs;
-	MultiGenomeMapper gMapper(genomeDir, genomes.front());
-	gMapper.init();
-	bool failedREgionExtraction = false;
-	std::stringstream extractionMessage;
-	extractionMessage << __PRETTY_FUNCTION__ << ", found the following errors while extracting regions " << "\n";
-	//check for all bed files first
-	for(const auto & tar : names.mips_){
-		for(const auto & genome : genomes){
-			auto bedFnp = njh::files::make_path(mgvDirectory, "beds", genome + "_" + tar + ".bed");
-			if(!bfs::exists(bedFnp)){
-				extractionMessage << "No bed file for " << genome << " and " << tar << ", should found at " << bedFnp<< "\n";
-				failedREgionExtraction = true;
-			}
-		}
-	}
-	if(failedREgionExtraction){
-		throw std::runtime_error{extractionMessage.str()};
-	}
-	//check for one region only
-	for(const auto & tar : names.mips_){
-		for(const auto & genome : genomes){
-			auto bedFnp = njh::files::make_path(mgvDirectory, "beds", genome + "_" + tar + ".bed");
-			auto beds = getBed3s(bedFnp);
-			if(beds.size() != 1){
-				extractionMessage << "Was expecting only one region in " << bedFnp << " but found: " << beds.size() << "\n";
-				failedREgionExtraction = true;
-			}
-		}
-	}
-	if(failedREgionExtraction){
-		throw std::runtime_error{extractionMessage.str()};
-	}
-	for(const auto & tar : names.mips_){
-		for(const auto & genome : genomes){
-			auto bedFnp = njh::files::make_path(mgvDirectory, "beds", genome + "_" + tar + ".bed");
-			auto beds = getBeds(bedFnp);
-			auto targetRegion = GenomicRegion(*beds.front());
-			seqs[genome][tar] = gMapper.extractGenomeRegion(genome, targetRegion);
-		}
-	}
-	for (const auto & lib : libraryAbundances) {
-
-		sim::simMipLib(lib.second, mCol, regions, seqs,
-				pcrSimsDir.string(), captureEfficiency, intErrorRate,
-				finalReadAmount, pcrRounds, initialPcrRounds, numThreads,
-				setUp.pars_.verbose_);
-
-		//sim 454
-		if (sim454) {
-			std::string simCmd454 = "454sim -d $(echo $(dirname $(which 454sim))/gen) "
-					+ njh::files::make_path(pcrSimsDir, lib.second.libName_).string() + ".fasta -o " + njh::files::make_path(sequenceSimsDir, lib.second.libName_).string() + ".sff";
-			auto simOutPut454 = njh::sys::run(VecStr{simCmd454});
-			jsonLog[lib.first]["454SimLog"] = simOutPut454.toJson();
-		}
-		//sim illumina
-		uint32_t illuminaAttempts = 10; //art fails for no reason sometimes
-		std::string simCmdIllumina = "art_illumina -amp -p -na -i "
-				+ njh::files::make_path(pcrSimsDir, lib.second.libName_).string()+ ".fasta -l " + estd::to_string(pairedEndReadLength) + " -f 1 -o "
-				+ njh::files::make_path(sequenceSimsDir , lib.second.libName_).string() + "_R";
-		auto simOutPutIllumina = njh::sys::run(VecStr{simCmdIllumina});
-		jsonLog[lib.first]["454SimLog"] = simOutPutIllumina.toJson();
-		uint32_t numberOfAttempts = 1;
-		jsonLog[lib.first]["illumina_sim_log"]["attempt-" + estd::to_string(numberOfAttempts)] = simOutPutIllumina.toJson();
-		while(!simOutPutIllumina.success_ && numberOfAttempts <= illuminaAttempts){
-			++numberOfAttempts;
-			simOutPutIllumina = njh::sys::run(VecStr{simCmdIllumina});
-			jsonLog[lib.first]["illumina_sim_log"]["attempt-" + estd::to_string(numberOfAttempts)] = simOutPutIllumina.toJson();
-		}
-		//rename with proper fastq endings
-		bfs::rename(njh::files::make_path(sequenceSimsDir,  lib.second.libName_ ).string()+ "_R1.fq", njh::files::make_path(sequenceSimsDir , lib.second.libName_).string() + "_R1.fastq");
-		bfs::rename(njh::files::make_path(sequenceSimsDir, lib.second.libName_).string() + "_R2.fq", njh::files::make_path(sequenceSimsDir , lib.second.libName_ ).string()+ "_R2.fastq");
-		//gzip files
-		std::stringstream gzipCmd;
-		gzipCmd << "gzip " << njh::files::make_path(sequenceSimsDir , lib.second.libName_).string() + "_R1.fastq"
-				<< "&& gzip " << njh::files::make_path(sequenceSimsDir,  lib.second.libName_ ).string()+ "_R2.fastq";
-		auto gzipRunOuput = njh::sys::run({gzipCmd.str()});
-		jsonLog[lib.first]["illumina_sim_log"]["gzip"] = gzipRunOuput.toJson();
-	}
-	logFile << jsonLog << std::endl;
-
-	std::cout << "Done" << std::endl;
-	setUp.logRunTime(std::cout);
+	std::cout <<"Feature coming" << std::endl;
 	return 0;
 }
 
-                    
+//namespace sim{
+//
+//
+//void simMipLib(const LibAdundInfo & libInfo,
+//		const MipCollection & mCol,
+//		const VecStr & regions,
+//		const std::unordered_map<std::string, std::unordered_map<std::string, seqInfo>> & seqs,
+//				const std::string & workingDir,
+//				double captureEfficiency,
+//				uint64_t intErrorRate,
+//				uint32_t finalReadAmount,
+//				uint32_t pcrRounds,
+//				uint32_t initialPcrRounds,
+//				uint32_t numThreads,
+//				bool verbose) {
+//	if(initialPcrRounds >= pcrRounds){
+//		std::stringstream ss;
+//		ss << "Error in " << __PRETTY_FUNCTION__ << std::endl;
+//		ss << "initialPcrRounds should be less than pcrRounds" << std::endl;
+//		ss << "pcrRounds:" << pcrRounds << std::endl;
+//		ss << "initialPcrRounds:" << initialPcrRounds << std::endl;
+//		throw std::runtime_error{ss.str()};
+//	}
+//
+//	std::ofstream libOutFile;
+//	openTextFile(libOutFile, OutOptions(njh::files::make_path(workingDir, libInfo.libName_ + ".fasta")));
+//	std::mutex seqFileLock;
+//
+//
+//	if(verbose){
+//		std::cout << "Simulating library " << libInfo.libName_ << std::endl;
+//	}
+//	njh::randomGenerator gen;
+//	std::unordered_map<std::string,std::unordered_map<std::string, uint64_t>> allSeqCounts;
+//	std::unordered_map<std::string,std::string> barcodedSeqs;
+//	std::unordered_map<std::string,std::pair<uint64_t,uint64_t>> templateNonMutated;
+//	auto genomesToSample = libInfo.genomeNamesForStartingTemplate();
+//	uint32_t captureAmount = std::round(genomesToSample.size() * captureEfficiency);
+//	if (0 == captureAmount) {
+//		std::stringstream ss;
+//		ss << "Error in " << __PRETTY_FUNCTION__ << std::endl;
+//		ss << "With capture efficiency of" << captureEfficiency
+//				<< " and starting template amount: " << genomesToSample.size()
+//				<< " the capture amount would be zero" << std::endl;
+//		throw std::runtime_error { ss.str() };
+//	}
+//	for(const auto & region : regions){
+//
+//
+////		for(const auto & gAbund : libInfo.genomesRelAbundance_){
+////			SeqIOOptions inOpts = SeqIOOptions::genFastaIn(njh::files::make_path(mipArmsDir, gAbund.genome_ + "_" + region + "-mips.fasta").string());
+////			seqInfo seq;
+////			SeqInput reader(inOpts);
+////			reader.openIn();
+////			while(reader.readNextRead(seq)){
+////				std::unordered_map<std::string, std::string> meta;
+////				seq.processNameForMeta(meta);
+////				seqs[meta["genome"]][meta["mipTar"]] = seq;
+////			}
+////		}
+//		auto mips = mCol.getMipTarsForRegion(region);
+//		for(const auto & mipName : mips){
+//			auto mip = mCol.mips_.at(mipName);
+//			auto capturedGenomes = gen.unifRandSelectionVec(genomesToSample, captureAmount, false);
+//			uint32_t count = 0;
+//			if(verbose){
+//				std::cout << "\tSimulating " << mipName << std::endl;
+//			}
+//			njh::ProgressBar pBar(capturedGenomes.size());
+//			for(const auto & genome : capturedGenomes){
+//				if(verbose){
+//					pBar.outputProgAdd(std::cout, 1, true);
+//				}
+//				std::string extBarcode = simulation::evenRandStr(mip.extBarcodeLen_, std::vector<char>{'A', 'C', 'G', 'T'}, gen);
+//				std::string ligBarcode = simulation::evenRandStr(mip.ligBarcodeLen_, std::vector<char>{'A', 'C', 'G', 'T'}, gen);
+//				std::string seq = extBarcode + seqs.at(genome).at(mipName).seq_ + ligBarcode;
+//				std::unordered_map<std::string, uint64_t> seqCounts;
+//				std::mutex seqMapLock;
+//				std::stringstream nameStream;
+//				nameStream << "["
+//						<< "genome=" << genome << ";"
+//						<< "mipTar=" << mipName << ";"
+//						<< "mipFam=" << mip.familyName_ << ";"
+//						<< "region=" << region << ";"
+//						<< "extBarcode=" << extBarcode << ";"
+//						<< "ligBarcode=" << ligBarcode << ";"
+//						<< "libName=" << libInfo.libName_ << ";"
+//						<< "simCount=" << count << ";"
+//						<< "]";
+//				std::string name = nameStream.str();
+//				auto finalAmount = runPcr(intErrorRate, numThreads, initialPcrRounds, seq,
+//						1, name, seqCounts, seqMapLock,
+//						false);
+//				uint64_t finalPerfectAmount = 1 * std::pow(2, initialPcrRounds);
+//				templateNonMutated[name] = {finalAmount, finalPerfectAmount};
+//				barcodedSeqs[name] = seq;
+//				allSeqCounts[name] = seqCounts;
+//				++count;
+//			}
+//		}
+//	}
+//
+//	auto sampleNumber = sampleReadsWithoutReplacementFinishPCR(barcodedSeqs,
+//			allSeqCounts, finalReadAmount, libOutFile, seqFileLock,
+//			pcrRounds - initialPcrRounds, intErrorRate, numThreads, verbose);
+//	if(verbose){
+//		/*
+//		{
+//
+//			std::cout << "PCR amounts: " << std::endl;
+//			uint64_t nonMutated = 0;
+//			uint64_t mutated = 0;
+//			for (const auto & read : reads) {
+//				std::cout << read->name_ << std::endl;
+//				nonMutated += templateNonMutated[read->name_].first;
+//				mutated += templateNonMutated[read->name_].second
+//						- templateNonMutated[read->name_].first;
+//				std::cout << "\t"
+//						<< getPercentageString(templateNonMutated[read->name_].first,
+//								templateNonMutated[read->name_].second) << std::endl;
+//			}
+//			std::cout << "Total: " << nonMutated + mutated << std::endl;
+//			std::cout << "\t" << getPercentageString(nonMutated, nonMutated + mutated)
+//					<< std::endl;
+//			std::cout << "\t" << getPercentageString(mutated, nonMutated + mutated)
+//					<< std::endl;
+//
+//		}
+//		std::cout << "Sampling Amounts:" << std::endl;
+//		uint64_t nonMutated = 0;
+//		uint64_t mutated = 0;
+//		for(const auto & read : reads){
+//			std::cout << read->name_ << std::endl;
+//			auto total = sampleNumber[read->name_].first + sampleNumber[read->name_].second;
+//			nonMutated+= sampleNumber[read->name_].first;
+//			mutated+= sampleNumber[read->name_].second;
+//			std::cout << "\tSampled     : " << getPercentageString(total, finalReadAmountCounts[read->name_])<< std::endl;
+//			std::cout << "\tNon-Mutated : " << getPercentageString(sampleNumber[read->name_].first, total) << std::endl;
+//			std::cout << "\tMutated     : " << getPercentageString(sampleNumber[read->name_].second, total) << std::endl;
+//		}
+//		std::cout << "Total\t       : " << nonMutated + mutated << std::endl;
+//		std::cout << "\tNon-Mutated : " << getPercentageString(nonMutated, nonMutated + mutated) << std::endl;
+//		std::cout << "\tMutated     : " << getPercentageString(mutated, nonMutated + mutated) << std::endl;
+//		 */
+//	}
+//	libOutFile.close();
+//}
+//
+//} // namesapce sim
+//
+//
+//int mipsterSimRunner::simMips(const njh::progutils::CmdArgs & inputCommands) {
+//  seqSetUp setUp(inputCommands);
+//
+//
+//  uint32_t startingTemplate = 3000;
+//	double captureEfficiency = 0.10;
+//	uint32_t finalReadAmount = 5000;
+//	uint32_t pcrRounds = 20;
+//	uint32_t initialPcrRounds = 10;
+//	long double errorRate = 3.5e-06;
+//	uint32_t numThreads = 2;
+//
+//	bfs::path genomeDir = "";
+//	std::string genomesName = "";
+//	std::string regionsName = "";
+//	std::string mgvDirectory = "";
+//	std::string abundanceFile = "";
+//
+//	bool sim454 = false;
+//
+//	uint32_t pairedEndReadLength = 250;
+//	std::string mipFile = "";
+//	std::string outDir = "";
+//
+//
+//	setUp.setOption(captureEfficiency, "--captureEfficiency", "Efficiency of capture of the starting template, percent of starting template that actually gets captured");
+//	setUp.setOption(genomeDir, "--genomeDir", "Genome Directory containing the genome files", true);
+//	setUp.setOption(mgvDirectory, "--mgvDirectory", "Directory with Reference Files to simulate off of", true);
+//	setUp.setOption(mipFile, "--mipArmsFilename", "Mip Arms File", true);
+//	setUp.setOption(genomesName, "--genomes", "Genomes To Simulate", true);
+//	setUp.setOption(regionsName, "--regions", "Regions To Simulate", true);
+//	setUp.setOption(abundanceFile, "--abundanceFile", "Abundance File, first column Genome names, each additonal column is genome abundance", true);
+//	setUp.setOption(pairedEndReadLength, "--pairedEndReadLength", "Paired End Read Length For illumina simulation");
+//	setUp.setOption(sim454, "--sim454", "Simulate 454 as well as illumina");
+//	setUp.setOption(startingTemplate, "--startingTemplate", "Staring Template Amount");
+//	setUp.setOption(pcrRounds, "--pcrRounds", "Number of PCR rounds");
+//	setUp.setOption(initialPcrRounds, "--initialPcrRounds", "Number of Initial rounds of PCR before sampling");
+//	setUp.setOption(errorRate, "--errorRate", "Polymerase Error Rate");
+//	setUp.setOption(numThreads, "--numThreads", "Number of Threads to Use");
+//	setUp.setOption(finalReadAmount, "--finalReadAmount", "Final Read Amount to Sample Per Simulation Library");
+//	setUp.processDirectoryOutputName("simMips_TODAY", true);
+//	setUp.processVerbose();
+//	setUp.processWritingOptions();
+//	setUp.finishSetUp(std::cout);
+//	setUp.startARunLog(setUp.pars_.directoryName_);
+//	setUp.writeParametersFile(setUp.pars_.directoryName_ + "parameters.tab.txt", false, true);
+//	MipCollection mCol(mipFile, 6);
+//	njh::randomGenerator gen;
+//	uint64_t intErrorRate = errorRate * std::numeric_limits<uint64_t>::max();
+//
+//	std::stringstream ss;
+//	bool fail = false;
+//	ss << __PRETTY_FUNCTION__ << ", error the following files need to exist" << "\n";
+//	auto checkDir = [&fail,&ss](const bfs::path & fnp){
+//		if(!bfs::exists(fnp)){
+//			ss << fnp << "\n";
+//			fail = true;
+//		}
+//	};
+//	checkDir(abundanceFile);
+//	checkDir(mgvDirectory);
+//	checkDir(njh::files::make_path(mgvDirectory, "beds"));
+//	checkDir(genomeDir);
+//	if(fail){
+//		throw std::runtime_error{ss.str()};
+//	}
+//
+//
+//	VecStr genomes = njh::tokenizeString(genomesName, ",");
+//	VecStr regions = njh::tokenizeString(regionsName, ",");
+//
+//	VecStr libNames;
+//	VecStr libDirNames;
+//	auto libraryAbundances = processAbundanceLibaries(abundanceFile, genomes);
+//	checkLibraryAbundancesThrow(libraryAbundances, startingTemplate);
+//	//set starting template amounts
+//	for (auto & lib : libraryAbundances) {
+//		lib.second.setTemplateAmount(startingTemplate);
+//	}
+//	bfs::path pcrSimsDir = njh::files::makeDir(setUp.pars_.directoryName_, njh::files::MkdirPar("pcrSims"));
+//	bfs::path sequenceSimsDir = njh::files::makeDir(setUp.pars_.directoryName_, njh::files::MkdirPar("sequenceSims"));
+//	bfs::path idFilesDir = njh::files::makeDir(setUp.pars_.directoryName_, njh::files::MkdirPar("id_files"));
+//	bfs::copy_file(mipFile, njh::files::make_path(idFilesDir, bfs::path(mipFile).filename().string()));
+//	MipsSamplesNames names(mCol.getMipFamsForRegions(regions), getVectorOfMapKeys(libraryAbundances));
+//	std::ofstream sampleNamesFile;
+//	openTextFile(sampleNamesFile, OutOptions(njh::files::make_path(idFilesDir, "allMipsSamplesNames.tab.txt")));
+//	names.write(sampleNamesFile);
+//	std::ofstream logFile;
+//	Json::Value jsonLog;
+//	openTextFile(logFile, OutOptions(bfs::path(setUp.pars_.directoryName_ + "simProgramLogs.json")));
+//
+//	std::unordered_map<std::string, std::unordered_map<std::string, seqInfo>> seqs;
+//	MultiGenomeMapper gMapper(genomeDir, genomes.front());
+//	gMapper.init();
+//	bool failedREgionExtraction = false;
+//	std::stringstream extractionMessage;
+//	extractionMessage << __PRETTY_FUNCTION__ << ", found the following errors while extracting regions " << "\n";
+//	//check for all bed files first
+//	for(const auto & tar : names.mips_){
+//		for(const auto & genome : genomes){
+//			auto bedFnp = njh::files::make_path(mgvDirectory, "beds", genome + "_" + tar + ".bed");
+//			if(!bfs::exists(bedFnp)){
+//				extractionMessage << "No bed file for " << genome << " and " << tar << ", should found at " << bedFnp<< "\n";
+//				failedREgionExtraction = true;
+//			}
+//		}
+//	}
+//	if(failedREgionExtraction){
+//		throw std::runtime_error{extractionMessage.str()};
+//	}
+//	//check for one region only
+//	for(const auto & tar : names.mips_){
+//		for(const auto & genome : genomes){
+//			auto bedFnp = njh::files::make_path(mgvDirectory, "beds", genome + "_" + tar + ".bed");
+//			auto beds = getBed3s(bedFnp);
+//			if(beds.size() != 1){
+//				extractionMessage << "Was expecting only one region in " << bedFnp << " but found: " << beds.size() << "\n";
+//				failedREgionExtraction = true;
+//			}
+//		}
+//	}
+//	if(failedREgionExtraction){
+//		throw std::runtime_error{extractionMessage.str()};
+//	}
+//	for(const auto & tar : names.mips_){
+//		for(const auto & genome : genomes){
+//			auto bedFnp = njh::files::make_path(mgvDirectory, "beds", genome + "_" + tar + ".bed");
+//			auto beds = getBeds(bedFnp);
+//			auto targetRegion = GenomicRegion(*beds.front());
+//			seqs[genome][tar] = gMapper.extractGenomeRegion(genome, targetRegion);
+//		}
+//	}
+//	for (const auto & lib : libraryAbundances) {
+//
+//		sim::simMipLib(lib.second, mCol, regions, seqs,
+//				pcrSimsDir.string(), captureEfficiency, intErrorRate,
+//				finalReadAmount, pcrRounds, initialPcrRounds, numThreads,
+//				setUp.pars_.verbose_);
+//
+//		//sim 454
+//		if (sim454) {
+//			std::string simCmd454 = "454sim -d $(echo $(dirname $(which 454sim))/gen) "
+//					+ njh::files::make_path(pcrSimsDir, lib.second.libName_).string() + ".fasta -o " + njh::files::make_path(sequenceSimsDir, lib.second.libName_).string() + ".sff";
+//			auto simOutPut454 = njh::sys::run(VecStr{simCmd454});
+//			jsonLog[lib.first]["454SimLog"] = simOutPut454.toJson();
+//		}
+//		//sim illumina
+//		uint32_t illuminaAttempts = 10; //art fails for no reason sometimes
+//		std::string simCmdIllumina = "art_illumina -amp -p -na -i "
+//				+ njh::files::make_path(pcrSimsDir, lib.second.libName_).string()+ ".fasta -l " + estd::to_string(pairedEndReadLength) + " -f 1 -o "
+//				+ njh::files::make_path(sequenceSimsDir , lib.second.libName_).string() + "_R";
+//		auto simOutPutIllumina = njh::sys::run(VecStr{simCmdIllumina});
+//		jsonLog[lib.first]["454SimLog"] = simOutPutIllumina.toJson();
+//		uint32_t numberOfAttempts = 1;
+//		jsonLog[lib.first]["illumina_sim_log"]["attempt-" + estd::to_string(numberOfAttempts)] = simOutPutIllumina.toJson();
+//		while(!simOutPutIllumina.success_ && numberOfAttempts <= illuminaAttempts){
+//			++numberOfAttempts;
+//			simOutPutIllumina = njh::sys::run(VecStr{simCmdIllumina});
+//			jsonLog[lib.first]["illumina_sim_log"]["attempt-" + estd::to_string(numberOfAttempts)] = simOutPutIllumina.toJson();
+//		}
+//		//rename with proper fastq endings
+//		bfs::rename(njh::files::make_path(sequenceSimsDir,  lib.second.libName_ ).string()+ "_R1.fq", njh::files::make_path(sequenceSimsDir , lib.second.libName_).string() + "_R1.fastq");
+//		bfs::rename(njh::files::make_path(sequenceSimsDir, lib.second.libName_).string() + "_R2.fq", njh::files::make_path(sequenceSimsDir , lib.second.libName_ ).string()+ "_R2.fastq");
+//		//gzip files
+//		std::stringstream gzipCmd;
+//		gzipCmd << "gzip " << njh::files::make_path(sequenceSimsDir , lib.second.libName_).string() + "_R1.fastq"
+//				<< "&& gzip " << njh::files::make_path(sequenceSimsDir,  lib.second.libName_ ).string()+ "_R2.fastq";
+//		auto gzipRunOuput = njh::sys::run({gzipCmd.str()});
+//		jsonLog[lib.first]["illumina_sim_log"]["gzip"] = gzipRunOuput.toJson();
+//	}
+//	logFile << jsonLog << std::endl;
+//
+//	std::cout << "Done" << std::endl;
+//	setUp.logRunTime(std::cout);
+//	return 0;
+//}
+
+
+
 } // namespace njhseq

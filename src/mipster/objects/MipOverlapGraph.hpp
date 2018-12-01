@@ -27,7 +27,7 @@
 
 
 #include "mipster/common.h"
-#include <elucidator/objects/dataContainers/graphs.h>
+#include <njhseq/objects/dataContainers/graphs.h>
 
 namespace njhseq {
 

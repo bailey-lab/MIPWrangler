@@ -24,7 +24,7 @@
 //
 
 #include "mav.hpp"
-#include <elucidator/objects/dataContainers/graphs.h>
+#include <njhseq/objects/dataContainers/graphs.h>
 
 
 namespace njhseq {

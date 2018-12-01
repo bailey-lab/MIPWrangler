@@ -22,7 +22,7 @@
 //
     
 #include "mipsterMipTesterRunner.hpp"
-#include <elucidator/BamToolsUtils.h>
+#include <njhseq/BamToolsUtils.h>
 #include <TwoBit.h>
 
 

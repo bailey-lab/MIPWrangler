@@ -25,8 +25,8 @@
 #include "MipsOnGenome.hpp"
 #include "mipster/objects/MipMapResult.hpp"
 #include "mipster/mipUtils.h"
-#include <elucidator/objects/BioDataObject.h>
-#include <elucidator/seqToolsUtils.h>
+#include <njhseq/objects/BioDataObject.h>
+//#include <elucidator/seqToolsUtils.h>
 #include <TwoBit.h>
 
 
