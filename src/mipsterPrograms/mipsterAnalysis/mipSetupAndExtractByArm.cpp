@@ -107,12 +107,29 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 	concurrent::AlignerPool aligners(maxLen, setUp.pars_.gapInfo_,
 			setUp.pars_.scoring_, pars.numThreads);
 	aligners.initAligners();
-
-	concurrent::AlignerPool alignersForStitching(maxLen, gapScoringParameters(10,1,0,0,0,0),
-			setUp.pars_.scoring_, pars.numThreads);
+	/*
+	 * 	pars_.generalMatch_,
+			pars_.generalMismatch_,
+			pars_.degenScoring_,
+			pars_.lessNScoring_,
+			pars_.caseInsensitiveScoring_
+	 */
+	auto scoringForStitching = substituteMatrix::createScoreMatrix(
+			2,
+			-2,
+			false,
+			true,
+			true);
+	aligner alignerObjForStitching(maxLen, gapScoringParameters(10,1,0,0,0,0), scoringForStitching, false);
+	alignerObjForStitching.qScorePars_.qualThresWindow_ = 0;
+	concurrent::AlignerPool alignersForStitching(alignerObjForStitching, pars.numThreads);
 
 	alignersForStitching.initAligners();
+	{
+		auto alignerObjForStitching = alignersForStitching.popAligner();
+		std::cout << alignerObjForStitching->parts_.gapScores_.toJson() << std::endl;
 
+	}
 
 	auto extractFiles =
 			[&pars,&samplesExtracted,&samplesEmpty,&filesKeys,&emptyFiles,&aligners,&alignersForStitching,&logs,&logsMut,&mipMaster](
