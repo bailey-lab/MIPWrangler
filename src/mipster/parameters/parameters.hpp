@@ -146,6 +146,8 @@ struct extractFromRawParsMultiple : public extractFromRawPars {
 		ret.qFilPars_ = qFilPars_;
 		ret.cacheAlignments = cacheAlignments;
 		ret.processPairPars_ = processPairPars_;
+		ret.keepIntermediateFiles = keepIntermediateFiles;
+		ret.writeOutInitialExtractedPairs = writeOutInitialExtractedPairs;
 		ret.refDir = refDir;
 		ret.copyCore(*this);
 		return ret;
