@@ -108,8 +108,9 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 			setUp.pars_.scoring_, pars.numThreads);
 	aligners.initAligners();
 
-	concurrent::AlignerPool alignersForStitching(maxLen, gapScoringParameters(5,1,0,0,0,0),
+	concurrent::AlignerPool alignersForStitching(maxLen, gapScoringParameters(10,1,0,0,0,0),
 			setUp.pars_.scoring_, pars.numThreads);
+
 	alignersForStitching.initAligners();
 
 
