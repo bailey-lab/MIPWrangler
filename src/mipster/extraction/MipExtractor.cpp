@@ -101,6 +101,14 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 								+ "_filteredOff" ), sampleIOOpts.front().outFormat_,
 										sampleIOOpts.front().out_) );
 
+		if(pars.writeOutInitialExtractedPairs){
+			mipOuts.addReader(mip + "_initial",
+					SeqIOOptions(
+							njh::files::make_path(mipDirectory, mip
+									+ "_initial" ), sampleIOOpts.front().outFormat_,
+											sampleIOOpts.front().out_) );
+		}
+
 		mipStitchedOuts.addReader(mip,
 				SeqIOOptions(
 						njh::files::make_path(sampDirMaster.extractDir_.string(), mip, mip),
@@ -289,7 +297,9 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 				const auto & mip = mipMaster.mips_->mips_.at(possibleArms.begin()->first);
 				//stitching
 				auto stitchedRes = pProcessor.processPairedEnd(seq,pairStitchingCounts[mip.name_], alignerObjForStitching);
-
+				if(pars.writeOutInitialExtractedPairs){
+					mipOuts.add(mip.name_ + "_initial", seq);
+				}
 				//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
 				SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
 				//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
