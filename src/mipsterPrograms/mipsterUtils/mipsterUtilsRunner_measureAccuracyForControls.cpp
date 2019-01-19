@@ -196,6 +196,8 @@ int mipsterUtilsRunner::benchmarkingForControlMixtures(const njh::progutils::Cmd
 	std::unordered_map<std::string, std::unordered_map<std::string, uint32_t>> barcodeTotals;
 	OutputStream haplotypesClassified(njh::files::make_path(setUp.pars_.directoryName_, "classifiedHaplotypes.tab.txt"));
 	haplotypesClassified << "sample\tmix\tmipFamily\tseqName\treadCnt\tbarcodeCnt\tbarcodeFrac\tmatchExpcted\texpectedRef\texpectedFrac" << std::endl;
+	OutputStream performanceOut(njh::files::make_path(setUp.pars_.directoryName_, "performancePerTarget.tab.txt"));
+	performanceOut << "sample\tmix\tmipFamily\ttotalBarcodes\trecoveredHaps\tfalseHaps\ttotalHaps\ttotalExpectedHaps\thapRecovery\tfalseHapsRate\tRMSE" << std::endl;
 	for(const auto & sample : samplesToMix){
 		for(const auto & mipFamily : familiesForMix[sample.second]){
 			bfs::path resultsFnp = mipMaster.pathPopClusFinalHaplo(MipFamSamp(mipFamily, sample.first));
@@ -229,6 +231,10 @@ int mipsterUtilsRunner::benchmarkingForControlMixtures(const njh::progutils::Cmd
 					MetaDataInName seqMeta(resSeq.name_);
 					barCodeTotal += seqMeta.getMeta<double>("barcodeCnt");
 				}
+				uint32_t recoveredHaps = 0;
+				uint32_t falseHaps = 0;
+				double sumOfSquares = 0;
+
 				for(const auto & resSeq : resSeqs){
 					MetaDataInName seqMeta(resSeq.name_);
 					std::string matchingRef = "";
@@ -239,6 +245,12 @@ int mipsterUtilsRunner::benchmarkingForControlMixtures(const njh::progutils::Cmd
 							expectedFrac = expectedFracs[expSeq->name_];
 							break;
 						}
+					}
+					if("" != matchingRef){
+						++recoveredHaps;
+						sumOfSquares += std::pow((seqMeta.getMeta<double>("barcodeCnt")/barCodeTotal) - expectedFrac, 2.0);
+					}else{
+						++falseHaps;
 					}
 					haplotypesClassified << sample.first
 							<< "\t" << sample.second
@@ -252,6 +264,18 @@ int mipsterUtilsRunner::benchmarkingForControlMixtures(const njh::progutils::Cmd
 							<< "\t" << expectedFrac
 							<< std::endl;
 				}
+				performanceOut << sample.first
+						<< "\t" << sample.second
+						<< "\t" << mipFamily
+						<< "\t" << barCodeTotal
+						<< "\t" << recoveredHaps
+						<< "\t" << falseHaps
+						<< '\t' << recoveredHaps + falseHaps
+						<< "\t" << expSeqs.size()
+						<< "\t" << static_cast<double>(recoveredHaps)/expSeqs.size()
+						<< "\t" << static_cast<double>(falseHaps)/(recoveredHaps + falseHaps)
+						<< "\t" << (0 == sumOfSquares ? 0 : std::sqrt(sumOfSquares)) << std::endl;
+
 				barcodeTotals[sample.first][mipFamily] = barCodeTotal;
 			}else{
 				barcodeTotals[sample.first][mipFamily] = 0;
@@ -262,13 +286,28 @@ int mipsterUtilsRunner::benchmarkingForControlMixtures(const njh::progutils::Cmd
 	OutputStream barcodeTotalsOut(njh::files::make_path(setUp.pars_.directoryName_, "barcodeTotals.tab.txt"));
 	auto samples = getVectorOfMapKeys(samplesToMix);
 	njh::sort(samples);
+	std::unordered_map<std::string, std::vector<uint32_t>> barcodeCounts;
 	barcodeTotalsOut << "Mip\t" << njh::conToStr(samples, "\t") << std::endl;
 	for(const auto & mipFam : allMipFams){
 		barcodeTotalsOut << mipFam;
 		for(const auto & samp : samples){
 			barcodeTotalsOut << '\t' << barcodeTotals[samp][mipFam];
+			if(barcodeTotals[samp][mipFam] > 0){
+				barcodeCounts[samp].emplace_back(barcodeTotals[samp][mipFam]);
+			}
 		}
 		barcodeTotalsOut << std::endl;
+	}
+
+	OutputStream sampleStatsOut(njh::files::make_path(setUp.pars_.directoryName_, "sampBarocdeStats.tab.txt"));
+	sampleStatsOut << "Sample\tMixName\ttargetsWithBarcodes\ttotalTargets\ttotalBarcodes\tmedianBarcodeCnt" << std::endl;
+	for(const auto & samp : samples){
+		sampleStatsOut << samp
+				<< '\t' << samplesToMix[samp]
+				<< '\t' << barcodeCounts[samp].size()
+				<< '\t' << familiesForMix[samplesToMix[samp]].size()
+				<< "\t" << vectorSum(barcodeCounts[samp])
+				<< "\t" << vectorMedianRef(barcodeCounts[samp]) << std::endl;
 	}
 
 	return 0;
