@@ -310,7 +310,11 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipBarcodeCorrectionMultiple --masterDir "
 				<< njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
 		<< " --numThreads " << pars.numThreads
-		<< " --logFile mipBarcodeCorrecting_run1" << std::endl;
+		<< " --logFile mipBarcodeCorrecting_run1";
+		if(pars.keepIntermediateFiles){
+			mipScriptOut << " --keepIntermediateFiles";
+		}
+		mipScriptOut << std::endl;
 	}
 	// run clustering step, mipClusteringMultiple
 	{
@@ -321,7 +325,11 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipClusteringMultiple --masterDir "
 				<< njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
 		<< " --numThreads " << pars.numThreads
-		<< " --logFile mipClustering_run1" << std::endl;
+		<< " --logFile mipClustering_run1" ;
+		if(pars.keepIntermediateFiles){
+			mipScriptOut << " --keepIntermediateFiles";
+		}
+		mipScriptOut << std::endl;
 	}
 	// run population clustering, mipPopulationClusteringMultiple
 	{
@@ -335,6 +343,9 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 		<< " --logFile mipPopClustering_run1";
 		if("" != pars.refDir){
 			mipScriptOut << " --refDir " << njh::files::normalize(pars.refDir);
+		};
+		if (pars.keepIntermediateFiles) {
+			mipScriptOut << " --keepIntermediateFiles";
 		}
 		mipScriptOut << std::endl;
 	}

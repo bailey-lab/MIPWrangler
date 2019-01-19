@@ -304,6 +304,18 @@ void SetUpMaster::loadMipsSampsInfo(uint32_t allowableArmErrors){
 	names_ = std::make_shared<MipsSamplesNames>(mipsSampsNamesFnp_);
 }
 
+void SetUpMaster::checkDirStructThrow(const std::string & funcName) const{
+	auto warnings = checkDirStruct();
+	if(!warnings.empty()){
+		std::stringstream ss;
+		ss << funcName << ", Error in directory structure, make sure you are in the correct analysis directory" << std::endl;
+		ss << "Following warnings;" << std::endl;
+		ss << njh::conToStr(warnings, "\n") << std::endl;
+		throw std::runtime_error{ss.str()};
+	}
+}
+
+
 VecStr SetUpMaster::checkDirStruct() const{
 	bool passedAllChecks = true;
 	VecStr warnings;

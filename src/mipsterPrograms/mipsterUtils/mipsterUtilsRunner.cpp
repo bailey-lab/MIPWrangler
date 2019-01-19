@@ -55,6 +55,7 @@ mipsterUtilsRunner::mipsterUtilsRunner()
 																		 addFunc("typeFinalHaplotypes", typeFinalHaplotypes, false),
 																		 addFunc("createPrimerFileFromArmFile", createPrimerFileFromArmFile, false),
 																		 addFunc("ExtractTargetsFromGenomes", ExtractTargetsFromGenomes, true),
+																		 addFunc("benchmarkingForControlMixtures", benchmarkingForControlMixtures, false),
 },
                     "MIPWranglerUtils") {}
 
