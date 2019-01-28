@@ -116,6 +116,7 @@ int mipsterMipExplorerRunner::setUpViewMipsOnGenome(
 	setUp.processDebug();
 	setUp.processVerbose();
 	setUp.processComparison(inputPars.allowableError);
+	setUp.setOption(inputPars.allowableError.hqMismatches_, "--errors", "Mismatches to allow in the arms");
 	setUp.setOption(inputPars.gMapperPars_.primaryGenome_, "--primaryGenome", "The primary genome", true);
 	setUp.setOption(inputPars.gMapperPars_.numThreads_, "--numThreads", "Number of Threads");
 	setUp.setOption(inputPars.mipArmsFnp, "--mipArmsFnp", "Mip Arms Fnp", true);
