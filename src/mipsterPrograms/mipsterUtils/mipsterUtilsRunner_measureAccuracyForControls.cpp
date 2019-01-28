@@ -274,7 +274,7 @@ int mipsterUtilsRunner::benchmarkingForControlMixtures(const njh::progutils::Cmd
 						<< "\t" << expSeqs.size()
 						<< "\t" << static_cast<double>(recoveredHaps)/expSeqs.size()
 						<< "\t" << static_cast<double>(falseHaps)/(recoveredHaps + falseHaps)
-						<< "\t" << (0 == sumOfSquares ? 0 : std::sqrt(sumOfSquares)) << std::endl;
+						<< "\t" << (0 == sumOfSquares ? 0 : std::sqrt(sumOfSquares/static_cast<double>(recoveredHaps))) << std::endl;
 
 				barcodeTotals[sample.first][mipFamily] = barCodeTotal;
 			}else{
