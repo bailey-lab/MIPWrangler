@@ -49,17 +49,19 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 	mipMaster.mips_->setAllMinimumExpectedLen(pars.minLen);
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 
-	if("" != pars.sampleMetaFnp){
+	if ("" != pars.sampleMetaFnp) {
 		mipMaster.setMetaData(pars.sampleMetaFnp);
 	}
 	mipMaster.createDirStructSkeleton();
 	auto warnings = mipMaster.checkDirStruct();
-	if(!warnings.empty()){
+	if (!warnings.empty()) {
 		std::stringstream ss;
-		ss << "Error in directory structure, make sure you are in the correct analysis directory" << std::endl;
+		ss
+				<< "Error in directory structure, make sure you are in the correct analysis directory"
+				<< std::endl;
 		ss << "Following warnings;" << std::endl;
 		ss << njh::conToStr(warnings, "\n") << std::endl;
-		throw std::runtime_error{ss.str()};
+		throw std::runtime_error { ss.str() };
 	}
 
 	pars.dir = njh::appendAsNeededRet(pars.dir.string(), "/");
