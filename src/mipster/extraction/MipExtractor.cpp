@@ -86,6 +86,8 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 	std::unordered_map<std::string, PairedReadProcessor::ProcessedResultsCounts> pairStitchingCounts;
 
 //	VecStr filterOutNames = { "_failedQuality", "_failedLigation", "_failedMinLen", "_containsNs", "_badStitch" };
+	auto forStitchedOut = sampleIOOpts.front().out_;
+	forStitchedOut.outExtention_ = ".fastq.gz";
 
 	VecStr allMipTargets = mipMaster.getAllMipTargets();
 	for (const auto & mip : allMipTargets) {
@@ -112,12 +114,13 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 		mipStitchedOuts.addReader(mip,
 				SeqIOOptions(
 						njh::files::make_path(sampDirMaster.extractDir_.string(), mip, mip),
-						SeqIOOptions::outFormats::FASTQ, sampleIOOpts.front().out_));
+						SeqIOOptions::outFormats::FASTQGZ, forStitchedOut));
+
 		mipStitchedOuts.addReader(mip + "_filteredOff",
 				SeqIOOptions(
 						njh::files::make_path(mipDirectory, mip
 								+ "_filteredOff" ),
-						SeqIOOptions::outFormats::FASTQ, sampleIOOpts.front().out_) );
+						SeqIOOptions::outFormats::FASTQGZ, forStitchedOut) );
 
 		pairStitchingCounts[mip] = PairedReadProcessor::ProcessedResultsCounts{};
 

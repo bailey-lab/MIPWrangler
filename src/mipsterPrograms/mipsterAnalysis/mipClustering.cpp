@@ -178,10 +178,10 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 		const SeqSetUpPars & seqPars,
 		aligner & alignerObj,
 		collapser collapserObj){
-	SeqIOOptions options = SeqIOOptions::genFastqIn(
+	SeqIOOptions options = SeqIOOptions::genFastqInGz(
 			njh::files::join(
 					VecStr { sampDirMaster.barCorDir_.string(), mipSampName.mipFam_,
-							mipSampName.mipFam_ + "_all.fastq" }));
+							mipSampName.mipFam_ + "_all.fastq.gz" }));
 	if (options.inExists()) {
 		njh::stopWatch watch;
 		SeqInput reader(options);
@@ -248,7 +248,7 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 						njh::files::join(sampDirMaster.clusAlnCacheDir_.string(),
 								mipSampName.mipFam_).string(), seqPars.debug_);
 			}
-			SeqIOOptions opts = SeqIOOptions::genFastqOut(
+			SeqIOOptions opts = SeqIOOptions::genFastqOutGz(
 					njh::files::make_path(mipFamilyDir,  mipSampName.mipFam_).string() + "_clustered");
 
 			renameReadNames(clusters, "[samp=" + mipSampName.samp_ + ";" + "mipFam=" + mipSampName.mipFam_ +"]",

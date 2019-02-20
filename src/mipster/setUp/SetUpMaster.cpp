@@ -418,7 +418,7 @@ bool SetUpMaster::checkForExtractedMipFamForSamp(const MipFamSamp & mipSampName)
 	for (const auto & mipName : mipsForFam) {
 		if (bfs::exists(
 				njh::files::join(
-						VecStr { sampDirMaster.extractDir_.string(), mipName, mipName + ".fastq" }))) {
+						VecStr { sampDirMaster.extractDir_.string(), mipName, mipName + ".fastq.gz" }))) {
 			familyHasExtractedReads = true;
 			break;
 		}
@@ -429,7 +429,7 @@ bool SetUpMaster::checkForExtractedMipFamForSamp(const MipFamSamp & mipSampName)
 bool SetUpMaster::checkForBarCorMipFamForSamp(const MipFamSamp & mipSampName) const{
 	SampleDirectoryMaster sampDirMaster(directoryMaster_, mipSampName);
 	return bfs::exists(njh::files::join(VecStr { sampDirMaster.barCorDir_.string(),
-		mipSampName.mipFam_, mipSampName.mipFam_ + "_all.fastq" }));
+		mipSampName.mipFam_, mipSampName.mipFam_ + "_all.fastq.gz" }));
 }
 
 bool SetUpMaster::checkForExtractedMipFamForSampThrow(const MipFamSamp & mipSampName) const{
@@ -442,7 +442,7 @@ bool SetUpMaster::checkForExtractedMipFamForSampThrow(const MipFamSamp & mipSamp
 	for (const auto & mipName : mipsForFam) {
 		if (bfs::exists(
 				njh::files::join(
-						VecStr { sampDirMaster.extractDir_.string(), mipName, mipName + ".fastq" }))) {
+						VecStr { sampDirMaster.extractDir_.string(), mipName, mipName + ".fastq.gz" }))) {
 			familyHasExtractedReads = true;
 			break;
 		}
@@ -455,7 +455,7 @@ bool SetUpMaster::checkForBarCorMipFamForSampThrow(const MipFamSamp & mipSampNam
 	sampDirMaster.checkForExtractDirectoryThrow();
 	sampDirMaster.checkForBarCorDirectoryThrow();
 	return bfs::exists(njh::files::join(VecStr { sampDirMaster.barCorDir_.string(),
-		mipSampName.mipFam_, mipSampName.mipFam_ + "_all.fastq" }));
+		mipSampName.mipFam_, mipSampName.mipFam_ + "_all.fastq.gz" }));
 }
 
 
@@ -488,7 +488,7 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithClustered(uint32_t numThreads)c
 			SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, MipFamSamp("", samp));
 			for(const auto & mipFam : mipMaster.names_->mips_){
 					if (bfs::exists(njh::files::join(VecStr { sampDirMaster.clusDir_.string(),
-						mipFam, mipFam + "_clustered.fastq" }))) {
+						mipFam, mipFam + "_clustered.fastq.gz" }))) {
 						currentPairs.emplace_back(MipFamSamp(mipFam, samp));
 				}
 			}
@@ -633,7 +633,7 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithBarCor(uint32_t numThreads)cons
 			SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, MipFamSamp("", samp));
 			for(const auto & mipFam : mipMaster.names_->mips_){
 					if (bfs::exists(njh::files::join(VecStr { sampDirMaster.barCorDir_.string(),
-						mipFam, mipFam + "_all.fastq" }))) {
+						mipFam, mipFam + "_all.fastq.gz" }))) {
 						currentPairs.emplace_back(MipFamSamp(mipFam, samp));
 				}
 			}
@@ -687,7 +687,7 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithExtracted(uint32_t numThreads) 
 				for (const auto & mipName : mipsForFam) {
 					if (bfs::exists(
 							njh::files::join(
-									VecStr { sampDirMaster.extractDir_.string(), mipName, mipName + ".fastq" }))) {
+									VecStr { sampDirMaster.extractDir_.string(), mipName, mipName + ".fastq.gz" }))) {
 						currentPairs.emplace_back(MipFamSamp(mipFam, samp));
 						break;
 					}
@@ -738,7 +738,7 @@ std::vector<MipFamSamp> SetUpMaster::getSamplesWithRawData(uint32_t numThreads)c
 bool SetUpMaster::checkForClusteredMipFamForSamp(const MipFamSamp & mipSampName) const{
 	SampleDirectoryMaster sampDirMaster(directoryMaster_, mipSampName);
 	return bfs::exists(njh::files::join(VecStr { sampDirMaster.clusDir_.string(),
-		mipSampName.mipFam_, mipSampName.mipFam_ + "_clustered.fastq" }));
+		mipSampName.mipFam_, mipSampName.mipFam_ + "_clustered.fastq.gz" }));
 }
 
 bool SetUpMaster::checkForRawDataForSamp(const MipFamSamp & mipSampName) const{
@@ -851,10 +851,10 @@ bfs::path SetUpMaster::pathMipPopClusHaplo(
 		const MipFamSamp & mipSampName) const {
 	/*return njh::files::make_path(directoryMaster_.populationClusteringDir_,
 			mipSampName.mipFam_, "analysis", "population",
-			mipSampName.mipFam_ + ".fastq");*/
+			mipSampName.mipFam_ + ".fastq.gz");*/
 	return njh::files::make_path(directoryMaster_.populationClusteringDir_,
 				mipSampName.mipFam_, "analysis", "population",
-				"PopSeqs.fastq");
+				"PopSeqs.fastq.gz");
 }
 
 bfs::path SetUpMaster::pathSampleExtractInfo(const MipFamSamp & mipSampName) const {
@@ -894,20 +894,20 @@ bfs::path SetUpMaster::pathSampleRawDataSecondRead(const MipFamSamp & mipSampNam
 bfs::path SetUpMaster::pathPopClusFinalHaplo(const MipFamSamp & mipSampName) const{
 	return njh::files::make_path(directoryMaster_.populationClusteringDir_,
 				mipSampName.mipFam_, "analysis", "samplesOutput",mipSampName.samp_, "final",
-				mipSampName.samp_ + ".fastq");
+				mipSampName.samp_ + ".fastq.gz");
 }
 /*
 bfs::path SetUpMaster::pathPopClusOriginalHaplo(const MipFamSamp & mipSampName) const{
 	return njh::files::make_path(directoryMaster_.populationClusteringDir_,
 				mipSampName.mipFam_, "analysis", "originals",
-				mipSampName.samp_ + ".fastq");
+				mipSampName.samp_ + ".fastq.gz");
 }*/
 
 bfs::path SetUpMaster::pathMipSampBarCorHap(
 		const MipFamSamp & mipSampName) const {
 	return njh::files::make_path(directoryMaster_.masterDir_, mipSampName.samp_,
 			mipSampName.samp_ + "_mipBarcodeCorrection", mipSampName.mipFam_,
-			mipSampName.mipFam_ + "_all.fastq");
+			mipSampName.mipFam_ + "_all.fastq.gz");
 }
 bfs::path SetUpMaster::pathMipSampBarCorBars(
 		const MipFamSamp & mipSampName, const std::string & mipTarName) const {
@@ -1106,10 +1106,10 @@ table SetUpMaster::gatherExtractStats(const std::vector<MipFamSamp> & samplesExt
 											SeqIOOptions::getInFormat(
 													njh::files::getExtension(filePath.string())), false), false);
 							uint32_t discarded = countSeqs(
-									SeqIOOptions(njh::files::make_path(mipMaster.directoryMaster_.masterDir_,samp.samp_,samp.samp_ + ".discarded.fastq").string(),
+									SeqIOOptions(njh::files::make_path(mipMaster.directoryMaster_.masterDir_,samp.samp_,samp.samp_ + ".discarded.fastq.gz").string(),
 											SeqIOOptions::inFormats::FASTQ, false), false);
 							uint32_t unassembled = countSeqs(
-									SeqIOOptions(njh::files::make_path(mipMaster.directoryMaster_.masterDir_,samp.samp_,samp.samp_ + ".notCombined_1.fastq").string(),
+									SeqIOOptions(njh::files::make_path(mipMaster.directoryMaster_.masterDir_,samp.samp_,samp.samp_ + ".notCombined_1.fastq.gz").string(),
 											SeqIOOptions::inFormats::FASTQ, false), false);
 							uint32_t raw = assembled + discarded + unassembled;
 							table extractTab(mipMaster.pathSampleExtractInfo(samp).string(), "\t", true);

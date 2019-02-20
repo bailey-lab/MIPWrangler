@@ -109,7 +109,7 @@ void SampleDirectoryMaster::ensureClusDirectoryExist() const{
 
 bfs::path SampleDirectoryMaster::getClusteredHapFnp(const std::string & mipName)const{
 	return njh::files::make_path(clusDir_.string(), mipName,
-			mipName + "_clustered.fastq");
+			mipName + "_clustered.fastq.gz");
 }
 
 

@@ -512,7 +512,7 @@ PopClusTabs printMipSampleCollapseInfo(
 	if(!sampCollapses.popCollapse_){
 		sampCollapses.loadInPreviousPop();
 	}
-	std::cout << __FILE__ << " " << __LINE__ << std::endl;
+	//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	std::stringstream infoFile;
 	infoFile << "s_Sample";
 	infoFile << "\t" << genPopInfoWithBars::getInfoHeader("\t");
@@ -592,7 +592,7 @@ PopClusTabs printMipSampleCollapseInfo(
 	PopClusTabs ret;
 	ret.sampTab_ = table(infoFile, "\t", true);
 	ret.popTab_ = table(popInfoOutFile, "\t", true);
-	std::cout << __FILE__ << " " << __LINE__ << std::endl;
+	//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	return ret;
 }
 

@@ -221,8 +221,8 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 								throw std::runtime_error{ss.str()};
 							}else{
 								sampleOpts.emplace_back(SeqIOOptions::genPairedInGz(pairedFnp.second.r1_fnp, pairedFnp.second.r2_fnp));
-								sampleOpts.back().outFormat_ = SeqIOOptions::outFormats::FASTQPAIRED;
-								sampleOpts.back().out_.outExtention_ = "_R1.fastq";
+								sampleOpts.back().outFormat_ = SeqIOOptions::outFormats::FASTQPAIREDGZ;
+								sampleOpts.back().out_.outExtention_ = "_R1.fastq.gz";
 								sampleOpts.back().revComplMate_ = true;
 							}
 						}
