@@ -75,6 +75,7 @@ public:
 
 	//get back a vector of warnings, if empty nothing went wrong
 	VecStr checkDirStruct() const;
+	void checkDirStructThrow(const std::string & funcName) const;
 
 	bool checkForRawDataForSamp(const MipFamSamp & mipSampName) const;
 	bool checkForExtractedMipFamForSamp(const MipFamSamp & mipSampName) const;

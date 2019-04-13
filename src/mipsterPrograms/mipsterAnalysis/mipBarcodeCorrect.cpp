@@ -66,8 +66,8 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 				<< " in samp: " << mipSampName.samp_ << std::endl;
 	}
 	uint32_t mipCorrectedNumber = 0;
-	SeqIOOptions outOpts = SeqIOOptions::genFastqOut( mipFamilyDir.string() + mipSampName.mipFam_
-					+ "_all.fastq");
+	SeqIOOptions outOpts = SeqIOOptions::genFastqOutGz( mipFamilyDir.string() + mipSampName.mipFam_
+					+ "_all.fastq.gz");
 	SeqOutput writer(outOpts);
 	writer.openOut();
 	bool foundNone = true;
@@ -80,11 +80,12 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 			std::cout << "Creating seqIoOptions for mip: " << mipSampName.mipFam_
 				<< " in samp: " << mipSampName.samp_ << std::endl;
 		}
-		SeqIOOptions options = SeqIOOptions::genFastqIn(njh::files::join(
-				VecStr { sampDirMaster.extractDir_.string(), mipName, mipName + ".fastq" }));
+		SeqIOOptions options = SeqIOOptions::genFastqInGz(njh::files::join(
+				VecStr { sampDirMaster.extractDir_.string(), mipName, mipName + ".fastq.gz" }));
 		if(setUpPars.debug_){
-			std::cout << options.firstName_ << std::endl;
+			std::cout << options.firstName_ << " " << njh::colorBool(options.inExists())<< std::endl;
 		}
+
 		if (options.inExists()) {
 			foundNone = false;
 			charCounter ligBarCounter(std::vector<char> { 'A', 'C', 'G', 'T' });

@@ -29,7 +29,7 @@ namespace njhseq {
 
 void correctForContamForMipFam(const mipCorrectForContamWithSameBarcodesPars & pars,
 		const SetUpMaster & mipMaster){
-
+	//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	auto mipFamTars = mipMaster.mips_->getMipsForFamily(pars.mipName);
 	//key1 = samp, key2 = mipFam, val = vec of barcodes to remove
 	std::unordered_map<std::string, std::unordered_map<std::string, VecStr>> barcodesToRemove;
@@ -41,7 +41,7 @@ void correctForContamForMipFam(const mipCorrectForContamWithSameBarcodesPars & p
 				barcodesExists.emplace_back(mipSamp);
 			}
 		}
-
+		//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		std::unordered_map<std::string, strCounter> barCounts;
 		for (const auto & bars : barcodesExists) {
 			std::ifstream barFile(mipMaster.pathMipSampBarCorBars(MipFamSamp(pars.mipName, bars.samp_), bars.mipFam_).string());
@@ -68,6 +68,7 @@ void correctForContamForMipFam(const mipCorrectForContamWithSameBarcodesPars & p
 				}
 			}
 		}
+		//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		std::unordered_map<std::string, VecStr> sharedBars;
 		for (const auto & sampCount : barCounts) {
 			for (const auto & bars : sampCount.second.counts_) {
@@ -102,20 +103,22 @@ void correctForContamForMipFam(const mipCorrectForContamWithSameBarcodesPars & p
 			}
 		}
 	}
-
+//	std::cout << __FILE__ << " " << __LINE__ << std::endl;
 
 	for (const auto & samps : barcodesToRemove) {
-		auto hapFile = mipMaster.pathMipSampBarCorHap(
-				MipFamSamp(pars.mipName, samps.first));
-		bfs::path tempHapFile = mipMaster.pathMipSampBarCorHap(
-				MipFamSamp(pars.mipName, samps.first)).string() + "_temp";
+		auto hapFile = mipMaster.pathMipSampBarCorHap(MipFamSamp(pars.mipName, samps.first));
+		bfs::path tempHapFile = mipMaster.pathMipSampBarCorHap(MipFamSamp(pars.mipName, samps.first)).string() + "_temp.gz";
 		bfs::rename(hapFile, tempHapFile);
-		SeqIOOptions opts = SeqIOOptions::genFastqInOut(tempHapFile.string(),hapFile.string(),true);
+//		std::cout << "tempHapFile: " << tempHapFile << std::endl;
+//		std::cout << "hapFile :" << hapFile << std::endl;
+		SeqIOOptions opts = SeqIOOptions::genFastqInOutGz(tempHapFile,hapFile,true);
+//		std::cout << njh::json::toJson(opts) << std::endl;
 		SeqIO reader(opts);
 		reader.openIn();
 		reader.openOut();
 		readObject read;
 		while(reader.readNextRead(read)){
+			//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 			read.processNameForMeta();
 			if (read.containsMeta("bar") && read.containsMeta("mipTar")) {
 				auto search = samps.second.find(read.getMeta("mipTar"));

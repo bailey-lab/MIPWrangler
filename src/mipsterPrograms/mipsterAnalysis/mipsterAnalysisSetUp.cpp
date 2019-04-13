@@ -82,6 +82,7 @@ void mipsterAnalysisSetUp::setUpExtractFromRawMultiple(extractFromRawParsMultipl
 	setOption(pars.processPairPars_.r2Trim_, "--r2Trim", "Number of Bases to trim off at the end of the r2 read");
 
   setOption(pars.keepIntermediateFiles, "--keepIntermediateFiles", "Keep Intermediate Files");
+  setOption(pars.writeOutInitialExtractedPairs, "--writeOutInitialExtractedPairs", "Write Out Initial Extracted Pairs");
 
 
 	pars.fileOpenLimit_ = (pars.fileOpenLimit_ - pars.numThreads) /pars.numThreads;

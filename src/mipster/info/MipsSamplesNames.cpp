@@ -72,7 +72,6 @@ MipsSamplesNames::MipsSamplesNames(const bfs::path & mipSampleFilename) {
 				<< std::endl;
 		throw std::runtime_error { ss.str() };
 	}
-
 	mips_ = mipSampInfo.getColumn("mips");
 	for(auto & m : mips_){
 		njh::trim(m);

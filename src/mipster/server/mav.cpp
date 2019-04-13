@@ -95,7 +95,7 @@ mav::mav(const Json::Value & config) :
 									InOptions(mipMaster_->pathMipPopClusPopInfo(mipFam)),
 									"\t", true)));
 			seqs_->updateAddCache(mipFam.mipFam_,
-					SeqIOOptions::genFastqIn(
+					SeqIOOptions::genFastqInGz(
 							mipMaster_->pathMipPopClusHaplo(mipFam).string(), true));
 		}
 		//pop info by sample
@@ -113,7 +113,7 @@ mav::mav(const Json::Value & config) :
 						config["mipFamsSampsPopClustered"]);
 		for (const auto & mipSamp : mipFamsSampsPopClustered) {
 			seqs_->updateAddCache(mipSamp.mipFam_ + "_" + mipSamp.samp_ + "_final",
-					SeqIOOptions::genFastqIn(
+					SeqIOOptions::genFastqInGz(
 							mipMaster_->pathPopClusFinalHaplo(mipSamp).string(), true));
 			/*seqs_->updateAddCache(mipSamp.mipFam_ + "_" + mipSamp.samp_ + "_original",
 					SeqIOOptions::genFastqIn(

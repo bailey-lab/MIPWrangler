@@ -311,7 +311,7 @@ void MipsOnGenome::genFastas(){
 									bool foundSame = false;
 									for( auto & outSeq : outputSeqs){
 										if(seq.seq_ == outSeq.seq_ ){
-											outSeq.name_ += "-" + seq.name_;
+											outSeq.name_ += "," + seq.name_;
 											foundSame = true;
 											break;
 										}
@@ -322,10 +322,10 @@ void MipsOnGenome::genFastas(){
 								}
 							}
 							for(auto & outSeq : outputSeqs){
-								if(std::string::npos != outSeq.name_.find('-')){
-									auto gs = njh::tokenizeString(outSeq.name_, "-");
+								if(std::string::npos != outSeq.name_.find(',')){
+									auto gs = njh::tokenizeString(outSeq.name_, ",");
 									njh::sort(gs);
-									outSeq.name_ = njh::conToStr(gs, "-");
+									outSeq.name_ = njh::conToStr(gs, ",");
 								}
 							}
 							return outputSeqs;
@@ -419,7 +419,7 @@ table MipsOnGenome::getGenomeLocsForMipTar(const std::string & tar) const{
 	auto seqs = seqReader.readAllReadsPtrs<readObject>();
 	std::unordered_map<std::string, std::shared_ptr<readObject>> seqsByName;
 	for (const auto & seq : seqs) {
-		auto toks = tokenizeString(seq->seqBase_.name_, "-");
+		auto toks = tokenizeString(seq->seqBase_.name_, ",");
 		for (const auto & tok : toks) {
 			seqsByName[tok] = seq;
 		}
@@ -460,7 +460,7 @@ table MipsOnGenome::getGenomeLocsForAllMipTars() const {
 		auto seqs = seqReader.readAllReadsPtrs<readObject>();
 		std::unordered_map<std::string, std::shared_ptr<readObject>> seqsByName;
 		for (const auto & seq : seqs) {
-			auto toks = tokenizeString(seq->seqBase_.name_, "-");
+			auto toks = tokenizeString(seq->seqBase_.name_, ",");
 			for (const auto & tok : toks) {
 				seqsByName[tok] = seq;
 			}
@@ -512,7 +512,7 @@ table MipsOnGenome::getGenomeLocsForGenome(const std::string & genome) const {
 			auto seqs = seqReader.readAllReadsPtrs<readObject>();
 			std::unordered_map<std::string, std::shared_ptr<readObject>> seqsByName;
 			for (const auto & seq : seqs) {
-				auto toks = tokenizeString(seq->seqBase_.name_, "-");
+				auto toks = tokenizeString(seq->seqBase_.name_, ",");
 				for (const auto & tok : toks) {
 					seqsByName[tok] = seq;
 				}
@@ -582,7 +582,7 @@ table MipsOnGenome::getMipTarStatsForGenomes(const VecStr & genomes,
 		std::unordered_map<std::string, std::shared_ptr<readObject>> readsByAllNames;
 		while(reader.readNextRead(seq)){
 			readLens.emplace_back(len(seq));
-			auto toks = tokenizeString(seq.name_, "-");
+			auto toks = tokenizeString(seq.name_, ",");
 			totalHapsPossible+= toks.size();
 			++hapNum;
 			for(const auto & tok : toks){
@@ -704,7 +704,7 @@ table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
 		std::unordered_map<std::string, std::shared_ptr<readObject>> readsByAllNames;
 		while (reader.readNextRead(seq)) {
 			readLens.emplace_back(len(seq));
-			auto toks = tokenizeString(seq.name_, "-");
+			auto toks = tokenizeString(seq.name_, ",");
 			totalHapsPossible += toks.size();
 			++hapNum;
 			for (const auto & tok : toks) {

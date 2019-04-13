@@ -43,11 +43,11 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 	uint64_t maxSize = 0;
 	VecStr missingSamples;
 	VecStr foundSamples;
-	SeqIOOptions genOpts = SeqIOOptions::genFastqIn("", true);
+	SeqIOOptions genOpts = SeqIOOptions::genFastqInGz("", true);
 
 	for (const auto& samp : mipSamps.samples_) {
 		SampleDirectoryMaster sampDirMaster(directoryMaster, MipFamSamp("", samp));
-		SeqIOOptions opts = SeqIOOptions::genFastqIn(sampDirMaster.getClusteredHapFnp(pars.mipName).string(), true);
+		SeqIOOptions opts = SeqIOOptions::genFastqInGz(sampDirMaster.getClusteredHapFnp(pars.mipName).string(), true);
 		if(bfs::exists(opts.firstName_)){
 			SeqInput reader(opts);
 			reader.openIn();

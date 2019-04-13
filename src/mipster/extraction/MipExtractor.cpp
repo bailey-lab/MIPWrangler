@@ -86,6 +86,8 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 	std::unordered_map<std::string, PairedReadProcessor::ProcessedResultsCounts> pairStitchingCounts;
 
 //	VecStr filterOutNames = { "_failedQuality", "_failedLigation", "_failedMinLen", "_containsNs", "_badStitch" };
+	auto forStitchedOut = sampleIOOpts.front().out_;
+	forStitchedOut.outExtention_ = ".fastq.gz";
 
 	VecStr allMipTargets = mipMaster.getAllMipTargets();
 	for (const auto & mip : allMipTargets) {
@@ -101,15 +103,24 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 								+ "_filteredOff" ), sampleIOOpts.front().outFormat_,
 										sampleIOOpts.front().out_) );
 
+		if(pars.writeOutInitialExtractedPairs){
+			mipOuts.addReader(mip + "_initial",
+					SeqIOOptions(
+							njh::files::make_path(mipDirectory, mip
+									+ "_initial" ), sampleIOOpts.front().outFormat_,
+											sampleIOOpts.front().out_) );
+		}
+
 		mipStitchedOuts.addReader(mip,
 				SeqIOOptions(
 						njh::files::make_path(sampDirMaster.extractDir_.string(), mip, mip),
-						SeqIOOptions::outFormats::FASTQ, sampleIOOpts.front().out_));
+						SeqIOOptions::outFormats::FASTQGZ, forStitchedOut));
+
 		mipStitchedOuts.addReader(mip + "_filteredOff",
 				SeqIOOptions(
 						njh::files::make_path(mipDirectory, mip
 								+ "_filteredOff" ),
-						SeqIOOptions::outFormats::FASTQ, sampleIOOpts.front().out_) );
+						SeqIOOptions::outFormats::FASTQGZ, forStitchedOut) );
 
 		pairStitchingCounts[mip] = PairedReadProcessor::ProcessedResultsCounts{};
 
@@ -204,7 +215,6 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 							failedQaulifierName = "_filteredOff";
 							eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
 						} else {
-							++pairStitchingCounts[mip.name_].total;
 							eCase = mip.checkRead(*stitchedRes.combinedSeq_, pars.qFilPars_);
 							failedQaulifierName = MipExtractionStats::getNameForCase(eCase);
 							if("" != failedQaulifierName){
@@ -258,7 +268,6 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 							failedQaulifierName = "_filteredOff";
 							eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
 						} else {
-							++pairStitchingCounts[currentMip.name_].total;
 							eCase = currentMip.checkRead(*stitchedRes.combinedSeq_, pars.qFilPars_);
 							failedQaulifierName = MipExtractionStats::getNameForCase(eCase);
 							if("" != failedQaulifierName){
@@ -289,12 +298,15 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 				const auto & mip = mipMaster.mips_->mips_.at(possibleArms.begin()->first);
 				//stitching
 				auto stitchedRes = pProcessor.processPairedEnd(seq,pairStitchingCounts[mip.name_], alignerObjForStitching);
-
+				++pairStitchingCounts[mip.name_].total;
+				if(pars.writeOutInitialExtractedPairs){
+					mipOuts.add(mip.name_ + "_initial", seq);
+				}
 				//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
 				SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
 				//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 				if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
-					++pairStitchingCounts[mip.name_].total;
+
 
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
@@ -315,7 +327,6 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 						failedQaulifierName = "_filteredOff";
 						eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
 					} else {
-						++pairStitchingCounts[mip.name_].total;
 						eCase = mip.checkRead(*stitchedRes.combinedSeq_, pars.qFilPars_);
 						failedQaulifierName = MipExtractionStats::getNameForCase(eCase);
 						if("" != failedQaulifierName){
@@ -394,7 +405,6 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 							failedQaulifierName = "_filteredOff";
 							eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
 						} else {
-							++pairStitchingCounts[mip.name_].total;
 							eCase = mip.checkRead(*stitchedRes.combinedSeq_, pars.qFilPars_);
 							failedQaulifierName = MipExtractionStats::getNameForCase(eCase);
 							if("" != failedQaulifierName){

@@ -92,6 +92,7 @@ struct mipIllumArmExtractionPars : mipCorePars{
   QualFilteringPars qFilPars_;
 	bool cacheAlignments = false;
 	bool keepIntermediateFiles = false;
+	bool writeOutInitialExtractedPairs = false;
 
 	bfs::path refDir = "";
 
@@ -118,6 +119,7 @@ struct mipIllumArmExtractionParsMultiple : public mipIllumArmExtractionPars {
 		ret.qFilPars_ = qFilPars_;
 		ret.cacheAlignments = cacheAlignments;
 		ret.keepIntermediateFiles = keepIntermediateFiles;
+		ret.writeOutInitialExtractedPairs = writeOutInitialExtractedPairs;
 		ret.processPairPars_ = processPairPars_;
 		ret.refDir = refDir;
 		ret.copyCore(*this);
@@ -144,6 +146,8 @@ struct extractFromRawParsMultiple : public extractFromRawPars {
 		ret.qFilPars_ = qFilPars_;
 		ret.cacheAlignments = cacheAlignments;
 		ret.processPairPars_ = processPairPars_;
+		ret.keepIntermediateFiles = keepIntermediateFiles;
+		ret.writeOutInitialExtractedPairs = writeOutInitialExtractedPairs;
 		ret.refDir = refDir;
 		ret.copyCore(*this);
 		return ret;

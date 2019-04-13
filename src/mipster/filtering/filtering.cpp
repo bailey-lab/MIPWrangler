@@ -158,8 +158,7 @@ std::shared_ptr<MippedRead> filterWithBarcodeCoverage(
 					alignerObj.comp_.recalcMismatchQuality(setUpPars.qScorePars_);
 					alignerObj.comp_.setEventBaseIdentityHq();
 					//cluster together reads that are .98 identity close to each other in a greedy fashion
-					if (alignerObj.comp_.distances_.eventBasedIdentityHq_
-							>= pars.barcodeIdentity) {
+					if (alignerObj.comp_.distances_.eventBasedIdentityHq_ >= pars.barcodeIdentity) {
 						if (setUpPars.debug_) {
 							std::cout << "\t\tPassed identity check collapsing"
 									<< std::endl;
@@ -177,19 +176,33 @@ std::shared_ptr<MippedRead> filterWithBarcodeCoverage(
 			//remove the reads that had been added
 			clusters = readVecSplitter::splitVectorOnRemove(clusters).first;
 			//calculate a consensus for the reads
+//			static uint32_t count = 0;
+//			++count;
+//			if(clusters.front().seqBase_.cnt_ > 2){
+//				auto outOpts = SeqIOOptions::genFastqOut(bfs::path(estd::to_string(count)));
+//				outOpts.out_.overWriteFile_ = true;
+//				SeqOutput writer(outOpts);
+//				writer.openOut();
+//				writer.write(clusters.front().seqBase_);
+//			}
 			clusterVec::allCalculateConsensus(clusters, alignerObj, true);
+
+//			if("crt_S0_Sub2_mip5" == tarStat.mipFamily_){
+//				std::cout << "clusters.size(): " << clusters.size() << std::endl;
+//				for(const auto & pos : iter::range(clusters.size())){
+//					std::cout << "\tpso: " << pos << " " << clusters[pos].seqBase_.name_ << " " << clusters[pos].seqBase_.cnt_ << std::endl;
+//				}
+//			}
 		}
 
 		//choose a representative sequence for the barcode by using the top most abundant,highest quality cluster
 		readVecSorter::sort(clusters);
-		correctedRead = std::make_shared<MippedRead>(
-				clusters.front().seqBase_);
+		correctedRead = std::make_shared<MippedRead>(clusters.front().seqBase_);
 		correctedRead->barInfo_ = std::make_shared<BarcodeInfo>(currentBarInfo);
 		if(clusters.size() > 1){
 			for(const auto pos : iter::range<uint32_t>(1,clusters.size())){
 				alignerObj.alignCacheGlobal(clusters.front(), clusters[pos]);
-				alignerObj.profilePrimerAlignment(clusters.front(),
-						clusters[pos]);
+				alignerObj.profilePrimerAlignment(clusters.front(),clusters[pos]);
 				alignerObj.comp_.recalcMismatchQuality(setUpPars.qScorePars_);
 				alignerObj.comp_.setEventBaseIdentityHq();
 				/**@todo may want to print out the number of clusters left,

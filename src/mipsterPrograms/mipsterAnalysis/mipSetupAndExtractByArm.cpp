@@ -49,17 +49,19 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 	mipMaster.mips_->setAllMinimumExpectedLen(pars.minLen);
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 
-	if("" != pars.sampleMetaFnp){
+	if ("" != pars.sampleMetaFnp) {
 		mipMaster.setMetaData(pars.sampleMetaFnp);
 	}
 	mipMaster.createDirStructSkeleton();
 	auto warnings = mipMaster.checkDirStruct();
-	if(!warnings.empty()){
+	if (!warnings.empty()) {
 		std::stringstream ss;
-		ss << "Error in directory structure, make sure you are in the correct analysis directory" << std::endl;
+		ss
+				<< "Error in directory structure, make sure you are in the correct analysis directory"
+				<< std::endl;
 		ss << "Following warnings;" << std::endl;
 		ss << njh::conToStr(warnings, "\n") << std::endl;
-		throw std::runtime_error{ss.str()};
+		throw std::runtime_error { ss.str() };
 	}
 
 	pars.dir = njh::appendAsNeededRet(pars.dir.string(), "/");
@@ -107,11 +109,29 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 	concurrent::AlignerPool aligners(maxLen, setUp.pars_.gapInfo_,
 			setUp.pars_.scoring_, pars.numThreads);
 	aligners.initAligners();
+	/*
+	 * 	pars_.generalMatch_,
+			pars_.generalMismatch_,
+			pars_.degenScoring_,
+			pars_.lessNScoring_,
+			pars_.caseInsensitiveScoring_
+	 */
+	auto scoringForStitching = substituteMatrix::createScoreMatrix(
+			2,
+			-2,
+			false,
+			true,
+			true);
+	aligner alignerObjForStitching(maxLen, gapScoringParameters(10,1,0,0,0,0), scoringForStitching, false);
+	alignerObjForStitching.qScorePars_.qualThresWindow_ = 0;
+	concurrent::AlignerPool alignersForStitching(alignerObjForStitching, pars.numThreads);
 
-	concurrent::AlignerPool alignersForStitching(maxLen, gapScoringParameters(5,1,0,0,0,0),
-			setUp.pars_.scoring_, pars.numThreads);
 	alignersForStitching.initAligners();
-
+//	{
+//		auto alignerObjForStitching = alignersForStitching.popAligner();
+//		std::cout << alignerObjForStitching->parts_.gapScores_.toJson() << std::endl;
+//
+//	}
 
 	auto extractFiles =
 			[&pars,&samplesExtracted,&samplesEmpty,&filesKeys,&emptyFiles,&aligners,&alignersForStitching,&logs,&logsMut,&mipMaster](
@@ -201,8 +221,8 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 								throw std::runtime_error{ss.str()};
 							}else{
 								sampleOpts.emplace_back(SeqIOOptions::genPairedInGz(pairedFnp.second.r1_fnp, pairedFnp.second.r2_fnp));
-								sampleOpts.back().outFormat_ = SeqIOOptions::outFormats::FASTQPAIRED;
-								sampleOpts.back().out_.outExtention_ = "_R1.fastq";
+								sampleOpts.back().outFormat_ = SeqIOOptions::outFormats::FASTQPAIREDGZ;
+								sampleOpts.back().out_.outExtention_ = "_R1.fastq.gz";
 								sampleOpts.back().revComplMate_ = true;
 							}
 						}
@@ -292,7 +312,11 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipBarcodeCorrectionMultiple --masterDir "
 				<< njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
 		<< " --numThreads " << pars.numThreads
-		<< " --logFile mipBarcodeCorrecting_run1" << std::endl;
+		<< " --logFile mipBarcodeCorrecting_run1";
+		if(pars.keepIntermediateFiles){
+			mipScriptOut << " --keepIntermediateFiles";
+		}
+		mipScriptOut << std::endl;
 	}
 	// run clustering step, mipClusteringMultiple
 	{
@@ -303,7 +327,11 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipClusteringMultiple --masterDir "
 				<< njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
 		<< " --numThreads " << pars.numThreads
-		<< " --logFile mipClustering_run1" << std::endl;
+		<< " --logFile mipClustering_run1" ;
+		if(pars.keepIntermediateFiles){
+			mipScriptOut << " --keepIntermediateFiles";
+		}
+		mipScriptOut << std::endl;
 	}
 	// run population clustering, mipPopulationClusteringMultiple
 	{
@@ -317,6 +345,9 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 		<< " --logFile mipPopClustering_run1";
 		if("" != pars.refDir){
 			mipScriptOut << " --refDir " << njh::files::normalize(pars.refDir);
+		};
+		if (pars.keepIntermediateFiles) {
+			mipScriptOut << " --keepIntermediateFiles";
 		}
 		mipScriptOut << std::endl;
 	}

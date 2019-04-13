@@ -64,5 +64,7 @@ class mipsterUtilsRunner : public njh::progutils::ProgramRunner {
 
 	static int ExtractTargetsFromGenomes(const njh::progutils::CmdArgs & inputCommands);
 
+	static int benchmarkingForControlMixtures(const njh::progutils::CmdArgs & inputCommands);
+
 };
 } // namespace njhseq
