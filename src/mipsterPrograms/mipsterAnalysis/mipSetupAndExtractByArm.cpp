@@ -46,7 +46,7 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 	mipMaster.setMipsSampsNamesFnp(pars.mipsSamplesFile);
 	mipMaster.loadMipsSampsInfo(pars.allowableErrors);
 	mipMaster.setServerName(njh::pasteAsStr("mip", mipServerName));
-	mipMaster.mips_->setAllMinimumExpectedLen(pars.minLen);
+	mipMaster.mips_->setAllMinCaptureLength(pars.minCaptureLength);
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 
 	if ("" != pars.sampleMetaFnp) {
@@ -105,7 +105,7 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 	logs["qualityFilteringPars"] = pars.qFilPars_.toJson();
 	std::mutex logsMut;
 
-	uint64_t maxLen = pars.minLen * 2;
+	uint64_t maxLen = pars.minCaptureLength * 2;
 	concurrent::AlignerPool aligners(maxLen, setUp.pars_.gapInfo_,
 			setUp.pars_.scoring_, pars.numThreads);
 	aligners.initAligners();

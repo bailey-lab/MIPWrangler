@@ -69,7 +69,7 @@ bool MipExtractionStats::haveStatFor(const std::string & name)const{
 
 
 table MipExtractionStats::outputContentsJustTargets(const MipCollection & mips){
-	table ret(toVecStr(VecStr{"Sample", "mipTarget", "mipFamily"}, SinlgeMipExtractInfo::toVecStrHeader(minlen_, qualCheckStr)));
+	table ret(toVecStr(VecStr{"Sample", "mipTarget", "mipFamily"}, SinlgeMipExtractInfo::toVecStrHeader(minCaptureLength_, qualCheckStr)));
 
 	auto statKeys = getVectorOfMapKeys(stats_);
 	MipNameSorter::sort(statKeys);
@@ -86,7 +86,7 @@ table MipExtractionStats::outputContentsJustTargets(const MipCollection & mips){
 table MipExtractionStats::outputContentsSummary(const MipCollection & mips){
 	table ret(toVecStr(VecStr{"Sample", "total"},
 			VecStr{"unmatched", "indeterminate", "smallFragment"},
-			SinlgeMipExtractInfo::toVecStrHeader(minlen_, qualCheckStr)
+			SinlgeMipExtractInfo::toVecStrHeader(minCaptureLength_, qualCheckStr)
 			));
 	auto statKeys = getVectorOfMapKeys(stats_);
 	SinlgeMipExtractInfo total;

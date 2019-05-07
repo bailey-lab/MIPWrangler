@@ -49,7 +49,7 @@ public:
 
 	std::string sampName_;
 
-	uint32_t minlen_{0};
+	uint32_t minCaptureLength_{0};
 	std::string qualCheckStr;
 
 	void increaseCount(const std::string & name,
