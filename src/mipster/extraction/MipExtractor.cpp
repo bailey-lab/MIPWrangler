@@ -194,9 +194,9 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 					//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
 					SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
-					//					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
-					if (stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
-							 stitchedRes.status_== PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP) {
+					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
+//					if (stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
+//							 stitchedRes.status_== PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP) {
 						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 						eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
 						//log and write read
@@ -252,9 +252,9 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 					//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
 					SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
-					//					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
-					if (stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
-							 stitchedRes.status_== PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP) {
+					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
+//					if (stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
+//							 stitchedRes.status_== PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP) {
 						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 						eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
 						//log and write read
@@ -311,9 +311,9 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 				//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
 				SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
 				//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
-				//					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
-				if (stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
-						 stitchedRes.status_== PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP) {
+				if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
+//				if (stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
+//						 stitchedRes.status_== PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP) {
 
 
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
@@ -393,9 +393,9 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 					//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
 					SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
-//					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
-					if(stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
-						 stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP){
+					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
+//					if(stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
+//						 stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP){
 						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 						eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
 						//log and write read

@@ -33,7 +33,18 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 	extractFromRawParsMultiple pars;
 	std::string mipServerName = "";
 	bool runRest = false;
+	int32_t stitchMatchScore = 2;
+	int32_t stitchMismatchScore = -2;
+	uint32_t stitchGapOpen = 10;
+	uint32_t stitchGapExtend = 1;
 	mipsterAnalysisSetUp setUp(inputCommands);
+
+	setUp.setOption(stitchMatchScore, "--stitchMatchScore", "Match Score for stitching alignments");
+	setUp.setOption(stitchMismatchScore, "--stitchMismatchScore", "Mismatch penalty for stitching alignments");
+	setUp.setOption(stitchGapOpen, "--stitchGapOpen", "Gap opening penalty for stitching alignments, the penalty will be the negative value given here");
+	setUp.setOption(stitchGapExtend, "--stitchGapExtend", "Gap extending penalty for stitching alignments, the penalty will be the negative value given here");
+
+
 	setUp.setOption(runRest, "--runRest", "Run the rest of the analysis as well with defaults");
 	setUp.setOption(mipServerName, "--mipServerNumber", "Name of the mip server, e.g. 1", true);
 	setUp.setUpExtractFromRawMultiple(pars);
@@ -117,12 +128,12 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 			pars_.caseInsensitiveScoring_
 	 */
 	auto scoringForStitching = substituteMatrix::createScoreMatrix(
-			2,
-			-2,
+			stitchMatchScore,
+			stitchMismatchScore,
 			false,
 			true,
 			true);
-	aligner alignerObjForStitching(maxLen, gapScoringParameters(10,1,0,0,0,0), scoringForStitching, false);
+	aligner alignerObjForStitching(maxLen, gapScoringParameters(stitchGapOpen,stitchGapExtend,0,0,0,0), scoringForStitching, false);
 	alignerObjForStitching.qScorePars_.qualThresWindow_ = 0;
 	concurrent::AlignerPool alignersForStitching(alignerObjForStitching, pars.numThreads);
 
