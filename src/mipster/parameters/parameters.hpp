@@ -25,7 +25,7 @@
 // along with MIPWrangler.  If not, see <http://www.gnu.org/licenses/>.
 //
 #include "mipster/common.h"
-#include <SeekDeep/objects/PairedReadProcessor.hpp>
+#include <SeekDeep/objects/IlluminaUtils/PairedReadProcessor.hpp>
 
 namespace njhseq {
 

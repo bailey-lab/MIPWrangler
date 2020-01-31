@@ -28,7 +28,7 @@
 #include "mipster/info.h"
 #include "mipster/mipUtils/MipNameSorter.hpp"
 
-#include <SeekDeep/objects/PairedReadProcessor.hpp>
+#include <SeekDeep/objects/IlluminaUtils/PairedReadProcessor.hpp>
 
 namespace njhseq {
 
