@@ -89,7 +89,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 	collapser collapserObj = collapser(seqPars.colOpts_);
 	collapse::SampleCollapseCollection sampColl(genOpts, pars.masterDir,
 			mipFamilyDir,
-			PopNamesInfo(pars.mipName, foundSamples),
+			PopNamesInfo(pars.mipName, foundSamples, VecStr{}),
 			pars.clusteringCutOffs);
 
 	if("" != pars.sampleMetaFnp){
