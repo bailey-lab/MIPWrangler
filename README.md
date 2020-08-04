@@ -1,6 +1,6 @@
 MIPWrangler
 ========
-Version 1.2.0
+Version 1.2.1-dev
 
 Bioinformatics tools to analyze molecular inversion probe (MIP) sequencing results Bailey Lab
 

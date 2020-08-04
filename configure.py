@@ -7,7 +7,7 @@ from utils import Utils
 from genFuncs import genHelper
 def main():
     name = "MIPWrangler"
-    libs = "seekdeep:v3.0.0"
+    libs = "seekdeep:develop"
     args = genHelper.parseNjhConfigureArgs()
     cmd = genHelper.mkConfigCmd(name, libs, sys.argv, private = True)
     Utils.run(cmd)

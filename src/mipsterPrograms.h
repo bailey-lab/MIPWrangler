@@ -45,7 +45,7 @@ mipsterRunner::mipsterRunner() :
 				  addRing<mipsterSimRunner>(),
 					addRing<mipsterMipExplorerRunner>(),
 					addRing<mipsterMipTesterRunner>()}, { }, "MIPWrangler",
-					"1", "2", "0") {
+					"1", "2", "1-dev") {
 }
 } // namespace njhseq
 
