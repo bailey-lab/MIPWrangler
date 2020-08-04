@@ -69,11 +69,11 @@ public:
 
 	uint32_t allowableErrors_ = 0;
 	uint32_t wiggleRoomArm_ = 0;
-	size_t minimumExpectedLen_ = std::numeric_limits<size_t>::max();
+	uint32_t min_capture_length_ = std::numeric_limits<uint32_t>::max();
 
 	void setAllowableErrorInArm(uint32_t allowableErrors);
 	void setWiggleRoomInArm(uint32_t wiggleRoom);
-	void setMinimumExpectedLen(size_t minimumExpectedLen);
+	void setMinCaptureLength(uint32_t min_capture_length);
 
 	std::vector<ArmPosScore> getPossibleExtArmPos(const seqInfo & read) const;
 	std::vector<ArmPosScore> getPossibleLigArmPos(const seqInfo & read) const;

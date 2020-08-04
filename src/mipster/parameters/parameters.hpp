@@ -25,7 +25,7 @@
 // along with MIPWrangler.  If not, see <http://www.gnu.org/licenses/>.
 //
 #include "mipster/common.h"
-#include <SeekDeep/objects/PairedReadProcessor.hpp>
+#include <SeekDeep/objects/IlluminaUtils/PairedReadProcessor.hpp>
 
 namespace njhseq {
 
@@ -87,7 +87,7 @@ struct mipIllumArmExtractionPars : mipCorePars{
 	  processPairPars_.r2Trim_ = 1;
 	}
 	std::string sampleName = "";
-	uint32_t minLen = 150;
+	uint32_t minCaptureLength = 100;
   uint32_t smallFragmentLength = 50;
   QualFilteringPars qFilPars_;
 	bool cacheAlignments = false;
@@ -112,7 +112,7 @@ struct mipIllumArmExtractionParsMultiple : public mipIllumArmExtractionPars {
 
 	mipIllumArmExtractionPars createForSample(const std::string & newSampleName)const{
 		mipIllumArmExtractionPars ret;
-		ret.minLen = minLen;
+		ret.minCaptureLength = minCaptureLength;
 		ret.smallFragmentLength = smallFragmentLength;
 		ret.fileOpenLimit_ = fileOpenLimit_;
 		ret.sampleName = newSampleName;
@@ -139,7 +139,7 @@ struct extractFromRawParsMultiple : public extractFromRawPars {
 	extractFromRawPars createForSample(const std::string & newSampleName)const{
 		extractFromRawPars ret;
 		ret.dir = dir;
-		ret.minLen = minLen;
+		ret.minCaptureLength = minCaptureLength;
 		ret.smallFragmentLength = smallFragmentLength;
 		ret.fileOpenLimit_ = fileOpenLimit_;
 		ret.sampleName = newSampleName;

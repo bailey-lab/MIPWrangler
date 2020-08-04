@@ -153,8 +153,8 @@ void Mip::setWiggleRoomInArm(uint32_t wiggleRoom) {
 	wiggleRoomArm_ = wiggleRoom;
 }
 
-void Mip::setMinimumExpectedLen(size_t minimumExpectedLen) {
-	minimumExpectedLen_ = minimumExpectedLen;
+void Mip::setMinCaptureLength(uint32_t min_capture_length) {
+	min_capture_length_ = min_capture_length;
 }
 
 
@@ -172,9 +172,9 @@ SinlgeMipExtractInfo::extractCase Mip::checkRead(seqInfo & read,
 			passQC = false;
 			//if fails ligation arm and is below minimum expected length
 			//add failure to bad min length as it probably just doesn't have the arm
-			if (len(read) < minimumExpectedLen_) {
+			if (len(read) < (min_capture_length_ + ligBarcodeLen_ + extBarcodeLen_ + ligationArm_.size() + extentionArm_.size())) {
 				eCase = SinlgeMipExtractInfo::extractCase::MINLENBAD;
-				read.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
+				read.name_.append("_capLen<" + estd::to_string(min_capture_length_));
 			}else{
 				eCase = SinlgeMipExtractInfo::extractCase::BADREVERSE;
 				read.name_.append("_failedLigArm");
@@ -184,9 +184,9 @@ SinlgeMipExtractInfo::extractCase Mip::checkRead(seqInfo & read,
 
 	//check minimum length
 	if (passQC) {
-		if (len(read) < minimumExpectedLen_) {
+		if (len(read) < (min_capture_length_ + ligBarcodeLen_ + extBarcodeLen_ + ligationArm_.size() + extentionArm_.size())) {
 			eCase = SinlgeMipExtractInfo::extractCase::MINLENBAD;
-			read.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
+			read.name_.append("_capLen<" + estd::to_string(min_capture_length_));
 			passQC = false;
 		}
 	}
@@ -235,37 +235,40 @@ SinlgeMipExtractInfo::extractCase Mip::checkRead(PairedRead & seq,
 	if (ligArmPos.empty()) {
 		//if fails ligation arm and is below minimum expected length
 		//add failure to bad min length as it probably just doesn't have the arm
-		if (len(seq.seqBase_) < minimumExpectedLen_ || len(seq.mateSeqBase_) < minimumExpectedLen_) {
-			eCase = SinlgeMipExtractInfo::extractCase::MINLENBAD;
-			seq.seqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
-			seq.mateSeqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
-		}else{
-			eCase = SinlgeMipExtractInfo::extractCase::BADREVERSE;
-			seq.seqBase_.name_.append("_failedLigArm");
-			seq.mateSeqBase_.name_.append("_failedLigArm");
-		}
+//		if (len(seq.seqBase_) < minimumExpectedLen_ || len(seq.mateSeqBase_) < minimumExpectedLen_) {
+//			eCase = SinlgeMipExtractInfo::extractCase::MINLENBAD;
+//			seq.seqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
+//			seq.mateSeqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
+//		}else{
+//			eCase = SinlgeMipExtractInfo::extractCase::BADREVERSE;
+//			seq.seqBase_.name_.append("_failedLigArm");
+//			seq.mateSeqBase_.name_.append("_failedLigArm");
+//		}
+		eCase = SinlgeMipExtractInfo::extractCase::BADREVERSE;
+		seq.seqBase_.name_.append("_failedLigArm");
+		seq.mateSeqBase_.name_.append("_failedLigArm");
 		return eCase;
 	}
 
 	//check minimum length
-	if (len(seq.seqBase_) < minimumExpectedLen_ || len(seq.mateSeqBase_) < minimumExpectedLen_) {
-		eCase = SinlgeMipExtractInfo::extractCase::MINLENBAD;
-		seq.seqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
-		seq.mateSeqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
-		return eCase;
-	}
+//	if (len(seq.seqBase_) < minimumExpectedLen_ || len(seq.mateSeqBase_) < minimumExpectedLen_) {
+//		eCase = SinlgeMipExtractInfo::extractCase::MINLENBAD;
+//		seq.seqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
+//		seq.mateSeqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
+//		return eCase;
+//	}
 
 	//check if trimming to bad quality
 	if(qFilPars.trimAtQual_){
 		readVecTrimmer::trimAtFirstQualScore(seq.seqBase_, qFilPars.trimAtQualCutOff_);
 		readVecTrimmer::trimToLastQualScore(seq.mateSeqBase_, qFilPars.trimAtQualCutOff_);
 		//check minimum length again after trimming
-		if (len(seq.seqBase_) < minimumExpectedLen_ || len(seq.mateSeqBase_) < minimumExpectedLen_) {
-			eCase = SinlgeMipExtractInfo::extractCase::MINLENBAD;
-			seq.seqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
-			seq.mateSeqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
-			return eCase;
-		}
+//		if (len(seq.seqBase_) < minimumExpectedLen_ || len(seq.mateSeqBase_) < minimumExpectedLen_) {
+//			eCase = SinlgeMipExtractInfo::extractCase::MINLENBAD;
+//			seq.seqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
+//			seq.mateSeqBase_.name_.append("_len<" + estd::to_string(minimumExpectedLen_));
+//			return eCase;
+//		}
 	}
 
 

@@ -73,7 +73,8 @@ public:
 
 	void setAllAllowableArmError(uint32_t allowableArmError);
 	void setAllWiggleRoomInArm(uint32_t wiigleRoom);
-	void setAllMinimumExpectedLen(size_t minimumExpectedLen);
+	void setAllMinCaptureLength(uint32_t min_capture_length, bool force = false);
+
 };
 
 }  // namespace njhseq

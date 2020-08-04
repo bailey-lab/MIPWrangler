@@ -73,7 +73,7 @@ void mipsterAnalysisSetUp::setUpExtractFromRawMultiple(extractFromRawParsMultipl
 			"Length to consider a read to be small fragment and shouldn't be processed");
 	setOption(pars.wiggleRoom, "--wiggleRoom",
 			"Amount of bases to allow the arms including barcode to be from the front of the read");
-	setOption(pars.minLen, "--minLen", "Minimum Length of Read to Be Extracted");
+	setOption(pars.minCaptureLength, "--minCaptureLength", "Minimum Capture Length cut off, captures below this will be thrown out, can be set for each mip individually in mip table");
 	setOption(pars.seqFileSuffix, "--seqFileSuffix", "The ending of the sequence append to sample name");
 	setOption(pars.fileOpenLimit_, "--fileOpenLimit", "Number of file allowed to open by one process");
 	setOption(pars.refDir, "--refDir", "Directory with possible reference sequence to rename popUIDs to");
@@ -145,7 +145,7 @@ void mipsterAnalysisSetUp::setUpMipIllumArmExtractionPaired(mipIllumArmExtractio
 			"Length to consider a read to be small fragment and shouldn't be processed");
 	setOption(pars.wiggleRoom, "--wiggleRoom",
 			"Amount of bases to allow the arms to be from the front of the read");
-	setOption(pars.minLen, "--minLen", "Minimum Length of Read to Be Extracted");
+	setOption(pars.minCaptureLength, "--minCaptureLength", "Minimum Capture Length cut off, captures below this will be thrown out, can be set for each mip individually in mip table");
 	processReadInNames(VecStr{"--fastq1", "--fastq2"});
 	pars_.ioOptions_.revComplMate_ = true;
 	pars_.gap_ = "5,1";
@@ -174,7 +174,7 @@ void mipsterAnalysisSetUp::setUpMipIllumArmExtractionMultiplePaired(
 			"Length to consider a read to be small fragment and shouldn't be processed");
 	setOption(pars.wiggleRoom, "--wiggleRoom",
 			"Amount of bases to allow the arms including barcode to be from the front of the read");
-	setOption(pars.minLen, "--minLen", "Minimum Length of Read to Be Extracted");
+	setOption(pars.minCaptureLength, "--minCaptureLength", "Minimum Capture Length cut off, captures below this will be thrown out, can be set for each mip individually in mip table");
 	setOption(pars.seqFileSuffix, "--seqFileSuffix", "The ending of the sequence append to sample name");
 	setOption(pars.fileOpenLimit_, "--fileOpenLimit", "Number of file allowed to open by one process");
 	pars.fileOpenLimit_ = (pars.fileOpenLimit_ - pars.numThreads) /pars.numThreads;
@@ -201,7 +201,7 @@ void mipsterAnalysisSetUp::setUpMipIllumArmExtraction(
 			"Length to consider a read to be small fragment and shouldn't be processed");
 	setOption(pars.wiggleRoom, "--wiggleRoom",
 			"Amount of bases to allow the arms to be from the front of the read");
-	setOption(pars.minLen, "--minLen", "Minimum Length of Read to Be Extracted");
+	setOption(pars.minCaptureLength, "--minCaptureLength", "Minimum Capture Length cut off, captures below this will be thrown out, can be set for each mip individually in mip table");
 	processReadInNames(VecStr{"--fastq"});
 	pars_.gap_ = "5,1";
 	pars_.gapRight_ = "0,0";
@@ -227,7 +227,7 @@ void mipsterAnalysisSetUp::setUpMipIllumArmExtractionMultiple(
 			"Length to consider a read to be small fragment and shouldn't be processed");
 	setOption(pars.wiggleRoom, "--wiggleRoom",
 			"Amount of bases to allow the arms including barcode to be from the front of the read");
-	setOption(pars.minLen, "--minLen", "Minimum Length of Read to Be Extracted");
+	setOption(pars.minCaptureLength, "--minCaptureLength", "Minimum Capture Length cut off, captures below this will be thrown out, can be set for each mip individually in mip table");
 	setOption(pars.seqFileSuffix, "--seqFileSuffix", "The ending of the sequence append to sample name");
 	setOption(pars.fileOpenLimit_, "--fileOpenLimit", "Number of file allowed to open by one process");
 	pars.fileOpenLimit_ = (pars.fileOpenLimit_ - pars.numThreads) /pars.numThreads;

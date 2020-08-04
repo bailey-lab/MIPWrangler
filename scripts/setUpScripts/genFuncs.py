@@ -15,12 +15,13 @@ class genHelper:
                           "TWOBIT", "SEQSERVER","NJHRINSIDE", "PSTREAMS",
                            "MONGOC", "MONGOCXX", "SHAREDMUTEX",
                            "MAGIC", "HTS", "RESTBED", "LIBPCA", "BOOST_FILESYSTEM", 
-                           "ELUCIDATOR", "ELUCIDATORLAB", "MIPWRANGLER", "EIGEN", "ZLIB", "ZLIB-NG"]
+                           "PATHWEAVER", "ELUCIDATOR", "ELUCIDATORLAB", "MIPWRANGLER", "EIGEN",
+                            "ZLIB", "ZLIB-NG", "UNQLITE"]
         neededLibraries = {}
         for lib in neededLibs:
             if ":" in lib:
                 libSplit = lib.split(":")
-                neededLibraries[libSplit[0].upper()] = libSplit[1]
+                neededLibraries[libSplit[0].upper()] = ":".join(libSplit[1:])
             else:
                 neededLibraries[lib.upper()] = ""
 
@@ -28,7 +29,7 @@ class genHelper:
             f.write("CC = {CC}\n".format(CC = cc))
             f.write("CXX = {CXX}\n".format(CXX = cxx))
             f.write("CXXOUTNAME = {NAME_OF_PROGRAM}\n".format(NAME_OF_PROGRAM = outName))
-            f.write("CXXFLAGS = -std=c++14\n")
+            f.write("CXXFLAGS = -std=c++17\n")
             f.write("CXXFLAGS += -Wall -ftemplate-depth=1024 -Werror=uninitialized -Werror=return-type -Wno-missing-braces\n")
             if "" != cxxFlags:
                 if cxxFlags.startswith("\\"):
@@ -42,7 +43,7 @@ class genHelper:
             f.write("CXXOPT += -O2 -funroll-loops -DNDEBUG  \n")
             f.write("\n")
             if private:
-              f.write("PRIVATE = TRUE\n")
+                f.write("PRIVATE = TRUE\n")
             f.write("#debug\n")
             f.write("CXXDEBUG = -g -gstabs+ \n")
             f.write("INSTALL_DIR={INSTALL_LOCATION}\n".format(INSTALL_LOCATION = os.path.join(installDirLoc,installDirName)))
@@ -60,7 +61,7 @@ class genHelper:
 
 
     @staticmethod            
-    def determineCC(args, defaultCC = "gcc-7"):
+    def determineCC(args, defaultCC = "gcc-9"):
         if Utils.isMac():
             defaultCC = "clang"
         if not args.CC:
@@ -72,7 +73,7 @@ class genHelper:
         return defaultCC
     
     @staticmethod
-    def determineCXX(args, defaultCXX = "g++-7"):
+    def determineCXX(args, defaultCXX = "g++-9"):
         if Utils.isMac():
             defaultCXX = "clang++"
         if not args.CXX:
@@ -110,7 +111,7 @@ class genHelper:
         if len(sys.argv) > 1:
             cmd += " " + " ".join(sys.argv[1:])
         if private:
-          cmd += " -private "
+            cmd += " -private "
         return cmd
 
 

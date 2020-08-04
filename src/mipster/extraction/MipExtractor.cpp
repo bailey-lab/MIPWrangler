@@ -28,7 +28,7 @@
 #include "mipster/info.h"
 #include "mipster/mipUtils/MipNameSorter.hpp"
 
-#include <SeekDeep/objects/PairedReadProcessor.hpp>
+#include <SeekDeep/objects/IlluminaUtils/PairedReadProcessor.hpp>
 
 namespace njhseq {
 
@@ -72,7 +72,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 
 	//extraction counts
 	MipExtractionStats allExtractStats(pars.sampleName);
-	allExtractStats.minlen_ = pars.minLen;
+	allExtractStats.minCaptureLength_ = pars.minCaptureLength;
 	if (pars.qFilPars_.checkingQFrac_) {
 		allExtractStats.qualCheckStr = "failed_q"
 				+ estd::to_string(pars.qFilPars_.qualCheck_) + "<"
@@ -195,6 +195,8 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 					SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
+//					if (stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
+//							 stitchedRes.status_== PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP) {
 						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 						eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
 						//log and write read
@@ -228,7 +230,9 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 								mip.determineLigBarcode(*stitchedRes.combinedSeq_, barInfo);
 								MetaDataInName barMeta;
 								barMeta.addMeta("extBar", barInfo.extBar_);
-								if ("" != barInfo.ligBar_) barMeta.addMeta("ligBar", barInfo.ligBar_);
+								if ("" != barInfo.ligBar_) {
+									barMeta.addMeta("ligBar", barInfo.ligBar_);
+								}
 								barMeta.addMeta("fullBar_", barInfo.fullBar_);
 								stitchedRes.combinedSeq_->name_.append(barMeta.createMetaName());
 							}
@@ -249,6 +253,8 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 					SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
+//					if (stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
+//							 stitchedRes.status_== PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP) {
 						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 						eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
 						//log and write read
@@ -306,6 +312,8 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 				SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
 				//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 				if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
+//				if (stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
+//						 stitchedRes.status_== PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP) {
 
 
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
@@ -386,6 +394,8 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 					SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
+//					if(stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
+//						 stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP){
 						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 						eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
 						//log and write read
@@ -569,7 +579,7 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 	}
 
 	MipExtractionStats allExtractStats(pars.sampleName);
-	allExtractStats.minlen_ = pars.minLen;
+	allExtractStats.minCaptureLength_ = pars.minCaptureLength;
 	if (pars.qFilPars_.checkingQFrac_) {
 		allExtractStats.qualCheckStr = "failed_q"
 				+ estd::to_string(pars.qFilPars_.qualCheck_) + "<"

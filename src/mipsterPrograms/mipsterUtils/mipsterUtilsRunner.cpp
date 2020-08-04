@@ -936,7 +936,7 @@ int mipsterUtilsRunner::fixingMipBedFiles(const njh::progutils::CmdArgs & inputC
 
 
 int mipsterUtilsRunner::creatingSeqTableFromDirectory(const njh::progutils::CmdArgs & inputCommands){
-	bfs::path directory = "";
+	bfs::path directory = "./";
 	OutOptions outOpts(bfs::path(""));
 	seqSetUp setUp(inputCommands);
 	setUp.setOption(directory, "--directory", "Input directory", true);

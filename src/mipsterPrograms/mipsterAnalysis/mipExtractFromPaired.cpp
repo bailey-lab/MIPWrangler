@@ -302,9 +302,9 @@ int mipsterAnalysisRunner::mipIllumExtractByArmAndFilterPaired(
 				<< pars.sampleName << std::endl;
 		throw std::runtime_error { ss.str() };
 	}
-	mipMaster.mips_->setAllMinimumExpectedLen(pars.minLen);
+	mipMaster.mips_->setAllMinCaptureLength(pars.minCaptureLength);
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
-	uint64_t maxLen = pars.minLen * 2;
+	uint64_t maxLen = pars.minCaptureLength * 2;
 	aligner alignerObjForFamilyDet = aligner(maxLen, setUp.pars_.gapInfo_,
 			setUp.pars_.scoring_);
 	//read in mip info and convert to mip class
@@ -356,7 +356,7 @@ int mipsterAnalysisRunner::mipIllumExtractByArmAndFilterMultiplePaired(
 		ss << njh::conToStr(warnings, "\n") << std::endl;
 		throw std::runtime_error{ss.str()};
 	}
-	mipMaster.mips_->setAllMinimumExpectedLen(pars.minLen);
+	mipMaster.mips_->setAllMinCaptureLength(pars.minCaptureLength);
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 	std::ofstream logFile;
 	openTextFile(logFile,
@@ -366,7 +366,7 @@ int mipsterAnalysisRunner::mipIllumExtractByArmAndFilterMultiplePaired(
 	logFile << "Ran from: " << inputCommands.workingDir_ << std::endl;
 	logFile << "Command: " << inputCommands.commandLine_ << std::endl;
 	njh::concurrent::LockableQueue<std::string> sampsQueue(mipMaster.names_->samples_);
-	uint64_t maxLen = pars.minLen * 2;
+	uint64_t maxLen = pars.minCaptureLength * 2;
 	concurrent::AlignerPool aligners(maxLen, setUp.pars_.gapInfo_,
 			setUp.pars_.scoring_, pars.numThreads);
 	aligners.initAligners();

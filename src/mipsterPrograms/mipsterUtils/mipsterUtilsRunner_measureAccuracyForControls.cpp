@@ -7,67 +7,26 @@
 
 #include "mipsterUtilsRunner.hpp"
 #include <SeekDeep/utils.h>
+#include <SeekDeep/objects/ControlBenchmarking.h>
 
 
 namespace njhseq {
 
-class ControlMixSetUp {
-public:
-	ControlMixSetUp(const std::string & name,
-			const std::unordered_map<std::string, double> & relativeAbundances) :
-			name_(name), rawRelativeAbundances_(relativeAbundances) {
-		if (relativeAbundances.empty()) {
-			std::stringstream ss;
-			ss << __PRETTY_FUNCTION__ << ", error "
-					<< " relativeAbundances can't be empty" << "\n";
-			throw std::runtime_error { ss.str() };
-		}
 
-		double total = 0;
-		for (const auto & relAbund : rawRelativeAbundances_) {
-
-			if (relAbund.second <= 0) {
-				std::stringstream ss;
-				ss << __PRETTY_FUNCTION__ << ", error "
-						<< " abundances need to be greater than zero, " << relAbund.first
-						<< ": " << relAbund.second << "\n";
-				throw std::runtime_error { ss.str() };
-			}
-			total += relAbund.second;
-		}
-		for (const auto & relAbund : rawRelativeAbundances_) {
-			relativeAbundances_[relAbund.first] = relAbund.second/total;
-		}
-
-	}
-
-
-	std::string name_;
-	std::unordered_map<std::string, double> rawRelativeAbundances_;
-	std::unordered_map<std::string, double> relativeAbundances_;
-
-	MetaDataInName meta_;
-
-	VecStr getStrains() const {
-		return njh::getVecOfMapKeys(rawRelativeAbundances_);
-	}
-
-};
 
 
 int mipsterUtilsRunner::benchmarkingForControlMixtures(const njh::progutils::CmdArgs & inputCommands) {
 	bfs::path extractionDir = "";
 	bfs::path masterAnalysisDir = "";
-	bfs::path sampleToMixture = "";
-	bfs::path mixtureSetUp = "";
+	ControlBencher::ControlBencherPars conBenchPars;
 
 	mipsterUtilsSetUp setUp(inputCommands);
 	setUp.processVerbose();
 	setUp.processDebug();
 	setUp.setOption(extractionDir,     "--extractionDir",     "Extraction Directory, extractions for MIP arms created by MIPWrangler setUpViewMipsOnGenome", true);
 	setUp.setOption(masterAnalysisDir, "--masterAnalysisDir", "Master Analysis Directory, finished analysis of MIPWrangler", true);
-	setUp.setOption(sampleToMixture,   "--sampleToMixture",   "Sample To Mixture, 2 columns 1)sample, 2)MixName", true);
-	setUp.setOption(mixtureSetUp,      "--mixtureSetUp",      "Mixture Set Up, 3 columns 1)MixName, 2)strain, 3)relative_abundance", true);
+	setUp.setOption(conBenchPars.samplesToMixFnp_,   "--sampleToMixture",   "Sample To Mixture, 2 columns 1)sample, 2)MixName", true);
+	setUp.setOption(conBenchPars.mixSetUpFnp_,      "--mixtureSetUp",      "Mixture Set Up, 3 columns 1)MixName, 2)strain, 3)relative_abundance", true);
 	std::string defaultDirName = njh::rstripRet(masterAnalysisDir.string(), '/') + "_benchmarkingForControlMixtures_TODAY";
 	setUp.processDirectoryOutputName(defaultDirName, true);
 	setUp.finishSetUp(std::cout);
@@ -76,63 +35,11 @@ int mipsterUtilsRunner::benchmarkingForControlMixtures(const njh::progutils::Cmd
 	mipMaster.loadMipsSampsInfo(6);
 	mipMaster.checkDirStructThrow(__PRETTY_FUNCTION__);
 
+	//set up bencher
+	ControlBencher bencher(conBenchPars);
 
-	//read in mixture setup
-	table mixtureSetupTab(mixtureSetUp, "\t", true);
-	mixtureSetupTab.checkForColumnsThrow(VecStr{"MixName", "strain", "relative_abundance"}, __PRETTY_FUNCTION__);
-
-	if(mixtureSetupTab.empty()){
-		std::stringstream ss;
-		ss << __PRETTY_FUNCTION__ << ", error " << mixtureSetUp << " is empty " << "\n";
-		throw std::runtime_error{ss.str()};
-	}
-	std::unordered_map<std::string, ControlMixSetUp> mixSetups;
-	std::unordered_map<std::string, std::unordered_map<std::string, double>> mixInfos;
-	for(const auto & row : mixtureSetupTab){
-		std::string mixname = row[mixtureSetupTab.getColPos("MixName")];
-		std::string strain = row[mixtureSetupTab.getColPos("strain")];
-		double relative_abundance  = njh::StrToNumConverter::stoToNum<double>(row[mixtureSetupTab.getColPos("relative_abundance")]);
-		if(njh::in(strain, mixInfos[mixname])){
-			std::stringstream ss;
-			ss << __PRETTY_FUNCTION__ << ", error " << " already have " << strain << " for mixture " << mixname<< "\n";
-			throw std::runtime_error{ss.str()};
-		}
-		mixInfos[mixname][strain] = relative_abundance;
-	}
-	for(const auto & mixInfo : mixInfos){
-		mixSetups.emplace(mixInfo.first, ControlMixSetUp(mixInfo.first, mixInfo.second));
-	}
-
-	//read in samples to mixture
-	table sampleToMixtureTab(sampleToMixture, "\t", true);
-	sampleToMixtureTab.checkForColumnsThrow(VecStr{"sample", "MixName"}, __PRETTY_FUNCTION__);
-	if(sampleToMixtureTab.empty()){
-		std::stringstream ss;
-		ss << __PRETTY_FUNCTION__ << ", error " << sampleToMixture << " is empty " << "\n";
-		throw std::runtime_error{ss.str()};
-	}
-	std::unordered_map<std::string, std::string> samplesToMix;
-	for(const auto & row : sampleToMixtureTab){
-		samplesToMix[row[sampleToMixtureTab.getColPos("sample")]] = row[sampleToMixtureTab.getColPos("MixName")];
-	}
-	VecStr missingMixs;
-	for(const auto & sampToMix : samplesToMix){
-		if(!njh::in(sampToMix.second, mixSetups)){
-			missingMixs.emplace_back(sampToMix.second);
-		}
-	}
-	if(!missingMixs.empty()){
-		std::stringstream ss;
-		ss << __PRETTY_FUNCTION__ << ", error " << " error missing the following mixture information from " << mixtureSetUp << "\n";
-		throw std::runtime_error{ss.str()};
-	}
-
-	//read in extraction table and determine which mips can bed used per mixture
-	std::set<std::string> allStrains;
-	for(const auto & mixSetup : mixSetups){
-		auto strains = mixSetup.second.getStrains();
-		allStrains.insert(strains.begin(), strains.end());
-	}
+	//read in extraction table and determine which mips can be used per mixture
+	std::set<std::string> allStrains = bencher.getAllStrains();
 
 	bfs::path extractionTableFnp = njh::files::make_path(extractionDir, "tables", "extractionCountsTable.tab.txt");
 	table extractionTable(extractionTableFnp, "\t", true);
@@ -147,8 +54,8 @@ int mipsterUtilsRunner::benchmarkingForControlMixtures(const njh::progutils::Cmd
 		ss << __PRETTY_FUNCTION__ << ", error " << " the following strains are missing " << njh::conToStrEndSpecial(missingStrains, ", ", " and ") << " from " << extractionTableFnp<< "\n";
 		throw std::runtime_error{ss.str()};
 	}
-	bfs::copy_file(sampleToMixture, njh::files::make_path(setUp.pars_.directoryName_, "sampleToMixture.tab.txt"));
-	bfs::copy_file(mixtureSetUp, njh::files::make_path(setUp.pars_.directoryName_, "mixtureSetUp.tab.txt"));
+	bfs::copy_file(bencher.pars_.samplesToMixFnp_, njh::files::make_path(setUp.pars_.directoryName_, "sampleToMixture.tab.txt"));
+	bfs::copy_file(bencher.pars_.mixSetUpFnp_, njh::files::make_path(setUp.pars_.directoryName_, "mixtureSetUp.tab.txt"));
 
 	std::unordered_map<std::string, VecStr> targetsForMix;
 	{
@@ -156,7 +63,7 @@ int mipsterUtilsRunner::benchmarkingForControlMixtures(const njh::progutils::Cmd
 		unusedTargetsOut << njh::conToStr(extractionTable.columnNames_, "\t") << std::endl;
 		for(const auto & row : extractionTable){
 			auto tarName = row[extractionTable.getColPos("target")];
-			for(const auto & mixSetup : mixSetups){
+			for(const auto & mixSetup : bencher.mixSetups_){
 				bool failed = false;
 				for(const auto & strain : mixSetup.second.relativeAbundances_){
 					if("1" != row[extractionTable.getColPos(strain.first)]){
@@ -198,7 +105,7 @@ int mipsterUtilsRunner::benchmarkingForControlMixtures(const njh::progutils::Cmd
 	haplotypesClassified << "sample\tmix\tmipFamily\tseqName\treadCnt\tbarcodeCnt\tbarcodeFrac\tmatchExpcted\texpectedRef\texpectedFrac" << std::endl;
 	OutputStream performanceOut(njh::files::make_path(setUp.pars_.directoryName_, "performancePerTarget.tab.txt"));
 	performanceOut << "sample\tmix\tmipFamily\ttotalBarcodes\trecoveredHaps\tfalseHaps\ttotalHaps\ttotalExpectedHaps\thapRecovery\tfalseHapsRate\tRMSE" << std::endl;
-	for(const auto & sample : samplesToMix){
+	for(const auto & sample : bencher.samplesToMix_){
 		for(const auto & mipFamily : familiesForMix[sample.second]){
 			bfs::path resultsFnp = mipMaster.pathPopClusFinalHaplo(MipFamSamp(mipFamily, sample.first));
 			if(bfs::exists(resultsFnp)){
@@ -213,8 +120,8 @@ int mipsterUtilsRunner::benchmarkingForControlMixtures(const njh::progutils::Cmd
 					std::vector<std::string> expecteds;
 					double expectedFrac = 0;
 					for(const auto & tok : toks){
-						if(njh::in(tok, mixSetups.at(sample.second).relativeAbundances_)){
-							expectedFrac+= mixSetups.at(sample.second).relativeAbundances_[tok];
+						if(njh::in(tok, bencher.mixSetups_.at(sample.second).relativeAbundances_)){
+							expectedFrac+= bencher.mixSetups_.at(sample.second).relativeAbundances_[tok];
 							expecteds.emplace_back(tok);
 						}
 					}
@@ -284,7 +191,7 @@ int mipsterUtilsRunner::benchmarkingForControlMixtures(const njh::progutils::Cmd
 	}
 
 	OutputStream barcodeTotalsOut(njh::files::make_path(setUp.pars_.directoryName_, "barcodeTotals.tab.txt"));
-	auto samples = getVectorOfMapKeys(samplesToMix);
+	auto samples = getVectorOfMapKeys(bencher.samplesToMix_);
 	njh::sort(samples);
 	std::unordered_map<std::string, std::vector<uint32_t>> barcodeCounts;
 	barcodeTotalsOut << "Mip\t" << njh::conToStr(samples, "\t") << std::endl;
@@ -303,9 +210,9 @@ int mipsterUtilsRunner::benchmarkingForControlMixtures(const njh::progutils::Cmd
 	sampleStatsOut << "Sample\tMixName\ttargetsWithBarcodes\ttotalTargets\ttotalBarcodes\tmedianBarcodeCnt" << std::endl;
 	for(const auto & samp : samples){
 		sampleStatsOut << samp
-				<< '\t' << samplesToMix[samp]
+				<< '\t' << bencher.samplesToMix_[samp]
 				<< '\t' << barcodeCounts[samp].size()
-				<< '\t' << familiesForMix[samplesToMix[samp]].size()
+				<< '\t' << familiesForMix[bencher.samplesToMix_[samp]].size()
 				<< "\t" << vectorSum(barcodeCounts[samp])
 				<< "\t" << vectorMedianRef(barcodeCounts[samp]) << std::endl;
 	}

@@ -40,9 +40,12 @@ void MipCollection::setAllWiggleRoomInArm(uint32_t wiggleRoom){
 	}
 }
 
-void MipCollection::setAllMinimumExpectedLen(size_t minimumExpectedLen){
+void MipCollection::setAllMinCaptureLength(uint32_t min_capture_length, bool force){
 	for(auto & mip : mips_){
-		mip.second.setMinimumExpectedLen(minimumExpectedLen);
+		//only set if not already set or if it's being forced
+		if(std::numeric_limits<uint32_t>::max() == mip.second.min_capture_length_  || force){
+			mip.second.setMinCaptureLength(min_capture_length);
+		}
 	}
 }
 
@@ -155,7 +158,7 @@ MipCollection::MipCollection(const bfs::path & mipArmIdFile,
 				<< std::endl;
 		throw std::runtime_error { ss.str() };
 	}
-
+	bool hasMinCapLengthCol = mipInfo.containsColumn("min_capture_length");
 	for (const auto & row : mipInfo.content_) {
 		if(std::all_of(row.begin(), row.end(), [](const std::string & col){ return "" == col;})){
 			continue;
@@ -178,6 +181,11 @@ MipCollection::MipCollection(const bfs::path & mipArmIdFile,
 				row[mipInfo.getColPos("gene_name")],
 				row[mipInfo.getColPos("mipset")]);
 		mips_[row[mipInfo.getColPos("mip_id")]].setAllowableErrorInArm(allowableArmError);
+		if (hasMinCapLengthCol) {
+			mips_[row[mipInfo.getColPos("mip_id")]].setMinCaptureLength(
+					njh::StrToNumConverter::stoToNum<uint32_t>(
+							row[mipInfo.getColPos("min_capture_length")]));
+		}
 	}
 	std::set<std::string> mipFamilies;
 	for (const auto & mip : mips_) {
