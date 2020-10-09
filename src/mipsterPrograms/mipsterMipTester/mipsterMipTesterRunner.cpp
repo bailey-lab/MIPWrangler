@@ -81,8 +81,8 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 	auto regions = gatherRegions(bedFile.string(), "", setUp.pars_.verbose_);
 
 	//check for overlaps
-	for (const auto & pos : iter::range(regions.size())) {
-		for (const auto & subPos : iter::range<uint32_t>(0, pos)) {
+	for (const auto pos : iter::range(regions.size())) {
+		for (const auto subPos : iter::range<uint32_t>(0, pos)) {
 			if (regions[pos].chrom_ == regions[subPos].chrom_) {
 				if ((regions[pos].start_ > regions[subPos].start_
 						&& regions[pos].start_ < regions[subPos].end_)

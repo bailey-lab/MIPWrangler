@@ -200,7 +200,7 @@ int mipsterUtilsRunner::writeOutPossibleHaplotypes(
 					seqInfo buildingSeq = *(mog.overlapGraph_->nodes_.at(toks[0])->val_);
 					MetaDataInName meta(buildingSeq.name_);
 					buildingSeq.name_ = meta.getMeta("h_popUID");
-					for(const auto & tokPos : iter::range<size_t>(0,toks.size()  - 1)){
+					for(const auto tokPos : iter::range<size_t>(0,toks.size()  - 1)){
 						alignerObj.alignCacheGlobal(mog.overlapGraph_->nodes_.at(toks[tokPos])->val_,
 								mog.overlapGraph_->nodes_.at(toks[tokPos + 1])->val_);
 

@@ -52,7 +52,7 @@ void MipCollection::setAllMinCaptureLength(uint32_t min_capture_length, bool for
 
 VecStr MipCollection::getMipsForFamily(const VecStr & families) const{
 	VecStr ret;
-	for(const auto family : families){
+	for(const auto & family : families){
 		addOtherVec(ret, getMipsForFamily(family));
 	}
 	MipNameSorter::sort(ret);

@@ -428,7 +428,7 @@ std::map<std::string, LibAdundInfo> processAbundanceLibaries(const std::string &
 			throw std::runtime_error{ss.str()};
 		}
 	}
-	for(const auto & colPos : iter::range(abundTab.nCol())){
+	for(const auto colPos : iter::range(abundTab.nCol())){
 		if("Genomes" != abundTab.columnNames_[colPos]){
 			std::string currentLibName = abundTab.columnNames_[colPos];
 			if(njh::in(currentLibName, ret)){
@@ -438,7 +438,7 @@ std::map<std::string, LibAdundInfo> processAbundanceLibaries(const std::string &
 			}
 			VecStr currentLibAbunds = abundTab.getColumn(colPos);
 			LibAdundInfo lib(currentLibName);
-			for(const auto & rowPos : iter::range(currentLibAbunds.size())){
+			for(const auto rowPos : iter::range(currentLibAbunds.size())){
 				double abund = njh::lexical_cast<double>(currentLibAbunds[rowPos]);
 				if(abund > 0){
 					lib.addGenome(genomes[rowPos], abund);

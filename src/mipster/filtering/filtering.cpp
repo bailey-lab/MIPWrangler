@@ -59,7 +59,7 @@ void filterOnMultipleLigBar(
 		for(const auto & pos : positions) {
 			readsPerBarcode.push_back(ligBarReads.at(ligKeys[pos]));
 		}
-		for(const auto & pos : iter::range<uint32_t>(ligKeys.size())){
+		for(const auto pos : iter::range<uint32_t>(ligKeys.size())){
 			if(!njh::in(pos, positions)){
 				/**@todo report/write out the reads not used */
 				tarStat.ligBarFilter_+= ligBarReads.at(ligKeys[pos]).size();
@@ -124,7 +124,7 @@ std::shared_ptr<MippedRead> filterWithBarcodeCoverage(
 				if (clusters[readPos].remove) {
 					continue;
 				}
-				for (const auto & subReadPos : iter::range(readPos)) {
+				for (const auto subReadPos : iter::range(readPos)) {
 					if (setUpPars.debug_) {
 						std::cout << "\t\tOn sub cluster " << subReadPos
 								<< " for barcode: " << currentBarInfo.fullBar_ << std::endl;

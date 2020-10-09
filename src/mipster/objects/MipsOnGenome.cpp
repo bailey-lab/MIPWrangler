@@ -262,7 +262,7 @@ void MipsOnGenome::genFastas(){
 							succes = false;
 							ss << "Error in parsing " << bedOpt.second->inFilename_ << ", the number of ext regions doesn't equal full regions or lig regions don't equal full regions\n";
 						}else{
-							for(const auto & regPos : iter::range(regions.size())){
+							for(const auto regPos : iter::range(regions.size())){
 								TwoBit::TwoBitFile twoBitFile(njh::files::make_path(inputParameters_.gMapperPars_.genomeDir_, genome + ".2bit"));
 								std::string seq = "";
 								twoBitFile[regions[regPos].chrom_]->getSequence(seq, regions[regPos].start_, regions[regPos].end_);

@@ -99,10 +99,10 @@ std::vector<identicalCluster> collapseIdenticalReadsForBarCorrectedReads(
 				readCountsPerReads.emplace_back(subSeqMeta.getMeta<uint32_t>("readCnt"));
 				readTotal+= readCountsPerReads.back();
 			}
-			for(const auto & qualPos : iter::range(seq.seqBase_.qual_.size())){
+			for(const auto qualPos : iter::range(seq.seqBase_.qual_.size())){
 				std::vector<uint32_t> quals;
 				quals.reserve(readTotal);
-				for(const auto & subSeqPos : iter::range(seq.reads_.size())){
+				for(const auto subSeqPos : iter::range(seq.reads_.size())){
 					addOtherVec(quals, std::vector<uint32_t>(readCountsPerReads[subSeqPos], seq.reads_[subSeqPos]->seqBase_.qual_[qualPos]));
 				}
 				seq.seqBase_.qual_[qualPos] = qualCalcFunc(quals);
@@ -114,7 +114,7 @@ std::vector<identicalCluster> collapseIdenticalReadsForBarCorrectedReads(
 			uint32_t readTotal = 0;
 			std::vector<uint32_t> bestSeqPositions;
 			uint32_t maxReadCount = 0;
-			for(const auto & subSeqPos : iter::range(seq.reads_.size())){
+			for(const auto subSeqPos : iter::range(seq.reads_.size())){
 				const auto & subSeq = seq.reads_[subSeqPos];
 				MetaDataInName subSeqMeta(subSeq->seqBase_.name_);
 				readCountsPerReads.emplace_back(subSeqMeta.getMeta<uint32_t>("readCnt"));
@@ -148,10 +148,10 @@ std::vector<identicalCluster> collapseIdenticalReadsForBarCorrectedReads(
 				readCountsPerReads.emplace_back(subSeqMeta.getMeta<uint32_t>("readCnt"));
 				readTotal+= readCountsPerReads.back();
 			}
-			for(const auto & qualPos : iter::range(seq.seqBase_.qual_.size())){
+			for(const auto qualPos : iter::range(seq.seqBase_.qual_.size())){
 				std::vector<uint32_t> quals;
 				quals.reserve(readTotal);
-				for(const auto & subSeqPos : iter::range(seq.reads_.size())){
+				for(const auto subSeqPos : iter::range(seq.reads_.size())){
 					quals.emplace_back(seq.reads_[subSeqPos]->seqBase_.qual_[qualPos]);
 				}
 				seq.seqBase_.qual_[qualPos] = vectorMaximum(quals);
@@ -211,7 +211,7 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 			}
 			alignerObj.numberOfAlingmentsDone_ = 0;
 			std::unordered_map<std::string, uint32_t> idenToIndex;
-			for (const auto & iPos : iter::range(identicalClusters.size())) {
+			for (const auto iPos : iter::range(identicalClusters.size())) {
 				idenToIndex[identicalClusters[iPos].getStubName(true)] = iPos;
 			}
 			std::vector<cluster> clusters = baseCluster::convertVectorToClusterVector<

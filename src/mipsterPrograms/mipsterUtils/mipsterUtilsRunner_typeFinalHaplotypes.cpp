@@ -252,7 +252,7 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 		auto typeOnChrom = [&bamPool,&alnPool,&proteinSeqOuts,&proteinSeqOutsMut,
 												&chromRegionsVec,&refData,&mipMaster,&genes,
 												&geneInfos,&alnRegionToGeneIds,&transferInfoMut,
-												&setUp,&twoBitFnp,&zeroBased,&aaTyper,
+												&setUp,&twoBitFnp,&aaTyper,
 												&targetNameToAminoAcidPositions,&popHapsTyped,&regionsToGeneIds](){
 			GenomicRegion currentChrom;
 			auto curAligner = alnPool.popAligner();

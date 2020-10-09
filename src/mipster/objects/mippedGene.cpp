@@ -102,7 +102,7 @@ void mippedGene::setUpGraph(aligner & alignerObj, comparison comp){
 		}
 	}
 
-	for(const auto & tarPos : iter::range(targetNames.size() - 1)){
+	for(const auto tarPos : iter::range(targetNames.size() - 1)){
 		auto & targetReadFirst = processedReads_.at(targetNames[tarPos]);
 		auto & targetReadSecond = processedReads_.at(targetNames[tarPos + 1]);
 
@@ -149,10 +149,10 @@ void mippedGene::printLociInfo(std::ostream & out)const {
 	out << "LOCI " << processedReads_.size() << "\n";
 	auto keys = getVectorOfMapKeys(processedReads_);
 	njh::sort(keys);
-	for(const auto & kPos : iter::range(keys.size())){
+	for(const auto kPos : iter::range(keys.size())){
 		out << "L" << kPos + 1 << " " << processedReads_.at(keys[kPos]).reads_.size()  << "\n";
 	}
-	for(const auto & kPos : iter::range(keys.size())){
+	for(const auto kPos : iter::range(keys.size())){
 		for(const auto & read : processedReads_.at(keys[kPos]).reads_){
 			out << "L" << kPos + 1 << " A" << read->clusterId_ + 1 << " "  << roundDecPlaces(read->seqBase_.frac_, 3)<< "\n";
 		}
@@ -462,7 +462,7 @@ void mippedGene::setProtein(){
 		if(refGeneRecord_->strand_ == '-'){
 			genomicDna = seqUtil::reverseComplement(genomicDna, "DNA");
 		}
-		for(const auto & pos : iter::range(refGeneRecord_->exonStarts_.size())){
+		for(const auto pos : iter::range(refGeneRecord_->exonStarts_.size())){
 			uint32_t eStart = refGeneRecord_->exonStarts_[pos] - refGeneRecord_->txStart_;
 			uint32_t eEnd = refGeneRecord_->exonEnds_[pos] - refGeneRecord_->txStart_;
 			cDna.append(genomicDna.substr(eStart, eEnd - eStart));
@@ -488,7 +488,7 @@ seqInfo mippedGene::getMutatedProtein(const std::map<uint32_t, mismatch> & misma
 	if(refGeneRecord_->strand_ == '-'){
 		genomicDna = seqUtil::reverseComplement(genomicDna, "DNA");
 	}
-	for(const auto & pos : iter::range(refGeneRecord_->exonStarts_.size())){
+	for(const auto pos : iter::range(refGeneRecord_->exonStarts_.size())){
 		uint32_t eStart = refGeneRecord_->exonStarts_[pos] - refGeneRecord_->txStart_;
 		uint32_t eEnd = refGeneRecord_->exonEnds_[pos] - refGeneRecord_->txStart_;
 		cDna.append(genomicDna.substr(eStart, eEnd - eStart));
