@@ -82,9 +82,9 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 			continue;
 		}
 		//get length and resize aligner vector if needed
-		uint64_t maxLen = alignerObjForFamilyDet.parts_.maxSize_;
+		uint64_t maxLen = alignerObjForFamilyDet.parts_.maxSize_ - 1;
 		readVec::getMaxLength(read, maxLen);
-		if (maxLen > alignerObjForFamilyDet.parts_.maxSize_) {
+		if (maxLen >= alignerObjForFamilyDet.parts_.maxSize_) {
 			alignerObjForFamilyDet.parts_.setMaxSize(maxLen);
 		}
 		bool found = false;
