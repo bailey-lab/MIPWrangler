@@ -125,8 +125,8 @@ int mipsterUtilsRunner::ExtractTargetsFromGenomes(
 			auto minlen = vectorMinimum(readLengths);
 			auto maxlen = vectorMaximum(readLengths);
 			lenCutOffsOut << familyName
-					<< "\t" << (minlen > pars.lenCutOffSizeExpand ? minlen - pars.lenCutOffSizeExpand : 0)
-					<< "\t" << maxlen + pars.lenCutOffSizeExpand << std::endl;
+                    << "\t" << (minlen > pars.minLenCutOffSizeExpand ? minlen - pars.minLenCutOffSizeExpand : 0)
+                    << "\t" << maxlen + pars.maxLenCutOffSizeExpand << std::endl;
 			uint32_t finalSize = maxlen + pars.barcodeSize;
 			if(finalSize > pars.pairedEndLength && finalSize < (2* pars.pairedEndLength - 10)){
 				overlapStatusOut << familyName
