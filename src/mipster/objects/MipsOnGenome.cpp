@@ -853,8 +853,8 @@ void MipsOnGenome::genBeds(const comparison & allowableError) {
 						auto extractions = getPossibleGenomeExtracts(alnResultsExt, alnResultsLig, insertSizeCutoff);
 						//this sort should put the better matching extraction on top and giving them the lower extraction counts
 						njh::sort(extractions, [](const GenomeExtractResult & result1, const GenomeExtractResult & result2){
-							return result1.ext_->comp_.distances_.eventBasedIdentity_ + result1.lig_->comp_.distances_.eventBasedIdentity_ >
-										 result2.ext_->comp_.distances_.eventBasedIdentity_ + result2.lig_->comp_.distances_.eventBasedIdentity_;
+							return result1.extComp_.distances_.eventBasedIdentity_ + result1.ligComp_.distances_.eventBasedIdentity_ >
+										 result2.extComp_.distances_.eventBasedIdentity_ + result2.ligComp_.distances_.eventBasedIdentity_;
 						});
 						if(extractions.empty()){
 							ss << "Failed to extract any results for " << pair.mip_ << " in " << pair.genome_ << std::endl;
@@ -882,11 +882,11 @@ void MipsOnGenome::genBeds(const comparison & allowableError) {
 								extraction.gRegion_->uid_ = meta.createMetaName();
 								outFile << extraction.gRegion_->genBedRecordCore().toDelimStr() << std::endl;
 								//ext
-								extraction.ext_->gRegion_.uid_ = meta.createMetaName();
-								outExtFile << extraction.ext_->gRegion_.genBedRecordCore().toDelimStr() << std::endl;
+								extraction.extRegion_.uid_ = meta.createMetaName();
+								outExtFile << extraction.extRegion_.genBedRecordCore().toDelimStr() << std::endl;
 								//lig
-								extraction.lig_->gRegion_.uid_ = meta.createMetaName();
-								outLigFile << extraction.lig_->gRegion_.genBedRecordCore().toDelimStr() << std::endl;
+								extraction.ligRegion_.uid_ = meta.createMetaName();
+								outLigFile << extraction.ligRegion_.genBedRecordCore().toDelimStr() << std::endl;
 								++count;
 							}
 						}

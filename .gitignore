@@ -34,3 +34,4 @@ bin
 __pycache__/
 *.py[cod]
 
+.idea
