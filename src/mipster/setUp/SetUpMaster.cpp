@@ -432,10 +432,10 @@ bool SetUpMaster::checkForBarCorMipFamForSamp(const MipFamSamp & mipSampName) co
 		mipSampName.mipFam_, mipSampName.mipFam_ + "_all.fastq.gz" }));
 }
 
-bool SetUpMaster::checkForExtractedMipFamForSampThrow(const MipFamSamp & mipSampName) const{
+bool SetUpMaster::checkForExtractedMipFamForSampThrow(const MipFamSamp & mipSampName, bool cacheAln) const{
 	SampleDirectoryMaster sampDirMaster(directoryMaster_, mipSampName);
-	sampDirMaster.checkForExtractDirectoryThrow();
-	sampDirMaster.checkForBarCorDirectoryThrow();
+	sampDirMaster.checkForExtractDirectoryThrow(cacheAln);
+	sampDirMaster.checkForBarCorDirectoryThrow(cacheAln);
 	//check to see if family has any mips with extracted reads;
 	bool familyHasExtractedReads = false;
 	auto mipsForFam = mips_->getMipsForFamily(mipSampName.mipFam_);
@@ -450,10 +450,10 @@ bool SetUpMaster::checkForExtractedMipFamForSampThrow(const MipFamSamp & mipSamp
 	return familyHasExtractedReads;
 }
 
-bool SetUpMaster::checkForBarCorMipFamForSampThrow(const MipFamSamp & mipSampName) const{
+bool SetUpMaster::checkForBarCorMipFamForSampThrow(const MipFamSamp & mipSampName, bool cacheAln) const{
 	SampleDirectoryMaster sampDirMaster(directoryMaster_, mipSampName);
-	sampDirMaster.checkForExtractDirectoryThrow();
-	sampDirMaster.checkForBarCorDirectoryThrow();
+	sampDirMaster.checkForExtractDirectoryThrow(cacheAln);
+	sampDirMaster.checkForBarCorDirectoryThrow(cacheAln);
 	return bfs::exists(njh::files::join(VecStr { sampDirMaster.barCorDir_.string(),
 		mipSampName.mipFam_, mipSampName.mipFam_ + "_all.fastq.gz" }));
 }

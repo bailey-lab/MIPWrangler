@@ -39,23 +39,23 @@ SampleDirectoryMaster::SampleDirectoryMaster(
 				clusAlnCacheDir_(njh::files::join(masterSampleDir_.string(), "alnCache_mipClustering/")){
 }
 
-void SampleDirectoryMaster::checkForAllDirectoriesThrow() const{
+void SampleDirectoryMaster::checkForAllDirectoriesThrow(bool keepCache) const {
 	try {
 		checkExistenceThrow(masterSampleDir_.string());
-		checkForExtractDirectoryThrow();
-		checkForBarCorDirectoryThrow();
-		checkForClusDirectoryThrow();
-	} catch (std::exception & e) {
+		checkForExtractDirectoryThrow(keepCache);
+		checkForBarCorDirectoryThrow(keepCache);
+		checkForClusDirectoryThrow(keepCache);
+	} catch (std::exception &e) {
 		std::stringstream ss;
 		ss << "Error for mip analysis for sample:" << mipSamp_.samp_ << " , not all required directories were found,"
 			 << " check to make sure you are in the correct directory" << std::endl;
 
 		ss << e.what() << std::endl;
-		throw std::runtime_error { ss.str() };
+		throw std::runtime_error{ss.str()};
 	}
 }
 
-void SampleDirectoryMaster::checkForExtractDirectoryThrow() const{
+void SampleDirectoryMaster::checkForExtractDirectoryThrow(bool keepCache) const{
 	try {
 		checkExistenceThrow(extractDir_.string());
 	} catch (std::exception & e) {
@@ -66,10 +66,12 @@ void SampleDirectoryMaster::checkForExtractDirectoryThrow() const{
 		throw std::runtime_error { ss.str() };
 	}
 }
-void SampleDirectoryMaster::checkForBarCorDirectoryThrow() const{
+void SampleDirectoryMaster::checkForBarCorDirectoryThrow(bool keepCache) const{
 	try {
 		checkExistenceThrow(barCorDir_.string());
-		checkExistenceThrow(barCorAlnCacheDir_.string());
+		if(keepCache){
+			checkExistenceThrow(barCorAlnCacheDir_.string());
+		}
 	} catch (std::exception & e) {
 		std::stringstream ss;
 		ss << "Error for mip analysis for sample:" << mipSamp_.samp_ << " , not all required directories were found,"
@@ -78,10 +80,12 @@ void SampleDirectoryMaster::checkForBarCorDirectoryThrow() const{
 		throw std::runtime_error { ss.str() };
 	}
 }
-void SampleDirectoryMaster::checkForClusDirectoryThrow() const{
+void SampleDirectoryMaster::checkForClusDirectoryThrow(bool keepCache) const{
 	try {
 		checkExistenceThrow(clusDir_.string());
-		checkExistenceThrow(clusAlnCacheDir_.string());
+		if(keepCache){
+			checkExistenceThrow(clusAlnCacheDir_.string());
+		}
 	} catch (std::exception & e) {
 		std::stringstream ss;
 		ss << "Error for mip analysis for sample:" << mipSamp_.samp_ << " , not all required directories were found,"

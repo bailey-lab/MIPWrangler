@@ -31,11 +31,11 @@ namespace njhseq {
 class SampleDirectoryMaster {
 public:
 	SampleDirectoryMaster(const MipAnalysisDirectoryMaster & masterDir, const MipFamSamp & mipSamp);
-	void checkForAllDirectoriesThrow() const;
+	void checkForAllDirectoriesThrow(bool keepCache) const;
 
-	void checkForExtractDirectoryThrow() const;
-	void checkForBarCorDirectoryThrow() const;
-	void checkForClusDirectoryThrow() const;
+	void checkForExtractDirectoryThrow(bool keepCache) const;
+	void checkForBarCorDirectoryThrow(bool keepCache) const;
+	void checkForClusDirectoryThrow(bool keepCache) const;
 
 	void createExtractDirectory(bool overWrite) const;
 	void ensureBarCorDirectoryExist(bool cacheAln) const;

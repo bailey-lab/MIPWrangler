@@ -29,6 +29,7 @@
 #include "mipster/objects/MipCollection.hpp"
 #include "mipster/info/MipsSamplesNames.hpp"
 
+
 namespace njhseq {
 
 class SetUpMaster {
@@ -84,9 +85,8 @@ public:
 	bool checkForBarCorMipFamForSamp(const MipFamSamp & mipSampName) const;
 	bool checkForClusteredMipFamForSamp(const MipFamSamp & mipSampName) const;
 
-	bool checkForExtractedMipFamForSampThrow(
-			const MipFamSamp & mipSampName) const;
-	bool checkForBarCorMipFamForSampThrow(const MipFamSamp & mipSampName) const;
+	bool checkForExtractedMipFamForSampThrow(const MipFamSamp & mipSampName, bool cacheAln) const;
+	bool checkForBarCorMipFamForSampThrow(const MipFamSamp & mipSampName, bool cacheAln) const;
 
 	std::vector<MipFamSamp> getSamplesWithRawData(uint32_t numThreads) const;
 	std::vector<MipFamSamp> getPairsWithExtracted(uint32_t numThreads) const;
