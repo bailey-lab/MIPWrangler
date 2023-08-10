@@ -47,6 +47,7 @@ struct mipCorePars{
 	bool infoFilesRequired = false;
 	bool logFileRequired = true;
 	bool verbose_ = false;
+	bool develop_ = false;
 
 	void processDefaults(seqSetUp & setUp);
 
@@ -160,7 +161,7 @@ struct mipBarcodeCorrectionPars : mipCorePars{
   bool useReadLen = false;
   uint32_t readlenDiff = 15;
 	double barcodeIdentity = 0.98;
-	std::string sampleName = "";
+	std::string sampleName;
 
 	bool writeExtra = false;
 
@@ -170,6 +171,9 @@ struct mipBarcodeCorrectionPars : mipCorePars{
 	bool cacheAlignments = false;
 
 
+	bool doNotDownSample_{false};
+	uint32_t downSampleAmount_{20000};
+	uint32_t seed_{0};
 };
 
 struct mipBarcodeCorrectionParsMultiple : public mipBarcodeCorrectionPars  {
@@ -182,7 +186,6 @@ struct mipBarcodeCorrectionParsMultiple : public mipBarcodeCorrectionPars  {
 		ret.barcodeIdentity = barcodeIdentity;
 		ret.writeExtra = writeExtra;
 		ret.qualRep = qualRep;
-
 		ret.keepIntermediateFiles = keepIntermediateFiles;
 		ret.cacheAlignments = cacheAlignments;
 

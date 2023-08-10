@@ -37,6 +37,8 @@ public:
 
 	MipAnalysisDirectoryMaster directoryMaster_;
 
+	bool development_{false};
+
 	bfs::path mipArmFnp_;
 	bfs::path mipsSampsNamesFnp_;
 
@@ -70,8 +72,8 @@ public:
 	void createTopSampleDirs() const;
 	void createPopClusMipDirs(uint32_t numThreads) const;
 
-	void makeBarcodeCorDirs() const;
-	void makeClusteringDirs() const;
+	void makeBarcodeCorDirs(bool cacheAln) const;
+	void makeClusteringDirs(bool cacheAln) const;
 
 	//get back a vector of warnings, if empty nothing went wrong
 	VecStr checkDirStruct() const;

@@ -258,7 +258,8 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 				mipFamilyAllClustersDir = njh::files::makeDir(mipFamilyDir, njh::files::MkdirPar("allInputClusters"));
 			}
 
-			OutputStream outInfoFile(OutOptions(njh::files::make_path(mipFamilyDir,"info.tab.txt")));
+			auto infoFnp = njh::files::make_path(mipFamilyDir,"info.tab.txt");
+			OutputStream outInfoFile{OutOptions(infoFnp)};
 			outInfoFile
 					<< "clusterName\tbarcodes\tbarcodeFraction\treads\treadsFraction"
 					<< std::endl;
@@ -306,6 +307,7 @@ void runClusteringForMipFamForSamp(const MipFamSamp &mipSampName,
 			logfile << "Run Length: " << watch.totalTimeFormatted(6) << std::endl;
 		}
 	}
+
 	if (bfs::exists(options.firstName_.parent_path()) && !pars.keepIntermediateFiles) {
 		njh::files::rmDirForce(options.firstName_.parent_path());
 	}
@@ -333,16 +335,32 @@ int mipsterAnalysisRunner::mipClustering(
 	sampDirMaster.checkForExtractDirectoryThrow();
 	sampDirMaster.checkForBarCorDirectoryThrow();
 	//create folders neccessary for this sample
-	sampDirMaster.ensureClusDirectoryExist();
+	sampDirMaster.ensureClusDirectoryExist(pars.cacheAlignments);
 	//set up collapser
 	collapser collapserObj = collapser(setUp.pars_.colOpts_);
 	aligner alignerObj = aligner(800, setUp.pars_.gapInfo_, setUp.pars_.scoring_,
 			KmerMaps(setUp.pars_.colOpts_.kmerOpts_.kLength_), setUp.pars_.qScorePars_,
 			setUp.pars_.colOpts_.alignOpts_.countEndGaps_, setUp.pars_.colOpts_.iTOpts_.weighHomopolyer_);
+	std::vector<bfs::path> allInfoFnps;
 	for (const auto & mipFam : mips.mipFamilies_) {
 		runClusteringForMipFamForSamp(MipFamSamp(mipFam, pars.sampleName),
 				sampDirMaster, pars, setUp.pars_, alignerObj, collapserObj);
+		auto infoFnp = sampDirMaster.getClusteredInfoFnp(mipFam);
+		if(exists(infoFnp)){
+			allInfoFnps.emplace_back(infoFnp);
+		}
 	}
+	OutputStream allClusInfoFnp(njh::files::make_path(sampDirMaster.clusDir_, "allInfo.tab.txt"));
+	table allClusInfo;
+	for(const auto & fnp : allInfoFnps){
+		if(allClusInfo.nRow() == 0 ){
+			allClusInfo = table(fnp, "\t", true);
+		}else{
+			allClusInfo.rbind(table(fnp, "\t", true), false);
+		}
+	}
+	allClusInfo.outPutContents(allClusInfoFnp, "\t");
+
 	return 0;
 }
 
@@ -374,7 +392,7 @@ int mipsterAnalysisRunner::mipClusteringMultiple(const njh::progutils::CmdArgs &
 	logInfo["workingDir"] = inputCommands.workingDir_;
 	logInfo["command"] = inputCommands.commandLine_;
 
-	mipMaster.makeClusteringDirs();
+	mipMaster.makeClusteringDirs(pars.cacheAlignments);
 
 
 	//set up collapser
@@ -428,6 +446,29 @@ int mipsterAnalysisRunner::mipClusteringMultiple(const njh::progutils::CmdArgs &
 	}
 	for(auto & t : threads){
 		t.join();
+	}
+
+	for(const auto & sample : mipMaster.names_->samples_){
+		std::vector<bfs::path> allInfoFnps;
+
+		for (const auto & mipFam : mipMaster.getAllMipFamilies()) {
+			SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, MipFamSamp(mipFam, sample));
+			auto infoFnp = sampDirMaster.getClusteredInfoFnp(mipFam);
+			if(exists(infoFnp)){
+				allInfoFnps.emplace_back(infoFnp);
+			}
+		}
+		SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, MipFamSamp("", sample));
+		OutputStream allClusInfoFnp(njh::files::make_path(sampDirMaster.clusDir_, "allInfo.tab.txt"));
+		table allClusInfo;
+		for(const auto & fnp : allInfoFnps){
+			if(allClusInfo.nRow() == 0 ){
+				allClusInfo = table(fnp, "\t", true);
+			}else{
+				allClusInfo.rbind(table(fnp, "\t", true), false);
+			}
+		}
+		allClusInfo.outPutContents(allClusInfoFnp, "\t");
 	}
 
 	logInfo["totalRunTime"] = setUp.timer_.totalTimeFormatted(6);

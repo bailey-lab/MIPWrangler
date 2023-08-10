@@ -38,8 +38,8 @@ public:
 	void checkForClusDirectoryThrow() const;
 
 	void createExtractDirectory(bool overWrite) const;
-	void ensureBarCorDirectoryExist() const;
-	void ensureClusDirectoryExist() const;
+	void ensureBarCorDirectoryExist(bool cacheAln) const;
+	void ensureClusDirectoryExist(bool cacheAln) const;
 
 	MipFamSamp mipSamp_;
 
@@ -56,6 +56,7 @@ public:
 
 
 	bfs::path getClusteredHapFnp(const std::string & mipName) const;
+	bfs::path getClusteredInfoFnp(const std::string & mipName) const;
 
 };
 

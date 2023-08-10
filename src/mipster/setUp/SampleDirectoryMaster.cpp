@@ -97,14 +97,18 @@ void SampleDirectoryMaster::createExtractDirectory(bool overWrite) const{
 	njh::files::makeDir(njh::files::MkdirPar(extractDir_.string(), overWrite));
 }
 
-void SampleDirectoryMaster::ensureBarCorDirectoryExist() const{
+void SampleDirectoryMaster::ensureBarCorDirectoryExist(bool cacheAln) const{
 	njh::files::makeDirP(njh::files::MkdirPar(barCorDir_.string()));
-	njh::files::makeDirP(njh::files::MkdirPar(barCorAlnCacheDir_.string()));
+	if(cacheAln){
+		njh::files::makeDirP(njh::files::MkdirPar(barCorAlnCacheDir_.string()));
+	}
 }
 
-void SampleDirectoryMaster::ensureClusDirectoryExist() const{
+void SampleDirectoryMaster::ensureClusDirectoryExist(bool cacheAln) const{
 	njh::files::makeDirP(njh::files::MkdirPar(clusDir_.string()));
-	njh::files::makeDirP(njh::files::MkdirPar(clusAlnCacheDir_.string()));
+	if(cacheAln){
+		njh::files::makeDirP(njh::files::MkdirPar(clusAlnCacheDir_.string()));
+	}
 }
 
 bfs::path SampleDirectoryMaster::getClusteredHapFnp(const std::string & mipName)const{
@@ -112,7 +116,9 @@ bfs::path SampleDirectoryMaster::getClusteredHapFnp(const std::string & mipName)
 			mipName + "_clustered.fastq.gz");
 }
 
-
+bfs::path SampleDirectoryMaster::getClusteredInfoFnp(const std::string & mipName)const{
+	return njh::files::make_path(clusDir_.string(), mipName,"info.tab.txt");
+}
 
 
 

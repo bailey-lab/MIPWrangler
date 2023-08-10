@@ -72,9 +72,12 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 	writer.openOut();
 	bool foundNone = true;
 	alignerObj.resetAlnCache();
-	alignerObj.processAlnInfoInputNoCheck(
-			njh::files::make_path(sampDirMaster.barCorAlnCacheDir_, mipSampName.mipFam_).string(),
-			setUpPars.debug_);
+	if(pars.cacheAlignments){
+		alignerObj.processAlnInfoInputNoCheck(
+						njh::files::make_path(sampDirMaster.barCorAlnCacheDir_, mipSampName.mipFam_).string(),
+						setUpPars.debug_);
+	}
+
 	for (const auto & mipName : mipsForFam) {
 		if(setUpPars.debug_){
 			std::cout << "Creating seqIoOptions for mip: " << mipSampName.mipFam_
@@ -96,27 +99,49 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 			//barcodeFile << "Barcode\treadCnt\tfilePos" << std::endl;
 			barcodeFile << "Barcode\treadCnt" << "\n";
 			BarcodeFilterStats::BarcodeFilterStat tarStat(mipName, mipSampName.mipFam_);
-			SeqInput reader(options);
-			auto reads = reader.readAllReadsPtrs<MippedRead>();
-			tarStat.initial_ = reads.size();
+			{
+				MippedRead seq;
+				//count how many reads
+				SeqInput reader(options);
+				reader.openIn();
+				while(reader.readNextRead(seq)){
+					++tarStat.initial_;
+				}
+			}
+
+			njh::randomGenerator rGen(pars.seed_);
+
+			double cutOff = static_cast<double>(pars.downSampleAmount_)/tarStat.initial_;
+			if(pars.doNotDownSample_){
+				cutOff = 1.01;
+			}
+
 			//key1 ext bar, key2 lig bar
 			std::unordered_map<std::string,
 					std::unordered_map<std::string,
 							std::vector<std::shared_ptr<MippedRead>>> >sameBarcodes;
 			uint32_t readCount = 0;
+			std::shared_ptr<MippedRead> seq;
 			//determine barcodes
-			for (const auto & read : reads) {
-				++readCount;
-				if (setUpPars.debug_) {
-					std::cout << "\rCurrently on " << readCount << " of " << reads.size()
-							<< " for " << mipName;
-					std::cout.flush();
+			{
+				SeqInput reader(options);
+				reader.openIn();
+				while(reader.readNextRead(seq)){
+					++readCount;
+					if (setUpPars.debug_) {
+						std::cout << "\rCurrently on " << readCount << " of " << tarStat.initial_
+											<< " for " << mipName;
+						std::cout.flush();
+					}
+					if(rGen.unifRand() > cutOff){
+						continue;
+					}
+					//this will both determine the barcodes and trim off the barcodes and the arms
+					seq->barInfo_ = std::make_shared<BarcodeInfo>(
+									mipMaster.mips_->mips_.at(mipName).determineBarcodesTrim(seq->seqBase_));
+					sameBarcodes[seq->barInfo_->extBar_][seq->barInfo_->ligBar_].push_back(
+									seq);
 				}
-				//this will both determine the barcodes and trim off the barcodes and the arms
-				read->barInfo_ = std::make_shared<BarcodeInfo>(
-						mipMaster.mips_->mips_.at(mipName).determineBarcodesTrim(read->seqBase_));
-				sameBarcodes[read->barInfo_->extBar_][read->barInfo_->ligBar_].push_back(
-						read);
 			}
 			if (setUpPars.debug_) {
 				std::cout << std::endl;
@@ -168,21 +193,21 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 							<< correctedRead->barInfo_->fullBar_ << std::endl;
 				}
 			}
-			if (mipMaster.mips_->mips_.at(mipName).ligBarcodeLen_ > 0) {
-				std::ofstream ligBarCompOutFile;
-				openTextFile(ligBarCompOutFile,
-						njh::files::make_path(mipFamilyDir,  mipName + "_ligBarNucComp").string(), ".tab.txt", false, true);
-				ligBarCounter.resetAlphabet(true);
-				ligBarCounter.setFractions();
-				ligBarCounter.outPutInfo(ligBarCompOutFile, false);
+			if(pars.develop_){
+				if (mipMaster.mips_->mips_.at(mipName).ligBarcodeLen_ > 0) {
+					OutputStream ligBarCompOutFile(
+									OutOptions(njh::files::make_path(mipFamilyDir, mipName + "_ligBarNucComp").string(), ".tab.txt"));
+					ligBarCounter.resetAlphabet(true);
+					ligBarCounter.setFractions();
+					ligBarCounter.outPutInfo(ligBarCompOutFile, false);
+				}
+				OutputStream extBarCompOutFile(
+								OutOptions(njh::files::make_path(mipFamilyDir, mipName + "_extBarNucComp").string(), ".tab.txt"));
+				extBarCounter.resetAlphabet(true);
+				extBarCounter.setFractions();
+				extBarCounter.outPutInfo(extBarCompOutFile, false);
+				filterStats.addFilterStat(tarStat);
 			}
-			std::ofstream extBarCompOutFile;
-			openTextFile(extBarCompOutFile, njh::files::make_path(mipFamilyDir, mipName).string() + "_extBarNucComp",
-					".tab.txt", false, true);
-			extBarCounter.resetAlphabet(true);
-			extBarCounter.setFractions();
-			extBarCounter.outPutInfo(extBarCompOutFile, false);
-			filterStats.addFilterStat(tarStat);
 		}
 		if (bfs::exists(options.firstName_.parent_path()) && !pars.keepIntermediateFiles) {
 			njh::files::rmDirForce(options.firstName_.parent_path());
@@ -244,7 +269,7 @@ int mipsterAnalysisRunner::mipBarcodeCorrection(const njh::progutils::CmdArgs & 
 	sampDirMaster.checkForExtractDirectoryThrow();
 	checkExistenceThrow(extractInfoFilename, __PRETTY_FUNCTION__);
 
-	sampDirMaster.ensureBarCorDirectoryExist();
+	sampDirMaster.ensureBarCorDirectoryExist(pars.cacheAlignments);
 	aligner alignerObj = aligner(800, setUp.pars_.gapInfo_, setUp.pars_.scoring_,
 			KmerMaps(setUp.pars_.colOpts_.kmerOpts_.kLength_),
 			setUp.pars_.qScorePars_, setUp.pars_.colOpts_.alignOpts_.countEndGaps_,
@@ -296,7 +321,7 @@ int mipsterAnalysisRunner::mipBarcodeCorrectionMultiple(const njh::progutils::Cm
 	if(setUp.pars_.debug_){
 		std::cout << "Making Barcode correction directories" << std::endl;
 	}
-	mipMaster.makeBarcodeCorDirs();
+	mipMaster.makeBarcodeCorDirs(pars.cacheAlignments);
 	if(setUp.pars_.debug_){
 		std::cout << "Done making Barcode correction directories" << std::endl;
 		std::cout << "Creating mip and sample parings" << std::endl;

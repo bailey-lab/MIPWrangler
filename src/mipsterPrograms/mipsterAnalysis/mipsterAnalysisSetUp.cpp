@@ -252,7 +252,11 @@ void mipsterAnalysisSetUp::setUpMipBarcodeCorrection(mipBarcodeCorrectionPars & 
 	processAlignerDefualts();
 
   setOption(pars.keepIntermediateFiles, "--keepIntermediateFiles", "Keep Intermediate Files");
-
+	setOption(pars.doNotDownSample_, "--doNotDownSample", "do Not Down Sample");
+	setOption(pars.downSampleAmount_, "--downSampleAmount", "downsample read Amount");
+	std::random_device rd;
+	pars.seed_ = rd();
+	setOption(pars.seed_, "--downSampleSeed", "down sample seed");
 
 	finishSetUp(std::cout);
 }
@@ -273,6 +277,11 @@ void mipsterAnalysisSetUp::setUpMipBarcodeCorrectionMultiple(mipBarcodeCorrectio
 	processAlignerDefualts();
 
   setOption(pars.keepIntermediateFiles, "--keepIntermediateFiles", "Keep Intermediate Files");
+	setOption(pars.doNotDownSample_, "--doNotDownSample", "do Not Down Sample");
+	setOption(pars.downSampleAmount_, "--downSampleAmount", "downsample read Amount");
+	std::random_device rd;
+	pars.seed_ = rd();
+	setOption(pars.seed_, "--downSampleSeed", "down sample seed");
 
 
 	finishSetUp(std::cout);

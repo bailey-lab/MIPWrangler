@@ -28,32 +28,32 @@
 
 namespace njhseq {
 
-void SetUpMaster::makeBarcodeCorDirs()const{
-	if(!names_){
+void SetUpMaster::makeBarcodeCorDirs(bool cacheAln) const {
+	if (!names_) {
 		std::stringstream ss;
 		ss << "Error in " << __PRETTY_FUNCTION__
-				<< " attempting to create sample directories when when member names_ isn't a valid pointer"
-				<< std::endl;
+			 << " attempting to create sample directories when when member names_ isn't a valid pointer"
+			 << std::endl;
 		throw std::runtime_error{ss.str()};
 	}
-	for (const auto & samp : names_->samples_) {
+	for (const auto &samp: names_->samples_) {
 		SampleDirectoryMaster sampDirMaster(directoryMaster_,
-				MipFamSamp("", samp));
-		sampDirMaster.ensureBarCorDirectoryExist();
+																				MipFamSamp("", samp));
+		sampDirMaster.ensureBarCorDirectoryExist(cacheAln);
 	}
 }
 
-void SetUpMaster::makeClusteringDirs()const{
-	if(!names_){
+void SetUpMaster::makeClusteringDirs(bool cacheAln) const {
+	if (!names_) {
 		std::stringstream ss;
 		ss << "Error in " << __PRETTY_FUNCTION__
-				<< " attempting to create sample directories when when member names_ isn't a valid pointer"
-				<< std::endl;
+			 << " attempting to create sample directories when when member names_ isn't a valid pointer"
+			 << std::endl;
 		throw std::runtime_error{ss.str()};
 	}
-	for (const auto & samp : names_->samples_) {
+	for (const auto &samp: names_->samples_) {
 		SampleDirectoryMaster sampDirMaster(directoryMaster_, MipFamSamp("", samp));
-		sampDirMaster.ensureClusDirectoryExist();
+		sampDirMaster.ensureClusDirectoryExist(cacheAln);
 	}
 }
 

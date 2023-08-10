@@ -47,6 +47,9 @@ void mipCorePars::processDefaults(seqSetUp & setUp) {
 	setUp.setOption(sampleMetaFnp,"--samplesMeta", "A file with meta data for samples");
 	setUp.setOption(overWriteDirs, "--overWriteDirs",
 			"Over write the barcode correction sample dir if it already exists");
+	setUp.setOption(develop_,"--develop", "run in development mode");
+
+
 }
 
 void mipCorePars::addCorePathsToConfig(Json::Value & config){

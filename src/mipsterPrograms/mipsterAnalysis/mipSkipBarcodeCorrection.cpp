@@ -254,7 +254,7 @@ int mipsterAnalysisRunner::mipSkipBarcodeCorrection(const njh::progutils::CmdArg
 	sampDirMaster.checkForExtractDirectoryThrow();
 	checkExistenceThrow(extractInfoFilename, __PRETTY_FUNCTION__);
 
-	sampDirMaster.ensureBarCorDirectoryExist();
+	sampDirMaster.ensureBarCorDirectoryExist(pars.cacheAlignments);
 	aligner alignerObj = aligner(800, setUp.pars_.gapInfo_, setUp.pars_.scoring_,
 			KmerMaps(setUp.pars_.colOpts_.kmerOpts_.kLength_),
 			setUp.pars_.qScorePars_, setUp.pars_.colOpts_.alignOpts_.countEndGaps_,
@@ -305,7 +305,7 @@ int mipsterAnalysisRunner::mipSkipBarcodeCorrectionMultiple(const njh::progutils
 	if(setUp.pars_.debug_){
 		std::cout << "Making Barcode correction directories" << std::endl;
 	}
-	mipMaster.makeBarcodeCorDirs();
+	mipMaster.makeBarcodeCorDirs(pars.cacheAlignments);
 	if(setUp.pars_.debug_){
 		std::cout << "Done making Barcode correction directories" << std::endl;
 		std::cout << "Creating mip and sample parings" << std::endl;
