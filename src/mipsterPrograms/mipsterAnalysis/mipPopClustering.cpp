@@ -68,7 +68,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		return;
 	}
 	// reading expected sequences to compare to
-	bool checkingExpected = pars.refIoOptions.firstName_ != "";
+	bool checkingExpected = !pars.refIoOptions.firstName_.empty();
 	std::vector<readObject> expectedSeqs;
 	if (checkingExpected) {
 		expectedSeqs = SeqInput::getReferenceSeq(pars.refIoOptions, maxSize);
@@ -92,7 +92,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 			PopNamesInfo(pars.mipName, foundSamples, VecStr{}),
 			pars.clusteringCutOffs);
 
-	if("" != pars.sampleMetaFnp){
+	if(!pars.sampleMetaFnp.empty()){
 		sampColl.addGroupMetaData(pars.sampleMetaFnp);
 	}
 	std::vector<sampleCluster> allSamples;
@@ -164,7 +164,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 					<< pars.previousPopFilename << std::endl;
 		}
 
-		if ("" != pars.previousPopFilename) {
+		if (!pars.previousPopFilename.empty()) {
 			sampColl.addRefMetaToName(getSeqs<readObject>(pars.previousPopFilename.string()), pars.previousPopErrors);
 		}
 		//auto sampTab = sampColl.genSampleCollapseInfo(std::set<std::string>{foundSamples.begin(), foundSamples.end()});
@@ -180,7 +180,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		}
 
 		auto popTabOpts = TableIOOpts::genTabFileOut(njh::files::make_path(mipFamilyDir, "population", "populationCluster.tab.txt"), true);
-		auto sampTabOpts = TableIOOpts::genTabFileOut(njh::files::make_path(mipFamilyDir, "selectedClustersInfo.tab.txt"), true);
+		auto sampTabOpts = TableIOOpts::genTabFileOut(njh::files::make_path(mipFamilyDir, "selectedClustersInfo.tab.txt.gz"), true);
 
 		auto tabs = printMipSampleCollapseInfo(sampColl, true, pars.mipName);
 		//auto tabs = printMipSampleCollapseInfo(sampColl, !expectedSeqs.empty(), pars.mipName);
@@ -313,7 +313,7 @@ int mipsterAnalysisRunner::mipPopulationClusteringMultiple(
 			const mipPopulationClusteringParsMultiple& pars,
 			const SeqSetUpPars & setUpPars,
 			const SetUpMaster & mipMaster){
-		std::string mipName = "";
+		std::string mipName;
 		while (mipsQueue.getVal(mipName)) {
 			njh::stopWatch watch;
 			auto currentSampPars = pars.createForMip(mipName);
@@ -330,8 +330,8 @@ int mipsterAnalysisRunner::mipPopulationClusteringMultiple(
 
 	for (uint32_t t = 0; t < pars.numThreads; ++t) {
 		threads.emplace_back(
-				std::thread(runPopClusMultiMip, std::ref(mipsQueue), std::cref(pars),
-						std::cref(setUp.pars_), std::cref(mipMaster)));
+				runPopClusMultiMip, std::ref(mipsQueue), std::cref(pars),
+						std::cref(setUp.pars_), std::cref(mipMaster));
 	}
 
 	for (auto & t : threads) {
@@ -342,7 +342,7 @@ int mipsterAnalysisRunner::mipPopulationClusteringMultiple(
 			OutOptions(
 					njh::files::make_path(
 							mipMaster.directoryMaster_.populationClusteringDir_,
-							"allInfo.tab.txt")), "\t", true);
+							"allInfo.tab.txt.gz")), "\t", true);
 	tabOpts.out_.overWriteFile_ = true;
 	std::vector<bfs::path> infofilePaths;
 	for(const auto & mip : mipMaster.names_->mips_){

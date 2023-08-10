@@ -827,7 +827,7 @@ std::string SetUpMaster::getGroupForMipFam(const std::string & mipFamName)const{
 bfs::path SetUpMaster::pathMipPopClusSampInfo(
 		const MipFamSamp & mipSampName) const {
 	return njh::files::make_path(directoryMaster_.populationClusteringDir_,
-			mipSampName.mipFam_, "analysis", "selectedClustersInfo.tab.txt");
+			mipSampName.mipFam_, "analysis", "selectedClustersInfo.tab.txt.gz");
 }
 
 bfs::path SetUpMaster::pathSampPopClusSampInfo(const MipFamSamp & mipSampName) const{
