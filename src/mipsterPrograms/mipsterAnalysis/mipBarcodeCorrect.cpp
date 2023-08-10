@@ -206,8 +206,8 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 				extBarCounter.resetAlphabet(true);
 				extBarCounter.setFractions();
 				extBarCounter.outPutInfo(extBarCompOutFile, false);
-				filterStats.addFilterStat(tarStat);
 			}
+			filterStats.addFilterStat(tarStat);
 		}
 		if (bfs::exists(options.firstName_.parent_path()) && !pars.keepIntermediateFiles) {
 			njh::files::rmDirForce(options.firstName_.parent_path());
