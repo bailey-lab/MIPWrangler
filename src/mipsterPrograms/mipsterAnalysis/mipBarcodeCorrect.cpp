@@ -121,7 +121,7 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 					std::unordered_map<std::string,
 							std::vector<std::shared_ptr<MippedRead>>> >sameBarcodes;
 			uint32_t readCount = 0;
-			std::shared_ptr<MippedRead> seq;
+			std::shared_ptr<MippedRead> seq = std::make_shared<MippedRead>();
 			//determine barcodes
 			{
 				SeqInput reader(options);
