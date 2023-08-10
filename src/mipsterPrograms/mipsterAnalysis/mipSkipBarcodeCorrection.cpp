@@ -251,7 +251,7 @@ int mipsterAnalysisRunner::mipSkipBarcodeCorrection(const njh::progutils::CmdArg
 	SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, MipFamSamp("", pars.sampleName));
 	bfs::path extractInfoFilename = njh::files::make_path(sampDirMaster.extractDir_, "extractInfoByTarget.txt");
 
-	sampDirMaster.checkForExtractDirectoryThrow();
+	sampDirMaster.checkForExtractDirectoryThrow(pars.cacheAlignments);
 	checkExistenceThrow(extractInfoFilename, __PRETTY_FUNCTION__);
 
 	sampDirMaster.ensureBarCorDirectoryExist(pars.cacheAlignments);

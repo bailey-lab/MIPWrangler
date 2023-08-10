@@ -332,8 +332,8 @@ int mipsterAnalysisRunner::mipClustering(
 	SampleDirectoryMaster sampDirMaster(directoryMaster,
 			MipFamSamp("", pars.sampleName));
 	//check for folder created by previous steps to see if we can run
-	sampDirMaster.checkForExtractDirectoryThrow();
-	sampDirMaster.checkForBarCorDirectoryThrow();
+	sampDirMaster.checkForExtractDirectoryThrow(pars.cacheAlignments);
+	sampDirMaster.checkForBarCorDirectoryThrow(pars.cacheAlignments);
 	//create folders neccessary for this sample
 	sampDirMaster.ensureClusDirectoryExist(pars.cacheAlignments);
 	//set up collapser
@@ -422,7 +422,7 @@ int mipsterAnalysisRunner::mipClusteringMultiple(const njh::progutils::CmdArgs &
 			njh::stopWatch watch;
 			auto sampPars = pars.createForSample(mipSamp.samp_);
 			SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, mipSamp);
-			sampDirMaster.checkForClusDirectoryThrow();
+			sampDirMaster.checkForClusDirectoryThrow(pars.cacheAlignments);
 			runClusteringForMipFamForSamp(mipSamp, sampDirMaster, pars, setUp.pars_, *curAlignerObj, collapserObj);
 
 			auto & currentPair = currrentPairingLog[mipSamp.samp_ + "_" + mipSamp.mipFam_];
