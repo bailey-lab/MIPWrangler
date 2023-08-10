@@ -189,6 +189,9 @@ struct mipBarcodeCorrectionParsMultiple : public mipBarcodeCorrectionPars  {
 		ret.keepIntermediateFiles = keepIntermediateFiles;
 		ret.cacheAlignments = cacheAlignments;
 
+		ret.doNotDownSample_ = doNotDownSample_;
+		ret.downSampleAmount_ = downSampleAmount_;
+		ret.seed_ = seed_;
 
 		ret.sampleName = newSampleName;
 
