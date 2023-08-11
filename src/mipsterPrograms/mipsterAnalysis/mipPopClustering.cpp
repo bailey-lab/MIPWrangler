@@ -36,7 +36,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		const MipsSamplesNames & mipSamps,
 		const mipPopulationClusteringPars & pars,
 		const SeqSetUpPars & seqPars) {
-	std::cout << __FILE__ << " " << __LINE__ << std::endl;
+	//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	bfs::path mipFamilyDir = njh::files::makeDir(
 			directoryMaster.populationClusteringDir_.string() + mipSamp.mipFam_,
 			njh::files::MkdirPar("analysis/", pars.overWriteDirs));
@@ -68,7 +68,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		}
 		return;
 	}
-	std::cout << __FILE__ << " " << __LINE__ << std::endl;
+	//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	// reading expected sequences to compare to
 	bool checkingExpected = !pars.refIoOptions.firstName_.empty();
 	std::vector<readObject> expectedSeqs;
@@ -100,7 +100,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 	std::vector<sampleCluster> allSamples;
 	//
 	collapserObj.opts_.kmerOpts_.checkKmers_ = false;
-	std::cout << __FILE__ << " " << __LINE__ << std::endl;
+	//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	for (const auto & samp : foundSamples) {
 		if(seqPars.verbose_){
 			std::cout << "Starting: " << samp << std::endl;
@@ -110,7 +110,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		for(auto & input : inputFiles){
 			input.reNameInput_ = false;
 		}
-		std::cout << __FILE__ << " " << __LINE__ << std::endl;
+		//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		sampColl.setUpSample(samp,
 				inputFiles,
 				alignerObj, collapserObj, seqPars.chiOpts_);
@@ -141,7 +141,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		if (!pars.keepChimeras) {
 			sampColl.sampleCollapses_[samp]->excludeChimeras(false);
 		}
-		std::cout << __FILE__ << " " << __LINE__ << std::endl;
+		//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		sampColl.sampleCollapses_[samp]->excludeFraction(pars.fracCutoff, true);
 
 		std::string sortBy = "fraction";
@@ -155,7 +155,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 			njh::files::rmDirForce(sampDirMaster.getClusteredHapFnp(pars.mipName).parent_path() );
 		}
 	}
-	std::cout << __FILE__ << " " << __LINE__ << std::endl;
+	//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	if(!allSamples.empty()){
 		if(seqPars.verbose_){
 			std::cout << njh::bashCT::boldGreen("Pop Clustering") << std::endl;
@@ -167,7 +167,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 			std::cout << "Ref file for " << pars.mipName << ": "
 					<< pars.previousPopFilename << std::endl;
 		}
-		std::cout << __FILE__ << " " << __LINE__ << std::endl;
+		//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		if (!pars.previousPopFilename.empty()) {
 			sampColl.addRefMetaToName(getSeqs<readObject>(pars.previousPopFilename.string()), pars.previousPopErrors);
 		}
@@ -175,59 +175,59 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		//auto popTab = sampColl.genPopulationCollapseInfo();
 
 
-		std::cout << __FILE__ << " " << __LINE__ << std::endl;
+		//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		sampColl.dumpPopulation(false);
 
-		std::cout << __FILE__ << " " << __LINE__ << std::endl;
+		//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		if(seqPars.verbose_){
 			std::cout << njh::bashCT::boldBlack("Printing info...") << std::endl;
 		}
-		std::cout << __FILE__ << " " << __LINE__ << std::endl;
+		//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		auto popTabOpts = TableIOOpts::genTabFileOut(njh::files::make_path(mipFamilyDir, "population", "populationCluster.tab.txt"), true);
 		auto sampTabOpts = TableIOOpts::genTabFileOut(njh::files::make_path(mipFamilyDir, "selectedClustersInfo.tab.txt.gz"), true);
-		std::cout << __FILE__ << " " << __LINE__ << std::endl;
+		//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		auto tabs = printMipSampleCollapseInfo(sampColl, true, pars.mipName);
 		//auto tabs = printMipSampleCollapseInfo(sampColl, !expectedSeqs.empty(), pars.mipName);
 		//popTab.outPutContents(popTabOpts);
 		//sampTab.outPutContents(sampTabOpts);
 		tabs.popTab_.outPutContents(popTabOpts);
 		tabs.sampTab_.outPutContents(sampTabOpts);
-		std::cout << __FILE__ << " " << __LINE__ << std::endl;
+		//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		if(!sampColl.popCollapse_){
 			sampColl.loadInPreviousPop();
 		}
-		std::cout << __FILE__ << " " << __LINE__ << std::endl;
+		//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		for (const auto & samp : foundSamples) {
 			sampColl.setUpSampleFromPrevious(samp);
 			/*
 			std::cout << sampColl.popCollapse_->collapsed_.subClustersPositions_.size() << std::endl;
 			std::cout << samp << std::endl;
 			std::cout << mipSamp.mipFam_ << std::endl;*/
-			std::cout << __FILE__ << " " << __LINE__ << std::endl;
+			//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 			auto sampResults = sampColl.sampleCollapses_.at(samp);
 			for (auto & clus : sampResults->collapsed_.clusters_) {
-				std::cout << __FILE__ << " " << __LINE__ << std::endl;
+				//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 				std::cout << clus.seqBase_.name_ << std::endl;
 
 				clus.processNameForMeta();
-				std::cout << __FILE__ << " " << __LINE__ << std::endl;
+				//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 				auto popUID =
 						sampColl.popCollapse_->collapsed_.clusters_[sampColl.popCollapse_->collapsed_.subClustersPositions_.at(
 								clus.seqBase_.getStubName(true))].seqBase_.getStubName(true);
-				std::cout << __FILE__ << " " << __LINE__ << std::endl;
+				//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 				if(MetaDataInName::nameHasMetaData(popUID)){
 					MetaDataInName::removeMetaDataInName(popUID);
 				}
-				std::cout << __FILE__ << " " << __LINE__ << std::endl;
+				//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 				clus.addMeta("h_popUID", popUID, true);
 				//clus.addMeta("region", "", true);
 				clus.resetMetaInName();
-				std::cout << __FILE__ << " " << __LINE__ << std::endl;
+				//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 			}
 			sampColl.dumpSample(samp);
 		}
 	}
-	std::cout << __FILE__ << " " << __LINE__ << std::endl;
+	//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	if(pars.cacheAlignments){
 		alignerObj.processAlnInfoOutputNoCheck(alnCacheDir.string(), seqPars.debug_);
 	}
@@ -247,7 +247,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 			}
 		}
 	}
-	std::cout << __FILE__ << " " << __LINE__ << std::endl;
+	//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	std::ofstream logfile;
 	openTextFile(logfile, OutOptions(njh::files::make_path(mipFamilyDir,"log.txt")));
 	logfile << "Ran on: " << njh::getCurrentDate() << std::endl;
@@ -265,7 +265,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 				<< readsIter.second.size() << " readsNum: "
 				<< readVec::getTotalReadCount(readsIter.second) << std::endl;
 	}*/
-	std::cout << __FILE__ << " " << __LINE__ << std::endl;
+	//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 }
 
 int mipsterAnalysisRunner::mipPopulationClustering(
