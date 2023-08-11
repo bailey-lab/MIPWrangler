@@ -207,7 +207,10 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 			auto sampResults = sampColl.sampleCollapses_.at(samp);
 			for (auto & clus : sampResults->collapsed_.clusters_) {
 				std::cout << __FILE__ << " " << __LINE__ << std::endl;
+				std::cout << clus.seqBase_.name_ << std::endl;
+
 				clus.processNameForMeta();
+				std::cout << __FILE__ << " " << __LINE__ << std::endl;
 				auto popUID =
 						sampColl.popCollapse_->collapsed_.clusters_[sampColl.popCollapse_->collapsed_.subClustersPositions_.at(
 								clus.seqBase_.getStubName(true))].seqBase_.getStubName(true);

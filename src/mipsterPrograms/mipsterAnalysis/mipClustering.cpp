@@ -350,7 +350,9 @@ int mipsterAnalysisRunner::mipClustering(
 			allInfoFnps.emplace_back(infoFnp);
 		}
 	}
-	OutputStream allClusInfoFnp(njh::files::make_path(sampDirMaster.clusDir_, "allInfo.tab.txt"));
+	OutOptions allClusInfoOpts(njh::files::make_path(sampDirMaster.clusDir_, "allInfo.tab.txt"));
+	allClusInfoOpts.overWriteFile_ = true;
+	OutputStream allClusInfoFnp(allClusInfoOpts);
 	table allClusInfo;
 	for(const auto & fnp : allInfoFnps){
 		if(allClusInfo.nRow() == 0 ){
@@ -459,7 +461,9 @@ int mipsterAnalysisRunner::mipClusteringMultiple(const njh::progutils::CmdArgs &
 			}
 		}
 		SampleDirectoryMaster sampDirMaster(mipMaster.directoryMaster_, MipFamSamp("", sample));
-		OutputStream allClusInfoFnp(njh::files::make_path(sampDirMaster.clusDir_, "allInfo.tab.txt"));
+		OutOptions allClusInfoOpts(njh::files::make_path(sampDirMaster.clusDir_, "allInfo.tab.txt"));
+		allClusInfoOpts.overWriteFile_ = true;
+		OutputStream allClusInfoFnp(allClusInfoOpts);
 		table allClusInfo;
 		for(const auto & fnp : allInfoFnps){
 			if(allClusInfo.nRow() == 0 ){
