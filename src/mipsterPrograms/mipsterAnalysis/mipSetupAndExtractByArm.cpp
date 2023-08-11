@@ -96,12 +96,12 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 
 	std::unordered_map<std::string, VecStr> readPairs;
 	std::unordered_map<std::string, VecStr> readPairsUnrecognized;
-	for(const auto & f : files){
+	for (const auto &f: files) {
 		auto filename = f.first.filename().string();
 		std::string sampName = filename.substr(0, filename.find('_'));
-		if(njh::in(sampName, mipMaster.names_->samples_)){
+		if (njh::in(sampName, mipMaster.names_->samples_)) {
 			readPairs[sampName].emplace_back(filename);
-		}else{
+		} else {
 			readPairsUnrecognized[sampName].emplace_back(filename);
 		}
 	}
@@ -466,9 +466,6 @@ int mipsterAnalysisRunner::mipSetup(const njh::progutils::CmdArgs & inputCommand
 		throw std::runtime_error {ss.str()};
 	}
 
-	std::ofstream logFile;
-	openTextFile(logFile, njh::files::make_path(mipMaster.directoryMaster_.logsDir_,
-																							pars.logFilename), ".json", setUp.pars_.ioOptions_.out_);
 	setUp.startARunLog(njh::files::make_path(mipMaster.directoryMaster_.logsDir_).string());
 
 	auto files = njh::files::listAllFiles(pars.dir, false, {std::regex{R"(.*.fastq.gz)"}});
@@ -479,21 +476,43 @@ int mipsterAnalysisRunner::mipSetup(const njh::progutils::CmdArgs & inputCommand
 
 	std::unordered_map<std::string, VecStr> readPairs;
 	std::unordered_map<std::string, VecStr> readPairsUnrecognized;
-	for(const auto & f : files){
+	std::vector<bfs::path> emptyFiles;
+	for (const auto &f: files) {
 		auto filename = f.first.filename().string();
-		std::string sampName = filename.substr(0, filename.find('_'));
-		if(njh::in(sampName, mipMaster.names_->samples_)){
-			readPairs[sampName].emplace_back(filename);
-		}else{
-			readPairsUnrecognized[sampName].emplace_back(filename);
+		if (njh::files::isFileEmpty(f.first)) {
+			emptyFiles.emplace_back(f.first);
+		} else {
+			std::string sampName = filename.substr(0, filename.find('_'));
+			if (njh::in(sampName, mipMaster.names_->samples_)) {
+				readPairs[sampName].emplace_back(filename);
+			} else {
+				readPairsUnrecognized[sampName].emplace_back(filename);
+			}
 		}
 	}
 	auto keys = getVectorOfMapKeys(readPairs);
 	njh::sort(keys);
-	std::vector<bfs::path> emptyFiles;
-	VecStr samplesExtracted;
-	VecStr samplesEmpty;
-	njh::concurrent::LockableQueue<std::string> filesKeys(keys);
+
+	{
+		auto sampleInputFilesFilesOpts = OutOptions(
+						njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "resources/sampleInputFiles.tab.txt"));
+		OutputStream sampleInputFilesFilesOut(sampleInputFilesFilesOpts);
+		sampleInputFilesFilesOut << "sample\tfiles" << std::endl;
+		for (const auto &inputFnps: readPairs) {
+			sampleInputFilesFilesOut << inputFnps.first << "\t"
+															 << njh::conToStr(inputFnps.second, ",") << std::endl;
+		}
+
+		auto unrecognizedSampleInputFilesOpts = OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "resources/unrecognizedSampleInputFiles.tab.txt"));
+		OutputStream unrecognizedSampleInputFilesOut(unrecognizedSampleInputFilesOpts);
+
+		unrecognizedSampleInputFilesOut << "sample\tfiles" << std::endl;
+		for (const auto &inputFnps: readPairsUnrecognized) {
+			unrecognizedSampleInputFilesOut << inputFnps.first << "\t"
+															 << njh::conToStr(inputFnps.second, ",") << std::endl;
+		}
+	}
+
 	Json::Value logs;
 	logs["mainCommand"] = setUp.commands_.commandLine_;
 	std::mutex logsMut;
@@ -504,7 +523,7 @@ int mipsterAnalysisRunner::mipSetup(const njh::progutils::CmdArgs & inputCommand
 	bfs::copy_file(pars.mipArmsFileName, njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "mip_arm_id.tab.txt"));
 	OutputStream allMipsSamplesFile(OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "allMipsSamplesNames.tab.txt")));
 	MipsSamplesNames goodSamples = *mipMaster.names_;
-	goodSamples.setSamples(samplesExtracted);
+	goodSamples.setSamples(keys);
 	goodSamples.write(allMipsSamplesFile);
 	bfs::copy_file(pars.mipsSamplesFile,njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "original_allMipsSamplesNames.tab.txt"));
 	mipMaster.createPopClusMipDirs(pars.numThreads);
