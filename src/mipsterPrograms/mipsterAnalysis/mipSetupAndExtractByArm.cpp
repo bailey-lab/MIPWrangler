@@ -495,7 +495,7 @@ int mipsterAnalysisRunner::mipSetup(const njh::progutils::CmdArgs & inputCommand
 
 	{
 		auto sampleInputFilesFilesOpts = OutOptions(
-						njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "resources/sampleInputFiles.tab.txt"));
+						njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleInputFiles.tab.txt"));
 		OutputStream sampleInputFilesFilesOut(sampleInputFilesFilesOpts);
 		sampleInputFilesFilesOut << "sample\tfiles" << std::endl;
 		for (const auto &inputFnps: readPairs) {
@@ -503,7 +503,7 @@ int mipsterAnalysisRunner::mipSetup(const njh::progutils::CmdArgs & inputCommand
 															 << njh::conToStr(inputFnps.second, ",") << std::endl;
 		}
 
-		auto unrecognizedSampleInputFilesOpts = OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "resources/unrecognizedSampleInputFiles.tab.txt"));
+		auto unrecognizedSampleInputFilesOpts = OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "unrecognizedSampleInputFiles.tab.txt"));
 		OutputStream unrecognizedSampleInputFilesOut(unrecognizedSampleInputFilesOpts);
 
 		unrecognizedSampleInputFilesOut << "sample\tfiles" << std::endl;
