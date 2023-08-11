@@ -60,8 +60,11 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 	//create out files
 	MultiSeqOutCache<PairedRead> mipOuts;
 	mipOuts.setOpenLimit(pars.fileOpenLimit_/2);
+	mipOuts.setCacheLimit(pars.seqOutCacheLimit_);
+
 	MultiSeqOutCache<seqInfo> mipStitchedOuts;
 	mipStitchedOuts.setOpenLimit(pars.fileOpenLimit_/2);
+	mipStitchedOuts.setCacheLimit(pars.seqOutCacheLimit_);
 
 	mipOuts.addReader("indeterminate",
 			SeqIOOptions(njh::files::make_path(filteredOffDir, "indeterminate").string(),  sampleIOOpts.front().outFormat_, sampleIOOpts.front().out_));

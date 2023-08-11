@@ -87,7 +87,7 @@ struct mipIllumArmExtractionPars : mipCorePars{
 	  processPairPars_.r1Trim_ = 1;
 	  processPairPars_.r2Trim_ = 1;
 	}
-	std::string sampleName = "";
+	std::string sampleName;
 	uint32_t minCaptureLength = 100;
   uint32_t smallFragmentLength = 50;
   QualFilteringPars qFilPars_;
@@ -99,7 +99,7 @@ struct mipIllumArmExtractionPars : mipCorePars{
 
 	PairedReadProcessor::ProcessParams processPairPars_;
 
-
+	uint32_t seqOutCacheLimit_ = 50000;
 
 #if defined( __APPLE__ ) || defined( __APPLE_CC__ ) || defined( macintosh ) || defined( __MACH__ )
 	uint32_t fileOpenLimit_ = 200; /**< The maximum number of files to be kept open at one time*/
@@ -150,6 +150,9 @@ struct extractFromRawParsMultiple : public extractFromRawPars {
 		ret.keepIntermediateFiles = keepIntermediateFiles;
 		ret.writeOutInitialExtractedPairs = writeOutInitialExtractedPairs;
 		ret.refDir = refDir;
+
+		ret.seqOutCacheLimit_ = seqOutCacheLimit_;
+
 		ret.copyCore(*this);
 		return ret;
 	}

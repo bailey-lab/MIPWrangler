@@ -76,6 +76,8 @@ void mipsterAnalysisSetUp::setUpExtractFromRawMultiple(extractFromRawParsMultipl
 	setOption(pars.minCaptureLength, "--minCaptureLength", "Minimum Capture Length cut off, captures below this will be thrown out, can be set for each mip individually in mip table");
 	setOption(pars.seqFileSuffix, "--seqFileSuffix", "The ending of the sequence append to sample name");
 	setOption(pars.fileOpenLimit_, "--fileOpenLimit", "Number of file allowed to open by one process");
+	setOption(pars.seqOutCacheLimit_, "--seqOutCacheLimit", "Seq Out Cache Limit when extracting");
+
 	setOption(pars.refDir, "--refDir", "Directory with possible reference sequence to rename popUIDs to");
 
 	setOption(pars.processPairPars_.r1Trim_, "--r1Trim", "Number of Bases to trim off at the end of the r1 read");

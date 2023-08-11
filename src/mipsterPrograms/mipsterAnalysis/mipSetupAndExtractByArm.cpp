@@ -31,7 +31,7 @@ namespace njhseq {
 
 int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs & inputCommands) {
 	extractFromRawParsMultiple pars;
-	std::string mipServerName = "";
+	std::string mipServerName;
 	bool runRest = false;
 	int32_t stitchMatchScore = 2;
 	int32_t stitchMismatchScore = -2;
@@ -60,7 +60,7 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 	mipMaster.mips_->setAllMinCaptureLength(pars.minCaptureLength);
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 
-	if ("" != pars.sampleMetaFnp) {
+	if (!pars.sampleMetaFnp.empty()) {
 		mipMaster.setMetaData(pars.sampleMetaFnp);
 	}
 	mipMaster.createDirStructSkeleton();
@@ -98,7 +98,7 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 	std::unordered_map<std::string, VecStr> readPairsUnrecognized;
 	for(const auto & f : files){
 		auto filename = f.first.filename().string();
-		std::string sampName = filename.substr(0, filename.find("_"));
+		std::string sampName = filename.substr(0, filename.find('_'));
 		if(njh::in(sampName, mipMaster.names_->samples_)){
 			readPairs[sampName].emplace_back(filename);
 		}else{
@@ -148,7 +148,7 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 			[&pars,&samplesExtracted,&samplesEmpty,&filesKeys,&emptyFiles,&aligners,&alignersForStitching,&logs,&logsMut,&mipMaster](
 					const std::string & outputDirectory,
 					const std::unordered_map<std::string, VecStr>& readPairs) {
-				std::string key = "";
+				std::string key;
 				VecStr currentEmptySamps;
 				VecStr currentSamplesExtracted;
 				std::vector<bfs::path> currentEmptyFiles;
@@ -193,7 +193,7 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 							throw std::runtime_error{ss.str()};
 						}else if(matchesR1){
 							std::string r1Name = njh::pasteAsStr(r1Match[1], r1Match[2]);
-							if(njh::has(pairedFnpForSample, r1Name) && "" != pairedFnpForSample[r1Name].r1_fnp ){
+							if(njh::has(pairedFnpForSample, r1Name) && !pairedFnpForSample[r1Name].r1_fnp.empty() ){
 								std::stringstream ss;
 								ss << __PRETTY_FUNCTION__ << ", error, already have " <<  pairedFnpForSample[r1Name].r1_fnp << " for " << f << " for " << r1Name << "\n";
 								throw std::runtime_error{ss.str()};
@@ -202,7 +202,7 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 							}
 						}else if(matchesR2){
 							std::string r2Name = njh::pasteAsStr(r2Match[1], r2Match[2]);
-							if(njh::has(pairedFnpForSample, r2Name) && "" != pairedFnpForSample[r2Name].r2_fnp ){
+							if(njh::has(pairedFnpForSample, r2Name) && !pairedFnpForSample[r2Name].r2_fnp.empty() ){
 								std::stringstream ss;
 								ss << __PRETTY_FUNCTION__ << ", error, already have " <<  pairedFnpForSample[r2Name].r2_fnp << " for " << f << " for " << r2Name << "\n";
 								throw std::runtime_error{ss.str()};
@@ -221,10 +221,10 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 						success = false;
 					}
 					std::vector<SeqIOOptions> sampleOpts;
-					if(pairedFnpForSample.size() >= 1 && success && !allEmpty){
+					if(!pairedFnpForSample.empty() && success && !allEmpty){
 						for(const auto & pairedFnp : pairedFnpForSample){
-							if("" == pairedFnp.second.r1_fnp  ||
-									"" == pairedFnp.second.r2_fnp){
+							if(pairedFnp.second.r1_fnp.empty()  ||
+									pairedFnp.second.r2_fnp.empty()){
 								std::stringstream ss;
 								ss << __PRETTY_FUNCTION__ << ", error, " << key << ", " << pairedFnp.first << ", had an empty r1 or r2 file list" << "\n";
 								ss << "R1:" << pairedFnp.second.r1_fnp << "\n";
@@ -268,9 +268,9 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 	std::vector<std::thread> threads;
 	for (uint32_t tNum = 0; tNum < pars.numThreads; ++tNum) {
 		threads.emplace_back(
-				std::thread(extractFiles,
+				extractFiles,
 						std::cref(mipMaster.directoryMaster_.masterDir_.string()),
-						std::cref(readPairs)));
+						std::cref(readPairs));
 	}
 	njh::concurrent::joinAllThreads(threads);
 	logFile << logs << std::endl;
@@ -354,9 +354,9 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 				<< njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
 		<< " --numThreads " << pars.numThreads
 		<< " --logFile mipPopClustering_run1";
-		if("" != pars.refDir){
+		if(!pars.refDir.empty()){
 			mipScriptOut << " --refDir " << njh::files::normalize(pars.refDir);
-		};
+		}
 		if (pars.keepIntermediateFiles) {
 			mipScriptOut << " --keepIntermediateFiles";
 		}
