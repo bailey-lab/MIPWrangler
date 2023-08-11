@@ -178,7 +178,7 @@ int mipsterAnalysisRunner::mipSetupAndExtractByArm(const njh::progutils::CmdArgs
 						auto inputName = njh::files::make_path(pars.dir,fqName);
 						//if the file is empty copy to an empty directory to avoid concatenating errors
 						if(0 == bfs::file_size(inputName)){
-							emptyFiles.emplace_back(inputName);
+							currentEmptyFiles.emplace_back(inputName);
 							continue;
 						}
 						allEmpty = false;
@@ -430,8 +430,14 @@ int mipsterAnalysisRunner::mipSetup(const njh::progutils::CmdArgs & inputCommand
 	std::string mipServerName;
 	mipsterAnalysisSetUp setUp(inputCommands);
 	setUp.setOption(mipServerName, "--mipServerNumber", "Name of the mip server, e.g. 1", true);
-	setUp.setUpExtractFromRawMultiple(pars);
+	pars.infoFilesRequired = true;
+	pars.logFileRequired = false;
+	pars.logFilename = "initialSetUp";
 
+	setUp.processMultipleDefaults(pars);
+	setUp.setOption(pars.dir, "--dir", "Name of raw data directory", true);
+	setUp.setOption(pars.refDir, "--refDir", "Directory with possible reference sequence to rename popUIDs to");
+	setUp.finishSetUp(std::cout);
 	//check for required external programs
 
 	//set up the mip analysis directory structure
@@ -474,8 +480,8 @@ int mipsterAnalysisRunner::mipSetup(const njh::progutils::CmdArgs & inputCommand
 		printOutMapContents(files, "\t", std::cout);
 	}
 
-	std::unordered_map<std::string, VecStr> readPairs;
-	std::unordered_map<std::string, VecStr> readPairsUnrecognized;
+	std::unordered_map<std::string, std::vector<std::string>> readPairs;
+	std::unordered_map<std::string, std::vector<std::string>> readPairsUnrecognized;
 	std::vector<bfs::path> emptyFiles;
 	for (const auto &f: files) {
 		auto filename = f.first.filename().string();
@@ -484,9 +490,9 @@ int mipsterAnalysisRunner::mipSetup(const njh::progutils::CmdArgs & inputCommand
 		} else {
 			std::string sampName = filename.substr(0, filename.find('_'));
 			if (njh::in(sampName, mipMaster.names_->samples_)) {
-				readPairs[sampName].emplace_back(filename);
+				readPairs[sampName].emplace_back(njh::files::normalize(njh::files::make_path(pars.dir, filename)).string());
 			} else {
-				readPairsUnrecognized[sampName].emplace_back(filename);
+				readPairsUnrecognized[sampName].emplace_back(njh::files::normalize(njh::files::make_path(pars.dir, filename)).string());
 			}
 		}
 	}
@@ -494,8 +500,7 @@ int mipsterAnalysisRunner::mipSetup(const njh::progutils::CmdArgs & inputCommand
 	njh::sort(keys);
 
 	{
-		auto sampleInputFilesFilesOpts = OutOptions(
-						njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleInputFiles.tab.txt"));
+		auto sampleInputFilesFilesOpts = OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleInputFiles.tab.txt"));
 		OutputStream sampleInputFilesFilesOut(sampleInputFilesFilesOpts);
 		sampleInputFilesFilesOut << "sample\tfiles" << std::endl;
 		for (const auto &inputFnps: readPairs) {
@@ -636,8 +641,7 @@ fi
 
 int mipsterAnalysisRunner::mipExtractByArm(const njh::progutils::CmdArgs & inputCommands) {
 	extractFromRawParsMultiple pars;
-	std::string mipServerName;
-	bool runRest = false;
+	std::string sample;
 	int32_t stitchMatchScore = 2;
 	int32_t stitchMismatchScore = -2;
 	uint32_t stitchGapOpen = 10;
@@ -649,10 +653,52 @@ int mipsterAnalysisRunner::mipExtractByArm(const njh::progutils::CmdArgs & input
 	setUp.setOption(stitchGapOpen, "--stitchGapOpen", "Gap opening penalty for stitching alignments, the penalty will be the negative value given here");
 	setUp.setOption(stitchGapExtend, "--stitchGapExtend", "Gap extending penalty for stitching alignments, the penalty will be the negative value given here");
 
+	setUp.setOption(sample, "--sample", "sample namee to run on", true);
 
-	setUp.setOption(runRest, "--runRest", "Run the rest of the analysis as well with defaults");
-	setUp.setOption(mipServerName, "--mipServerNumber", "Name of the mip server, e.g. 1", true);
-	setUp.setUpExtractFromRawMultiple(pars);
+	pars.infoFilesRequired = false;
+	pars.logFileRequired = false;
+	setUp.processDefaults(pars);
+	pars.qFilPars_.checkingQFrac_ = true;
+	setUp.setOption(pars.qFilPars_.qualWindow_, "--qualWindow",
+									"Sliding Quality Window, format is WindowSize,WindowStep,Threshold");
+	seqUtil::processQualityWindowString(pars.qFilPars_.qualWindow_, pars.qFilPars_.qualityWindowLength_,
+																			pars.qFilPars_.qualityWindowStep_, pars.qFilPars_.qualityWindowThres_);
+	setUp.setOption(pars.qFilPars_.qualCheck_, "--qualCheck", "Qual Check Level");
+	setUp.setOption(pars.qFilPars_.qualCheckCutOff_, "--qualCheckCutOff",
+									"Cut Off for fraction of bases above qual check of "
+									+ estd::to_string(pars.qFilPars_.qualCheck_));
+	if (setUp.commands_.hasFlagCaseInsenNoDash("-qualWindow")) {
+		pars.qFilPars_.checkingQWindow = true;
+		pars.qFilPars_.checkingQFrac_ = false;
+	}
+	pars.qFilPars_.trimAtQual_ = setUp.setOption(pars.qFilPars_.trimAtQualCutOff_, "--trimAtQual",
+																							 "Trim Reads at first occurrence of quality score");
+	setUp.setOption(pars.allowableErrors, "--allowableErrors",
+									"Number of Errors To Allow in Arm");
+	setUp.setOption(pars.smallFragmentLength, "--smallFragmentLength",
+									"Length to consider a read to be small fragment and shouldn't be processed");
+	setUp.setOption(pars.wiggleRoom, "--wiggleRoom",
+									"Amount of bases to allow the arms including barcode to be from the front of the read");
+	setUp.setOption(pars.minCaptureLength, "--minCaptureLength", "Minimum Capture Length cut off, captures below this will be thrown out, can be set for each mip individually in mip table");
+	setUp.setOption(pars.seqFileSuffix, "--seqFileSuffix", "The ending of the sequence append to sample name");
+	setUp.setOption(pars.fileOpenLimit_, "--fileOpenLimit", "Number of file allowed to open by one process");
+	setUp.setOption(pars.seqOutCacheLimit_, "--seqOutCacheLimit", "Seq Out Cache Limit when extracting");
+
+
+	setUp.setOption(pars.processPairPars_.r1Trim_, "--r1Trim", "Number of Bases to trim off at the end of the r1 read");
+	setUp.setOption(pars.processPairPars_.r2Trim_, "--r2Trim", "Number of Bases to trim off at the end of the r2 read");
+
+	setUp.setOption(pars.keepIntermediateFiles, "--keepIntermediateFiles", "Keep Intermediate Files");
+	setUp.setOption(pars.writeOutInitialExtractedPairs, "--writeOutInitialExtractedPairs", "Write Out Initial Extracted Pairs");
+	setUp.setOption(pars.writeOutFilteredReads, "--writeOutFilteredReads", "Write Out filtered Extracted reads");
+
+
+	pars.fileOpenLimit_ = (pars.fileOpenLimit_ - pars.numThreads) /pars.numThreads;
+	setUp.pars_.gap_ = "5,1";
+	setUp.pars_.gapRight_ = "0,0";
+	setUp.pars_.gapLeft_ = "0,0";
+	setUp.processAlignerDefualts();
+	setUp.finishSetUp(std::cout);
 
 	//check for required external programs
 
@@ -661,14 +707,11 @@ int mipsterAnalysisRunner::mipExtractByArm(const njh::progutils::CmdArgs & input
 	mipMaster.setMipArmFnp(pars.mipArmsFileName);
 	mipMaster.setMipsSampsNamesFnp(pars.mipsSamplesFile);
 	mipMaster.loadMipsSampsInfo(pars.allowableErrors);
-	mipMaster.setServerName(njh::pasteAsStr("mip", mipServerName));
+
 	mipMaster.mips_->setAllMinCaptureLength(pars.minCaptureLength);
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 
-	if (!pars.sampleMetaFnp.empty()) {
-		mipMaster.setMetaData(pars.sampleMetaFnp);
-	}
-	mipMaster.createDirStructSkeleton();
+
 	auto warnings = mipMaster.checkDirStruct();
 	if (!warnings.empty()) {
 		std::stringstream ss;
@@ -680,41 +723,31 @@ int mipsterAnalysisRunner::mipExtractByArm(const njh::progutils::CmdArgs & input
 		throw std::runtime_error { ss.str() };
 	}
 
-	pars.dir = njh::appendAsNeededRet(pars.dir.string(), "/");
-
-	if(!bfs::exists(pars.dir)){
-		std::stringstream ss;
-		ss << njh::bashCT::boldRed(pars.dir.string()) << " doesn't exist";
-		throw std::runtime_error {ss.str()};
-	}
-
-	std::ofstream logFile;
-	openTextFile(logFile, njh::files::make_path(mipMaster.directoryMaster_.logsDir_,
-																							pars.logFilename), ".json", setUp.pars_.ioOptions_.out_);
-	setUp.startARunLog(njh::files::make_path(mipMaster.directoryMaster_.logsDir_).string());
-
-	auto files = njh::files::listAllFiles(pars.dir, false, {std::regex{R"(.*.fastq.gz)"}});
-	if(setUp.pars_.debug_){
-		std::cout << "Files: " << std::endl;
-		printOutMapContents(files, "\t", std::cout);
-	}
-
 	std::unordered_map<std::string, VecStr> readPairs;
-	std::unordered_map<std::string, VecStr> readPairsUnrecognized;
-	for(const auto & f : files){
-		auto filename = f.first.filename().string();
-		std::string sampName = filename.substr(0, filename.find('_'));
-		if(njh::in(sampName, mipMaster.names_->samples_)){
-			readPairs[sampName].emplace_back(filename);
-		}else{
-			readPairsUnrecognized[sampName].emplace_back(filename);
+
+
+	table sampleNameInputFiles(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleInputFiles.tab.txt"), "\t", true);
+	sampleNameInputFiles.checkForColumnsThrow(VecStr{"sample", "files"}, __PRETTY_FUNCTION__ );
+	for(const auto & row : sampleNameInputFiles){
+		if(njh::in(row[sampleNameInputFiles.getColPos("sample")], readPairs)){
+			std::stringstream ss;
+			ss << __PRETTY_FUNCTION__ << ", error " << "already have " << row[sampleNameInputFiles.getColPos("sample")]<< "\n";
+			throw std::runtime_error{ss.str()};
 		}
+		readPairs[row[sampleNameInputFiles.getColPos("sample")]] = njh::tokenizeString(row[sampleNameInputFiles.getColPos("files")], ",");
 	}
+
 	auto keys = getVectorOfMapKeys(readPairs);
 	njh::sort(keys);
-	std::vector<bfs::path> emptyFiles;
+	if(!njh::in(sample, keys)){
+		std::stringstream ss;
+		ss << __PRETTY_FUNCTION__ << ", error " << "no files found for sample: " << sample << "\n";
+		ss << "options include: " << njh::conToStr(keys, ",") << "\n";
+		throw std::runtime_error{ss.str()};
+	}
+	keys = {sample};
 	VecStr samplesExtracted;
-	VecStr samplesEmpty;
+
 	njh::concurrent::LockableQueue<std::string> filesKeys(keys);
 	Json::Value logs;
 	logs["mainCommand"] = setUp.commands_.commandLine_;
@@ -750,7 +783,7 @@ int mipsterAnalysisRunner::mipExtractByArm(const njh::progutils::CmdArgs & input
 //	}
 
 	auto extractFiles =
-					[&pars,&samplesExtracted,&samplesEmpty,&filesKeys,&emptyFiles,&aligners,&alignersForStitching,&logs,&logsMut,&mipMaster](
+					[&pars,&samplesExtracted,&filesKeys,&aligners,&alignersForStitching,&logs,&logsMut,&mipMaster](
 									const std::string & outputDirectory,
 									const std::unordered_map<std::string, VecStr>& readPairs) {
 						std::string key;
@@ -770,7 +803,8 @@ int mipsterAnalysisRunner::mipExtractByArm(const njh::progutils::CmdArgs & input
 							bool success = true;
 							bool allEmpty = true;
 							out << key << std::endl;
-							auto sampDir = njh::files::makeDir(outputDirectory, njh::files::MkdirPar(key));
+							auto sampDirPars = njh::files::MkdirPar(key);
+							auto sampDir = njh::files::makeDirP(outputDirectory, sampDirPars);
 							std::vector<bfs::path> r1_files;
 							std::vector<bfs::path> r2_files;
 							struct PairedFnps{
@@ -783,7 +817,7 @@ int mipsterAnalysisRunner::mipExtractByArm(const njh::progutils::CmdArgs & input
 								auto inputName = njh::files::make_path(pars.dir,fqName);
 								//if the file is empty copy to an empty directory to avoid concatenating errors
 								if(0 == bfs::file_size(inputName)){
-									emptyFiles.emplace_back(inputName);
+									currentEmptyFiles.emplace_back(inputName);
 									continue;
 								}
 								allEmpty = false;
@@ -862,9 +896,7 @@ int mipsterAnalysisRunner::mipExtractByArm(const njh::progutils::CmdArgs & input
 						}
 						{
 							std::lock_guard<std::mutex> lock(logsMut);
-							addOtherVec(samplesEmpty, currentEmptySamps);
 							addOtherVec(samplesExtracted, currentSamplesExtracted);
-							addOtherVec(emptyFiles, currentEmptyFiles);
 							for(const auto & keyLog : currentLogs){
 								logs[keyLog.first] = keyLog.second;
 							}
@@ -878,153 +910,6 @@ int mipsterAnalysisRunner::mipExtractByArm(const njh::progutils::CmdArgs & input
 						std::cref(readPairs));
 	}
 	njh::concurrent::joinAllThreads(threads);
-	logFile << logs << std::endl;
-
-	//copy over resources;
-	bfs::copy_file(pars.mipArmsFileName, njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "mip_arm_id.tab.txt"));
-	njh::files::makeDirP(njh::files::MkdirPar(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo")));
-	std::ofstream outSamplesFoundFile;
-	openTextFile(outSamplesFoundFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/outSamplesFound.tab.txt")));
-	std::ofstream outSamplesEmptyfile;
-	openTextFile(outSamplesEmptyfile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/outSamplesEmpty.tab.txt")));
-	std::ofstream gzCatSamplesFile;
-	openTextFile(gzCatSamplesFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/gzCatSamples.tab.txt")));
-	std::ofstream pearExtractSamplesFile;
-	openTextFile(pearExtractSamplesFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/emptyFiles.tab.txt")));
-	std::ofstream samplesMissingFile;
-	openTextFile(samplesMissingFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/samplesMissing.tab.txt")));
-	auto allFoundSamps = concatVecs(samplesExtracted, samplesEmpty);
-	njh::sort(allFoundSamps);
-	njh::sort(samplesEmpty);
-	njh::sort(samplesExtracted);
-	njh::sort(emptyFiles);
-	if(!allFoundSamps.empty()) outSamplesFoundFile << njh::conToStr(allFoundSamps, "\n") << std::endl;
-	if(!samplesEmpty.empty()) outSamplesEmptyfile << njh::conToStr(samplesEmpty, "\n") << std::endl;
-	if(!samplesExtracted.empty()) gzCatSamplesFile << njh::conToStr(samplesExtracted, "\n") << std::endl;
-	if(!emptyFiles.empty()) pearExtractSamplesFile << njh::conToStr(emptyFiles, "\n") << std::endl;
-	std::ofstream allMipsSamplesFile;
-	openTextFile(allMipsSamplesFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "allMipsSamplesNames.tab.txt")));
-	MipsSamplesNames goodSamples = *mipMaster.names_;
-	goodSamples.setSamples(samplesExtracted);
-	goodSamples.write(allMipsSamplesFile);
-	bfs::copy_file(pars.mipsSamplesFile,njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "original_allMipsSamplesNames.tab.txt"));
-	mipMaster.createPopClusMipDirs(pars.numThreads);
-
-	if (nullptr != mipMaster.meta_) {
-		bfs::copy_file(mipMaster.meta_->groupingsFile_,
-									 njh::files::make_path(mipMaster.directoryMaster_.masterDir_,
-																				 "resources", "samplesMeta.tab.txt"));
-	}
-
-
-	// set up scripts
-
-	// run barcode correction, mipBarcodeCorrectionMultiple
-	{
-		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipBarcodeCorrectionMultiple.sh"));
-		std::ofstream mipScriptOut;
-		mipScriptOpts.openExecutableFile(mipScriptOut);
-		mipScriptOut << "#!/usr/bin/env bash" << "\n";
-		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipBarcodeCorrectionMultiple --masterDir "
-								 << njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
-								 << " --numThreads " << pars.numThreads
-								 << " --logFile mipBarcodeCorrecting_run1";
-		if(pars.keepIntermediateFiles){
-			mipScriptOut << " --keepIntermediateFiles";
-		}
-		mipScriptOut << std::endl;
-	}
-	// run clustering step, mipClusteringMultiple
-	{
-		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipClusteringMultiple.sh"));
-		std::ofstream mipScriptOut;
-		mipScriptOpts.openExecutableFile(mipScriptOut);
-		mipScriptOut << "#!/usr/bin/env bash" << "\n";
-		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipClusteringMultiple --masterDir "
-								 << njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
-								 << " --numThreads " << pars.numThreads
-								 << " --logFile mipClustering_run1" ;
-		if(pars.keepIntermediateFiles){
-			mipScriptOut << " --keepIntermediateFiles";
-		}
-		mipScriptOut << std::endl;
-	}
-	// run population clustering, mipPopulationClusteringMultiple
-	{
-		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipPopulationClusteringMultiple.sh"));
-		std::ofstream mipScriptOut;
-		mipScriptOpts.openExecutableFile(mipScriptOut);
-		mipScriptOut << "#!/usr/bin/env bash" << "\n";
-		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipPopulationClusteringMultiple --masterDir "
-								 << njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
-								 << " --numThreads " << pars.numThreads
-								 << " --logFile mipPopClustering_run1";
-		if(!pars.refDir.empty()){
-			mipScriptOut << " --refDir " << njh::files::normalize(pars.refDir);
-		}
-		if (pars.keepIntermediateFiles) {
-			mipScriptOut << " --keepIntermediateFiles";
-		}
-		mipScriptOut << std::endl;
-	}
-	// run setup for viewer, mipAnalysisServerSetUp
-	{
-		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipAnalysisServerSetUp.sh"));
-		std::ofstream mipScriptOut;
-		mipScriptOpts.openExecutableFile(mipScriptOut);
-		mipScriptOut << "#!/usr/bin/env bash" << "\n";
-		mipScriptOut << R"(if [[ $# -ne 1 ]]; then
-    echo "Illegal number of parameters, needs 1 argument, 1) name of mip server number"
-    exit
-fi
-)";
-
-		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipAnalysisServerSetUp --masterDir "
-								 << njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
-								 << " --numThreads " << pars.numThreads
-								 << " --name mip$1 --verbose";
-		mipScriptOut << std::endl;
-	}
-	// run viewer, mav
-	{
-		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_viewer.sh"));
-		std::ofstream mipScriptOut;
-		mipScriptOpts.openExecutableFile(mipScriptOut);
-		mipScriptOut << "#!/usr/bin/env bash" << "\n";
-		mipScriptOut << R"(if [[ $# -ne 1 ]]; then
-    echo "Illegal number of parameters, needs 1 argument, 1) name of mip server number"
-    exit
-fi
-)";
-
-		mipScriptOut << "nohup " << setUp.commands_.masterProgramRaw_ << " mav --masterDir "
-								 << njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
-								 << " --numThreads " << pars.numThreads
-								 << " --port $((10000+$1)) --name mip$1 --verbose &";
-		mipScriptOut << std::endl;
-	}
-
-	{
-		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_restOfAnalysis.sh"));
-		std::ofstream mipScriptOut;
-		mipScriptOpts.openExecutableFile(mipScriptOut);
-		mipScriptOut << "#!/usr/bin/env bash" << "\n";
-		mipScriptOut << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipBarcodeCorrectionMultiple.sh")) << std::endl;
-		mipScriptOut << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipClusteringMultiple.sh")) << std::endl;
-		mipScriptOut << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipPopulationClusteringMultiple.sh")) << std::endl;
-		mipScriptOut << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipAnalysisServerSetUp.sh")) << " " << mipServerName << std::endl;
-		mipScriptOut << std::endl;
-	}
-
-	if(runRest){
-		std::stringstream cmdSs;
-		cmdSs << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_restOfAnalysis.sh")) << " " << mipServerName << std::endl;
-		auto runLog = njh::sys::run(VecStr{cmdSs.str()});
-		OutOptions restOfAnalysisRunLogOpts(njh::files::make_path(mipMaster.directoryMaster_.logsDir_, "run_restOfAnalysis_log.json"));
-		OutputStream restOfAnalysisRunLogOut(restOfAnalysisRunLogOpts);
-		restOfAnalysisRunLogOut << runLog.toJson() << std::endl;
-	}
-
 
 
 	return 0;
@@ -1032,8 +917,7 @@ fi
 
 int mipsterAnalysisRunner::mipExtractByArmMultiple(const njh::progutils::CmdArgs & inputCommands) {
 	extractFromRawParsMultiple pars;
-	std::string mipServerName;
-	bool runRest = false;
+
 	int32_t stitchMatchScore = 2;
 	int32_t stitchMismatchScore = -2;
 	uint32_t stitchGapOpen = 10;
@@ -1046,9 +930,52 @@ int mipsterAnalysisRunner::mipExtractByArmMultiple(const njh::progutils::CmdArgs
 	setUp.setOption(stitchGapExtend, "--stitchGapExtend", "Gap extending penalty for stitching alignments, the penalty will be the negative value given here");
 
 
-	setUp.setOption(runRest, "--runRest", "Run the rest of the analysis as well with defaults");
-	setUp.setOption(mipServerName, "--mipServerNumber", "Name of the mip server, e.g. 1", true);
-	setUp.setUpExtractFromRawMultiple(pars);
+	pars.infoFilesRequired = false;
+	pars.logFileRequired = false;
+	pars.logFilename = "extractionLog";
+	setUp.processMultipleDefaults(pars);
+
+	pars.qFilPars_.checkingQFrac_ = true;
+	setUp.setOption(pars.qFilPars_.qualWindow_, "--qualWindow",
+						"Sliding Quality Window, format is WindowSize,WindowStep,Threshold");
+	seqUtil::processQualityWindowString(pars.qFilPars_.qualWindow_, pars.qFilPars_.qualityWindowLength_,
+																			pars.qFilPars_.qualityWindowStep_, pars.qFilPars_.qualityWindowThres_);
+	setUp.setOption(pars.qFilPars_.qualCheck_, "--qualCheck", "Qual Check Level");
+	setUp.setOption(pars.qFilPars_.qualCheckCutOff_, "--qualCheckCutOff",
+						"Cut Off for fraction of bases above qual check of "
+						+ estd::to_string(pars.qFilPars_.qualCheck_));
+	if (setUp.commands_.hasFlagCaseInsenNoDash("-qualWindow")) {
+		pars.qFilPars_.checkingQWindow = true;
+		pars.qFilPars_.checkingQFrac_ = false;
+	}
+	pars.qFilPars_.trimAtQual_ = setUp.setOption(pars.qFilPars_.trimAtQualCutOff_, "--trimAtQual",
+																				 "Trim Reads at first occurrence of quality score");
+	setUp.setOption(pars.allowableErrors, "--allowableErrors",
+						"Number of Errors To Allow in Arm");
+	setUp.setOption(pars.smallFragmentLength, "--smallFragmentLength",
+						"Length to consider a read to be small fragment and shouldn't be processed");
+	setUp.setOption(pars.wiggleRoom, "--wiggleRoom",
+						"Amount of bases to allow the arms including barcode to be from the front of the read");
+	setUp.setOption(pars.minCaptureLength, "--minCaptureLength", "Minimum Capture Length cut off, captures below this will be thrown out, can be set for each mip individually in mip table");
+	setUp.setOption(pars.seqFileSuffix, "--seqFileSuffix", "The ending of the sequence append to sample name");
+	setUp.setOption(pars.fileOpenLimit_, "--fileOpenLimit", "Number of file allowed to open by one process");
+	setUp.setOption(pars.seqOutCacheLimit_, "--seqOutCacheLimit", "Seq Out Cache Limit when extracting");
+
+
+	setUp.setOption(pars.processPairPars_.r1Trim_, "--r1Trim", "Number of Bases to trim off at the end of the r1 read");
+	setUp.setOption(pars.processPairPars_.r2Trim_, "--r2Trim", "Number of Bases to trim off at the end of the r2 read");
+
+	setUp.setOption(pars.keepIntermediateFiles, "--keepIntermediateFiles", "Keep Intermediate Files");
+	setUp.setOption(pars.writeOutInitialExtractedPairs, "--writeOutInitialExtractedPairs", "Write Out Initial Extracted Pairs");
+	setUp.setOption(pars.writeOutFilteredReads, "--writeOutFilteredReads", "Write Out filtered Extracted reads");
+
+
+	pars.fileOpenLimit_ = (pars.fileOpenLimit_ - pars.numThreads) /pars.numThreads;
+	setUp.pars_.gap_ = "5,1";
+	setUp.pars_.gapRight_ = "0,0";
+	setUp.pars_.gapLeft_ = "0,0";
+	setUp.processAlignerDefualts();
+	setUp.finishSetUp(std::cout);
 
 	//check for required external programs
 
@@ -1057,14 +984,10 @@ int mipsterAnalysisRunner::mipExtractByArmMultiple(const njh::progutils::CmdArgs
 	mipMaster.setMipArmFnp(pars.mipArmsFileName);
 	mipMaster.setMipsSampsNamesFnp(pars.mipsSamplesFile);
 	mipMaster.loadMipsSampsInfo(pars.allowableErrors);
-	mipMaster.setServerName(njh::pasteAsStr("mip", mipServerName));
 	mipMaster.mips_->setAllMinCaptureLength(pars.minCaptureLength);
 	mipMaster.mips_->setAllWiggleRoomInArm(pars.wiggleRoom);
 
-	if (!pars.sampleMetaFnp.empty()) {
-		mipMaster.setMetaData(pars.sampleMetaFnp);
-	}
-	mipMaster.createDirStructSkeleton();
+
 	auto warnings = mipMaster.checkDirStruct();
 	if (!warnings.empty()) {
 		std::stringstream ss;
@@ -1076,41 +999,31 @@ int mipsterAnalysisRunner::mipExtractByArmMultiple(const njh::progutils::CmdArgs
 		throw std::runtime_error { ss.str() };
 	}
 
-	pars.dir = njh::appendAsNeededRet(pars.dir.string(), "/");
-
-	if(!bfs::exists(pars.dir)){
-		std::stringstream ss;
-		ss << njh::bashCT::boldRed(pars.dir.string()) << " doesn't exist";
-		throw std::runtime_error {ss.str()};
-	}
-
-	std::ofstream logFile;
-	openTextFile(logFile, njh::files::make_path(mipMaster.directoryMaster_.logsDir_,
-																							pars.logFilename), ".json", setUp.pars_.ioOptions_.out_);
+	OutOptions logOutOpts(njh::files::make_path(mipMaster.directoryMaster_.logsDir_,
+																							pars.logFilename), ".json");
+	logOutOpts.overWriteFile_ = pars.overWriteLog;
+	OutputStream logFile(logOutOpts);
 	setUp.startARunLog(njh::files::make_path(mipMaster.directoryMaster_.logsDir_).string());
 
-	auto files = njh::files::listAllFiles(pars.dir, false, {std::regex{R"(.*.fastq.gz)"}});
-	if(setUp.pars_.debug_){
-		std::cout << "Files: " << std::endl;
-		printOutMapContents(files, "\t", std::cout);
+	std::unordered_map<std::string, VecStr> readPairs;
+
+
+	table sampleNameInputFiles(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleInputFiles.tab.txt"), "\t", true);
+	sampleNameInputFiles.checkForColumnsThrow(VecStr{"sample", "files"}, __PRETTY_FUNCTION__ );
+	for(const auto & row : sampleNameInputFiles){
+		if(njh::in(row[sampleNameInputFiles.getColPos("sample")], readPairs)){
+			std::stringstream ss;
+			ss << __PRETTY_FUNCTION__ << ", error " << "already have " << row[sampleNameInputFiles.getColPos("sample")]<< "\n";
+			throw std::runtime_error{ss.str()};
+		}
+		readPairs[row[sampleNameInputFiles.getColPos("sample")]] = njh::tokenizeString(row[sampleNameInputFiles.getColPos("files")], ",");
 	}
 
-	std::unordered_map<std::string, VecStr> readPairs;
-	std::unordered_map<std::string, VecStr> readPairsUnrecognized;
-	for(const auto & f : files){
-		auto filename = f.first.filename().string();
-		std::string sampName = filename.substr(0, filename.find('_'));
-		if(njh::in(sampName, mipMaster.names_->samples_)){
-			readPairs[sampName].emplace_back(filename);
-		}else{
-			readPairsUnrecognized[sampName].emplace_back(filename);
-		}
-	}
 	auto keys = getVectorOfMapKeys(readPairs);
 	njh::sort(keys);
-	std::vector<bfs::path> emptyFiles;
+
 	VecStr samplesExtracted;
-	VecStr samplesEmpty;
+
 	njh::concurrent::LockableQueue<std::string> filesKeys(keys);
 	Json::Value logs;
 	logs["mainCommand"] = setUp.commands_.commandLine_;
@@ -1146,7 +1059,7 @@ int mipsterAnalysisRunner::mipExtractByArmMultiple(const njh::progutils::CmdArgs
 //	}
 
 	auto extractFiles =
-					[&pars,&samplesExtracted,&samplesEmpty,&filesKeys,&emptyFiles,&aligners,&alignersForStitching,&logs,&logsMut,&mipMaster](
+					[&pars,&samplesExtracted,&filesKeys,&aligners,&alignersForStitching,&logs,&logsMut,&mipMaster](
 									const std::string & outputDirectory,
 									const std::unordered_map<std::string, VecStr>& readPairs) {
 						std::string key;
@@ -1166,7 +1079,8 @@ int mipsterAnalysisRunner::mipExtractByArmMultiple(const njh::progutils::CmdArgs
 							bool success = true;
 							bool allEmpty = true;
 							out << key << std::endl;
-							auto sampDir = njh::files::makeDir(outputDirectory, njh::files::MkdirPar(key));
+							auto sampDirPars = njh::files::MkdirPar(key);
+							auto sampDir = njh::files::makeDirP(outputDirectory, sampDirPars);
 							std::vector<bfs::path> r1_files;
 							std::vector<bfs::path> r2_files;
 							struct PairedFnps{
@@ -1179,7 +1093,7 @@ int mipsterAnalysisRunner::mipExtractByArmMultiple(const njh::progutils::CmdArgs
 								auto inputName = njh::files::make_path(pars.dir,fqName);
 								//if the file is empty copy to an empty directory to avoid concatenating errors
 								if(0 == bfs::file_size(inputName)){
-									emptyFiles.emplace_back(inputName);
+									currentEmptyFiles.emplace_back(inputName);
 									continue;
 								}
 								allEmpty = false;
@@ -1258,9 +1172,7 @@ int mipsterAnalysisRunner::mipExtractByArmMultiple(const njh::progutils::CmdArgs
 						}
 						{
 							std::lock_guard<std::mutex> lock(logsMut);
-							addOtherVec(samplesEmpty, currentEmptySamps);
 							addOtherVec(samplesExtracted, currentSamplesExtracted);
-							addOtherVec(emptyFiles, currentEmptyFiles);
 							for(const auto & keyLog : currentLogs){
 								logs[keyLog.first] = keyLog.second;
 							}
@@ -1276,152 +1188,32 @@ int mipsterAnalysisRunner::mipExtractByArmMultiple(const njh::progutils::CmdArgs
 	njh::concurrent::joinAllThreads(threads);
 	logFile << logs << std::endl;
 
-	//copy over resources;
-	bfs::copy_file(pars.mipArmsFileName, njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "mip_arm_id.tab.txt"));
 	njh::files::makeDirP(njh::files::MkdirPar(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo")));
-	std::ofstream outSamplesFoundFile;
-	openTextFile(outSamplesFoundFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/outSamplesFound.tab.txt")));
-	std::ofstream outSamplesEmptyfile;
-	openTextFile(outSamplesEmptyfile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/outSamplesEmpty.tab.txt")));
-	std::ofstream gzCatSamplesFile;
-	openTextFile(gzCatSamplesFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/gzCatSamples.tab.txt")));
-	std::ofstream pearExtractSamplesFile;
-	openTextFile(pearExtractSamplesFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/emptyFiles.tab.txt")));
-	std::ofstream samplesMissingFile;
-	openTextFile(samplesMissingFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "sampleExtractInfo/samplesMissing.tab.txt")));
-	auto allFoundSamps = concatVecs(samplesExtracted, samplesEmpty);
-	njh::sort(allFoundSamps);
-	njh::sort(samplesEmpty);
+//	OutOptions outSamplesFoundOpts(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(),"sampleExtractInfo/outSamplesFound.tab.txt"));
+//	outSamplesFoundOpts.overWriteFile_ = pars.overWriteDirs;
+//	OutputStream outSamplesFoundFile(outSamplesFoundOpts);
+//
+//	OutOptions outSamplesEmptyOpts(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(),"sampleExtractInfo/outSamplesEmpty.tab.txt"));
+//	outSamplesEmptyOpts.overWriteFile_ = pars.overWriteDirs;
+//	OutputStream outSamplesEmptyfile(outSamplesEmptyOpts);
+
+	OutOptions samplesExtractedOpts(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(),"sampleExtractInfo/samplesExtracted.tab.txt"));
+	samplesExtractedOpts.overWriteFile_ = pars.overWriteDirs;
+	OutputStream samplesExtractedFile(samplesExtractedOpts);
+//
+//	OutOptions emptyFilesOpts(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(),"sampleExtractInfo/emptyFiles.tab.txt"));
+//	emptyFilesOpts.overWriteFile_ = pars.overWriteDirs;
+//	OutputStream emptyFilesFiles(emptyFilesOpts);
+//
+//	OutOptions samplesMissingOpts(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(),"sampleExtractInfo/samplesMissing.tab.txt"));
+//	samplesMissingOpts.overWriteFile_ = pars.overWriteDirs;
+//	OutputStream samplesMissingFile(samplesMissingOpts);
+
+//	auto allFoundSamps = samplesExtracted;
+//	njh::sort(allFoundSamps);
 	njh::sort(samplesExtracted);
-	njh::sort(emptyFiles);
-	if(!allFoundSamps.empty()) outSamplesFoundFile << njh::conToStr(allFoundSamps, "\n") << std::endl;
-	if(!samplesEmpty.empty()) outSamplesEmptyfile << njh::conToStr(samplesEmpty, "\n") << std::endl;
-	if(!samplesExtracted.empty()) gzCatSamplesFile << njh::conToStr(samplesExtracted, "\n") << std::endl;
-	if(!emptyFiles.empty()) pearExtractSamplesFile << njh::conToStr(emptyFiles, "\n") << std::endl;
-	std::ofstream allMipsSamplesFile;
-	openTextFile(allMipsSamplesFile,OutOptions(njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "allMipsSamplesNames.tab.txt")));
-	MipsSamplesNames goodSamples = *mipMaster.names_;
-	goodSamples.setSamples(samplesExtracted);
-	goodSamples.write(allMipsSamplesFile);
-	bfs::copy_file(pars.mipsSamplesFile,njh::files::join(mipMaster.directoryMaster_.resourceDir_.string(), "original_allMipsSamplesNames.tab.txt"));
-	mipMaster.createPopClusMipDirs(pars.numThreads);
 
-	if (nullptr != mipMaster.meta_) {
-		bfs::copy_file(mipMaster.meta_->groupingsFile_,
-									 njh::files::make_path(mipMaster.directoryMaster_.masterDir_,
-																				 "resources", "samplesMeta.tab.txt"));
-	}
-
-
-	// set up scripts
-
-	// run barcode correction, mipBarcodeCorrectionMultiple
-	{
-		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipBarcodeCorrectionMultiple.sh"));
-		std::ofstream mipScriptOut;
-		mipScriptOpts.openExecutableFile(mipScriptOut);
-		mipScriptOut << "#!/usr/bin/env bash" << "\n";
-		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipBarcodeCorrectionMultiple --masterDir "
-								 << njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
-								 << " --numThreads " << pars.numThreads
-								 << " --logFile mipBarcodeCorrecting_run1";
-		if(pars.keepIntermediateFiles){
-			mipScriptOut << " --keepIntermediateFiles";
-		}
-		mipScriptOut << std::endl;
-	}
-	// run clustering step, mipClusteringMultiple
-	{
-		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipClusteringMultiple.sh"));
-		std::ofstream mipScriptOut;
-		mipScriptOpts.openExecutableFile(mipScriptOut);
-		mipScriptOut << "#!/usr/bin/env bash" << "\n";
-		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipClusteringMultiple --masterDir "
-								 << njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
-								 << " --numThreads " << pars.numThreads
-								 << " --logFile mipClustering_run1" ;
-		if(pars.keepIntermediateFiles){
-			mipScriptOut << " --keepIntermediateFiles";
-		}
-		mipScriptOut << std::endl;
-	}
-	// run population clustering, mipPopulationClusteringMultiple
-	{
-		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipPopulationClusteringMultiple.sh"));
-		std::ofstream mipScriptOut;
-		mipScriptOpts.openExecutableFile(mipScriptOut);
-		mipScriptOut << "#!/usr/bin/env bash" << "\n";
-		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipPopulationClusteringMultiple --masterDir "
-								 << njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
-								 << " --numThreads " << pars.numThreads
-								 << " --logFile mipPopClustering_run1";
-		if(!pars.refDir.empty()){
-			mipScriptOut << " --refDir " << njh::files::normalize(pars.refDir);
-		}
-		if (pars.keepIntermediateFiles) {
-			mipScriptOut << " --keepIntermediateFiles";
-		}
-		mipScriptOut << std::endl;
-	}
-	// run setup for viewer, mipAnalysisServerSetUp
-	{
-		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipAnalysisServerSetUp.sh"));
-		std::ofstream mipScriptOut;
-		mipScriptOpts.openExecutableFile(mipScriptOut);
-		mipScriptOut << "#!/usr/bin/env bash" << "\n";
-		mipScriptOut << R"(if [[ $# -ne 1 ]]; then
-    echo "Illegal number of parameters, needs 1 argument, 1) name of mip server number"
-    exit
-fi
-)";
-
-		mipScriptOut << setUp.commands_.masterProgramRaw_ << " mipAnalysisServerSetUp --masterDir "
-								 << njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
-								 << " --numThreads " << pars.numThreads
-								 << " --name mip$1 --verbose";
-		mipScriptOut << std::endl;
-	}
-	// run viewer, mav
-	{
-		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_viewer.sh"));
-		std::ofstream mipScriptOut;
-		mipScriptOpts.openExecutableFile(mipScriptOut);
-		mipScriptOut << "#!/usr/bin/env bash" << "\n";
-		mipScriptOut << R"(if [[ $# -ne 1 ]]; then
-    echo "Illegal number of parameters, needs 1 argument, 1) name of mip server number"
-    exit
-fi
-)";
-
-		mipScriptOut << "nohup " << setUp.commands_.masterProgramRaw_ << " mav --masterDir "
-								 << njh::files::normalize(mipMaster.directoryMaster_.masterDir_)
-								 << " --numThreads " << pars.numThreads
-								 << " --port $((10000+$1)) --name mip$1 --verbose &";
-		mipScriptOut << std::endl;
-	}
-
-	{
-		OutOptions mipScriptOpts(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_restOfAnalysis.sh"));
-		std::ofstream mipScriptOut;
-		mipScriptOpts.openExecutableFile(mipScriptOut);
-		mipScriptOut << "#!/usr/bin/env bash" << "\n";
-		mipScriptOut << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipBarcodeCorrectionMultiple.sh")) << std::endl;
-		mipScriptOut << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipClusteringMultiple.sh")) << std::endl;
-		mipScriptOut << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipPopulationClusteringMultiple.sh")) << std::endl;
-		mipScriptOut << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_mipAnalysisServerSetUp.sh")) << " " << mipServerName << std::endl;
-		mipScriptOut << std::endl;
-	}
-
-	if(runRest){
-		std::stringstream cmdSs;
-		cmdSs << njh::files::normalize(njh::files::make_path(mipMaster.directoryMaster_.scriptsDir_, "run_restOfAnalysis.sh")) << " " << mipServerName << std::endl;
-		auto runLog = njh::sys::run(VecStr{cmdSs.str()});
-		OutOptions restOfAnalysisRunLogOpts(njh::files::make_path(mipMaster.directoryMaster_.logsDir_, "run_restOfAnalysis_log.json"));
-		OutputStream restOfAnalysisRunLogOut(restOfAnalysisRunLogOpts);
-		restOfAnalysisRunLogOut << runLog.toJson() << std::endl;
-	}
-
-
+	if(!samplesExtracted.empty()) samplesExtractedFile << njh::conToStr(samplesExtracted, "\n") << std::endl;
 
 	return 0;
 }

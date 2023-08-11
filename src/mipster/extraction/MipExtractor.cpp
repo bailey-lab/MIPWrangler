@@ -207,7 +207,9 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 						failedStitchingMeta.addMeta("failedStitchCase", PairedReadProcessor::getOverlapStatusStr(stitchedRes.status_));
 						seq.seqBase_.name_.append(failedStitchingMeta.createMetaName());
 						seq.mateSeqBase_.name_.append(failedStitchingMeta.createMetaName());
-						mipOuts.add(mip.name_ + "_filteredOff", seq);
+						if(pars.writeOutFilteredReads){
+							mipOuts.add(mip.name_ + "_filteredOff", seq);
+						}
 						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					} else {
 						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
@@ -222,7 +224,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 						} else {
 							eCase = mip.checkRead(*stitchedRes.combinedSeq_, pars.qFilPars_);
 							failedQaulifierName = MipExtractionStats::getNameForCase(eCase);
-							if("" != failedQaulifierName){
+							if(!failedQaulifierName.empty()){
 								MetaDataInName failedQcMeta;
 								failedQcMeta.addMeta("failed", '_' == failedQaulifierName.front()? failedQaulifierName.substr(1) : failedQaulifierName);
 								stitchedRes.combinedSeq_->name_.append(failedQcMeta.createMetaName());
@@ -233,7 +235,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 								mip.determineLigBarcode(*stitchedRes.combinedSeq_, barInfo);
 								MetaDataInName barMeta;
 								barMeta.addMeta("extBar", barInfo.extBar_);
-								if ("" != barInfo.ligBar_) {
+								if (!barInfo.ligBar_.empty()) {
 									barMeta.addMeta("ligBar", barInfo.ligBar_);
 								}
 								barMeta.addMeta("fullBar_", barInfo.fullBar_);
@@ -241,7 +243,9 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 							}
 						}
 						//log and write read
-						mipStitchedOuts.add(mip.name_ + failedQaulifierName, *stitchedRes.combinedSeq_);
+						if(pars.writeOutFilteredReads || "_filteredOff" !=  failedQaulifierName ){
+							mipStitchedOuts.add(mip.name_ + failedQaulifierName, *stitchedRes.combinedSeq_);
+						}
 					}
 					allExtractStats.increaseCount(mip.name_, eCase);
 				}else{
@@ -265,7 +269,9 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 						failedStitchingMeta.addMeta("failedStitchCase", PairedReadProcessor::getOverlapStatusStr(stitchedRes.status_));
 						seq.seqBase_.name_.append(failedStitchingMeta.createMetaName());
 						seq.mateSeqBase_.name_.append(failedStitchingMeta.createMetaName());
-						mipOuts.add(currentMip.name_ + "_filteredOff", seq);
+						if(pars.writeOutFilteredReads){
+							mipOuts.add(currentMip.name_ + "_filteredOff", seq);
+						}
 						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					}else{
 						//quality control
@@ -279,7 +285,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 						} else {
 							eCase = currentMip.checkRead(*stitchedRes.combinedSeq_, pars.qFilPars_);
 							failedQaulifierName = MipExtractionStats::getNameForCase(eCase);
-							if("" != failedQaulifierName){
+							if(!failedQaulifierName.empty()){
 								MetaDataInName failedQcMeta;
 								failedQcMeta.addMeta("failed", '_' == failedQaulifierName.front()? failedQaulifierName.substr(1) : failedQaulifierName);
 								stitchedRes.combinedSeq_->name_.append(failedQcMeta.createMetaName());
@@ -290,14 +296,16 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 								currentMip.determineLigBarcode(*stitchedRes.combinedSeq_, barInfo);
 								MetaDataInName barMeta;
 								barMeta.addMeta("extBar", barInfo.extBar_);
-								if ("" != barInfo.ligBar_) barMeta.addMeta("ligBar", barInfo.ligBar_);
+								if (!barInfo.ligBar_.empty()) barMeta.addMeta("ligBar", barInfo.ligBar_);
 								barMeta.addMeta("fullBar_", barInfo.fullBar_);
 								stitchedRes.combinedSeq_->name_.append(barMeta.createMetaName());
 							}
 						}
 
 						//log and write read
-						mipStitchedOuts.add(currentMip.name_ + failedQaulifierName, *stitchedRes.combinedSeq_);
+						if(pars.writeOutFilteredReads || "_filteredOff" !=  failedQaulifierName ){
+							mipStitchedOuts.add(currentMip.name_ + failedQaulifierName, *stitchedRes.combinedSeq_);
+						}
 					}
 					allExtractStats.increaseCount(currentMip.name_, eCase);
 				}
@@ -326,7 +334,9 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 					failedStitchingMeta.addMeta("failedStitchCase", PairedReadProcessor::getOverlapStatusStr(stitchedRes.status_));
 					seq.seqBase_.name_.append(failedStitchingMeta.createMetaName());
 					seq.mateSeqBase_.name_.append(failedStitchingMeta.createMetaName());
-					mipOuts.add(mip.name_ + "_filteredOff", seq);
+					if(pars.writeOutFilteredReads){
+						mipOuts.add(mip.name_ + "_filteredOff", seq);
+					}
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 				}else{
 					//quality control
@@ -357,7 +367,9 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 						}
 					}
 					//log and write read
-					mipStitchedOuts.add(mip.name_ + failedQaulifierName, *stitchedRes.combinedSeq_);
+					if(pars.writeOutFilteredReads || "_filteredOff" !=  failedQaulifierName ){
+						mipStitchedOuts.add(mip.name_ + failedQaulifierName, *stitchedRes.combinedSeq_);
+					}
 				}
 				allExtractStats.increaseCount(mip.name_, eCase);
 			} else {
@@ -406,7 +418,9 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 						failedStitchingMeta.addMeta("failedStitchCase", PairedReadProcessor::getOverlapStatusStr(stitchedRes.status_));
 						seq.seqBase_.name_.append(failedStitchingMeta.createMetaName());
 						seq.mateSeqBase_.name_.append(failedStitchingMeta.createMetaName());
-						mipOuts.add(mip.name_ + "_filteredOff", seq);
+						if(pars.writeOutFilteredReads){
+							mipOuts.add(mip.name_ + "_filteredOff", seq);
+						}
 						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					}else{
 						//quality control
@@ -437,7 +451,9 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 							}
 						}
 						//log and write read
-						mipStitchedOuts.add(mip.name_ + failedQaulifierName, *stitchedRes.combinedSeq_);
+						if(pars.writeOutFilteredReads || "_filteredOff" !=  failedQaulifierName ){
+							mipStitchedOuts.add(mip.name_ + failedQaulifierName, *stitchedRes.combinedSeq_);
+						}
 						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					}
 					allExtractStats.increaseCount(mip.name_, eCase);
@@ -471,7 +487,9 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					seq.seqBase_.name_.append(indeterminateMeta.createMetaName() );
 					seq.mateSeqBase_.name_.append(indeterminateMeta.createMetaName() );
-					mipOuts.add("indeterminate", seq);
+					if(pars.writeOutFilteredReads){
+						mipOuts.add("indeterminate", seq);
+					}
 				}else{
 					std::stringstream ss;
 					ss << __PRETTY_FUNCTION__ << std::endl;
@@ -635,7 +653,9 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 				if(possibleExtArms.empty()){
 					//no matches found
 					allExtractStats.increaseUnmatched();
-					mipOuts.add("unmatchedReads", seq);
+					if(pars.writeOutFilteredReads){
+						mipOuts.add("unmatchedReads", seq);
+					}
 				}else if(possibleExtArms.size() == 1){
 					const auto & mip = mipMaster.mips_->mips_.at(possibleExtArms.begin()->first);
 					//quality control

@@ -88,13 +88,13 @@ struct mipIllumArmExtractionPars : mipCorePars{
 	  processPairPars_.r2Trim_ = 1;
 	}
 	std::string sampleName;
-	uint32_t minCaptureLength = 100;
+	uint32_t minCaptureLength = 30;
   uint32_t smallFragmentLength = 50;
   QualFilteringPars qFilPars_;
 	bool cacheAlignments = false;
 	bool keepIntermediateFiles = false;
 	bool writeOutInitialExtractedPairs = false;
-
+	bool writeOutFilteredReads = false;
 	bfs::path refDir = "";
 
 	PairedReadProcessor::ProcessParams processPairPars_;
@@ -150,7 +150,7 @@ struct extractFromRawParsMultiple : public extractFromRawPars {
 		ret.keepIntermediateFiles = keepIntermediateFiles;
 		ret.writeOutInitialExtractedPairs = writeOutInitialExtractedPairs;
 		ret.refDir = refDir;
-
+		ret.writeOutFilteredReads = writeOutFilteredReads;
 		ret.seqOutCacheLimit_ = seqOutCacheLimit_;
 
 		ret.copyCore(*this);
