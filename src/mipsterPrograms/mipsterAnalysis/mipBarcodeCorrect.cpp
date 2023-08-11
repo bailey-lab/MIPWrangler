@@ -121,7 +121,7 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 					std::unordered_map<std::string,
 							std::vector<std::shared_ptr<MippedRead>>> >sameBarcodes;
 			uint32_t readCount = 0;
-			std::shared_ptr<MippedRead> seq = std::make_shared<MippedRead>();
+			MippedRead seq;
 			//determine barcodes
 			{
 				SeqInput reader(options);
@@ -137,10 +137,8 @@ void runBarCorForMipFamForSamp(const MipFamSamp &mipSampName,
 						continue;
 					}
 					//this will both determine the barcodes and trim off the barcodes and the arms
-					seq->barInfo_ = std::make_shared<BarcodeInfo>(
-									mipMaster.mips_->mips_.at(mipName).determineBarcodesTrim(seq->seqBase_));
-					sameBarcodes[seq->barInfo_->extBar_][seq->barInfo_->ligBar_].push_back(
-									seq);
+					seq.barInfo_ = std::make_shared<BarcodeInfo>(mipMaster.mips_->mips_.at(mipName).determineBarcodesTrim(seq.seqBase_));
+					sameBarcodes[seq.barInfo_->extBar_][seq.barInfo_->ligBar_].push_back(std::make_shared<MippedRead>(seq));
 				}
 			}
 			if (setUpPars.debug_) {
