@@ -47,7 +47,11 @@ mipsterAnalysisRunner::mipsterAnalysisRunner()
 					 addFunc("mipSkipBarcodeCorrectionMultiple", mipSkipBarcodeCorrectionMultiple, false),
 					 addFunc("extractFromRaw", extractFromRaw, true),
 					 addFunc("mipSetupAndExtractByArm", mipSetupAndExtractByArm, false),
-           },//
+
+					 addFunc("mipSetup", mipSetup, false),
+					 addFunc("mipExtractByArm", mipExtractByArm, true),
+					 addFunc("mipExtractByArmMultiple", mipExtractByArmMultiple, false),
+           },//, ,
           "MIPWranglerAnalysis") {}
 /*
  * 	static int (const njh::progutils::CmdArgs & inputCommands);

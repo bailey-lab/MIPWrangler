@@ -43,7 +43,11 @@ class mipsterAnalysisRunner : public njh::progutils::ProgramRunner {
 	static int runGzExtractStitch(const njh::progutils::CmdArgs & inputCommands);
 
 	static int mipSetupAndExtractByArm(const njh::progutils::CmdArgs & inputCommands);
+	static int mipSetup(const njh::progutils::CmdArgs & inputCommands);
+	static int mipExtractByArm(const njh::progutils::CmdArgs & inputCommands);
+	static int mipExtractByArmMultiple(const njh::progutils::CmdArgs & inputCommands);
 
+	//mipSetup, mipExtractByArm, mipExtractByArmMultiple
 	static int mipIllumExtractByArmAndFilter(const njh::progutils::CmdArgs & inputCommands);
 	static int mipIllumExtractByArmAndFilterMultiple(const njh::progutils::CmdArgs & inputCommands);
 
