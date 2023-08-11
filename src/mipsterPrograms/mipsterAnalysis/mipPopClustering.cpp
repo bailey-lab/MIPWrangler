@@ -36,6 +36,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		const MipsSamplesNames & mipSamps,
 		const mipPopulationClusteringPars & pars,
 		const SeqSetUpPars & seqPars) {
+	std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	bfs::path mipFamilyDir = njh::files::makeDir(
 			directoryMaster.populationClusteringDir_.string() + mipSamp.mipFam_,
 			njh::files::MkdirPar("analysis/", pars.overWriteDirs));
@@ -67,6 +68,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		}
 		return;
 	}
+	std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	// reading expected sequences to compare to
 	bool checkingExpected = !pars.refIoOptions.firstName_.empty();
 	std::vector<readObject> expectedSeqs;
@@ -98,6 +100,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 	std::vector<sampleCluster> allSamples;
 	//
 	collapserObj.opts_.kmerOpts_.checkKmers_ = false;
+	std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	for (const auto & samp : foundSamples) {
 		if(seqPars.verbose_){
 			std::cout << "Starting: " << samp << std::endl;
@@ -107,6 +110,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		for(auto & input : inputFiles){
 			input.reNameInput_ = false;
 		}
+		std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		sampColl.setUpSample(samp,
 				inputFiles,
 				alignerObj, collapserObj, seqPars.chiOpts_);
@@ -137,7 +141,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		if (!pars.keepChimeras) {
 			sampColl.sampleCollapses_[samp]->excludeChimeras(false);
 		}
-
+		std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		sampColl.sampleCollapses_[samp]->excludeFraction(pars.fracCutoff, true);
 
 		std::string sortBy = "fraction";
@@ -151,7 +155,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 			njh::files::rmDirForce(sampDirMaster.getClusteredHapFnp(pars.mipName).parent_path() );
 		}
 	}
-
+	std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	if(!allSamples.empty()){
 		if(seqPars.verbose_){
 			std::cout << njh::bashCT::boldGreen("Pop Clustering") << std::endl;
@@ -163,7 +167,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 			std::cout << "Ref file for " << pars.mipName << ": "
 					<< pars.previousPopFilename << std::endl;
 		}
-
+		std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		if (!pars.previousPopFilename.empty()) {
 			sampColl.addRefMetaToName(getSeqs<readObject>(pars.previousPopFilename.string()), pars.previousPopErrors);
 		}
@@ -171,10 +175,10 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		//auto popTab = sampColl.genPopulationCollapseInfo();
 
 
-
+		std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		sampColl.dumpPopulation(false);
 
-
+		std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		if(seqPars.verbose_){
 			std::cout << njh::bashCT::boldBlack("Printing info...") << std::endl;
 		}
@@ -214,7 +218,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 			sampColl.dumpSample(samp);
 		}
 	}
-
+	std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	if(pars.cacheAlignments){
 		alignerObj.processAlnInfoOutputNoCheck(alnCacheDir.string(), seqPars.debug_);
 	}
@@ -234,7 +238,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 			}
 		}
 	}
-
+	std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	std::ofstream logfile;
 	openTextFile(logfile, OutOptions(njh::files::make_path(mipFamilyDir,"log.txt")));
 	logfile << "Ran on: " << njh::getCurrentDate() << std::endl;
@@ -252,6 +256,7 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 				<< readsIter.second.size() << " readsNum: "
 				<< readVec::getTotalReadCount(readsIter.second) << std::endl;
 	}*/
+	std::cout << __FILE__ << " " << __LINE__ << std::endl;
 }
 
 int mipsterAnalysisRunner::mipPopulationClustering(
