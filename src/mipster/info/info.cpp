@@ -200,10 +200,14 @@ table getSampleMipStats(const std::string & dirName, bool verbose, const VecStr 
 
 
 void updateNameWithBarinfo(sampleCluster & clus){
+	std::cout << __FILE__ << " " << __LINE__ << std::endl;
+	std::cout << clus.seqBase_.name_ << std::endl;
 	clus.seqBase_.name_ = clus.firstReadName_;
 	auto tPos = clus.seqBase_.name_.rfind("_t");
 	clus.seqBase_.name_.at(tPos + 1) = 'B';
 	clus.updateName();
+	std::cout << clus.seqBase_.name_ << std::endl;
+	std::cout << __FILE__ << " " << __LINE__ << std::endl;
 }
 
 void genInfoWithBars::increaseCounts(const genClusInfoWithBars & info){
