@@ -182,38 +182,44 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		if(seqPars.verbose_){
 			std::cout << njh::bashCT::boldBlack("Printing info...") << std::endl;
 		}
-
+		std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		auto popTabOpts = TableIOOpts::genTabFileOut(njh::files::make_path(mipFamilyDir, "population", "populationCluster.tab.txt"), true);
 		auto sampTabOpts = TableIOOpts::genTabFileOut(njh::files::make_path(mipFamilyDir, "selectedClustersInfo.tab.txt.gz"), true);
-
+		std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		auto tabs = printMipSampleCollapseInfo(sampColl, true, pars.mipName);
 		//auto tabs = printMipSampleCollapseInfo(sampColl, !expectedSeqs.empty(), pars.mipName);
 		//popTab.outPutContents(popTabOpts);
 		//sampTab.outPutContents(sampTabOpts);
 		tabs.popTab_.outPutContents(popTabOpts);
 		tabs.sampTab_.outPutContents(sampTabOpts);
-
+		std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		if(!sampColl.popCollapse_){
 			sampColl.loadInPreviousPop();
 		}
+		std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		for (const auto & samp : foundSamples) {
 			sampColl.setUpSampleFromPrevious(samp);
 			/*
 			std::cout << sampColl.popCollapse_->collapsed_.subClustersPositions_.size() << std::endl;
 			std::cout << samp << std::endl;
 			std::cout << mipSamp.mipFam_ << std::endl;*/
+			std::cout << __FILE__ << " " << __LINE__ << std::endl;
 			auto sampResults = sampColl.sampleCollapses_.at(samp);
 			for (auto & clus : sampResults->collapsed_.clusters_) {
+				std::cout << __FILE__ << " " << __LINE__ << std::endl;
 				clus.processNameForMeta();
 				auto popUID =
 						sampColl.popCollapse_->collapsed_.clusters_[sampColl.popCollapse_->collapsed_.subClustersPositions_.at(
 								clus.seqBase_.getStubName(true))].seqBase_.getStubName(true);
+				std::cout << __FILE__ << " " << __LINE__ << std::endl;
 				if(MetaDataInName::nameHasMetaData(popUID)){
 					MetaDataInName::removeMetaDataInName(popUID);
 				}
+				std::cout << __FILE__ << " " << __LINE__ << std::endl;
 				clus.addMeta("h_popUID", popUID, true);
 				//clus.addMeta("region", "", true);
 				clus.resetMetaInName();
+				std::cout << __FILE__ << " " << __LINE__ << std::endl;
 			}
 			sampColl.dumpSample(samp);
 		}
