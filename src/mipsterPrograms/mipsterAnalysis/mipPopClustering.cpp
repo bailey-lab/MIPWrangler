@@ -66,6 +66,11 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 		if(seqPars.verbose_){
 			std::cout << "No reads for mip: " << mipSamp.mipFam_ << std::endl;
 		}
+    std::ofstream logfile;
+    openTextFile(logfile, OutOptions(njh::files::make_path(mipFamilyDir,"log.txt")));
+    logfile << "Ran on: " << njh::getCurrentDate() << std::endl;
+    logfile << "Run Length: " << watch.totalTimeFormatted(6) << std::endl;
+    logfile << "No reads for mip: " << mipSamp.mipFam_ << std::endl;
 		return;
 	}
 	//std::cout << __FILE__ << " " << __LINE__ << std::endl;
