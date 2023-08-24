@@ -49,7 +49,7 @@ mipsterAnalysisRunner::mipsterAnalysisRunner()
 					 addFunc("mipSetupAndExtractByArm", mipSetupAndExtractByArm, false),
 
 					 addFunc("mipSetup", mipSetup, false),
-					 addFunc("mipExtractByArm", mipExtractByArm, true),
+					 addFunc("mipExtractByArm", mipExtractByArm, false),
 					 addFunc("mipExtractByArmMultiple", mipExtractByArmMultiple, false),
            },//, ,
           "MIPWranglerAnalysis") {}
