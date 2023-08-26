@@ -410,7 +410,9 @@ void genPopClusInfoWithBars::update() {
 std::string genPopClusInfoWithBars::getInfoHeader(const std::string & delim) {
 	return vectorToString(VecStr { "h_popUID", "h_mipPopUID", "h_sampleCnt", "h_sampleFrac",
 			"h_medianBarcodeFrac", "h_meanBarcodeFrac", "h_readCnt", "h_readFrac",
-			"h_barcodeCnt", "h_barcodeFrac", "h_inputNames", "h_seq", "h_qual" },
+			"h_barcodeCnt", "h_barcodeFrac",
+//"h_inputNames",
+      "h_seq", "h_qual" },
 			delim);
 }
 
@@ -423,7 +425,8 @@ std::string genPopClusInfoWithBars::getInfo(const std::string & delim) const {
 	return vectorToString(
 			toVecStr(popUid_, mipPopUid_, sampCnt_, sampFrac_, medianBarcodeFrac_,
 					meanBarcodeFrac_, readCnt_, readFrac_, barcodeCnt_, barcodeFrac_,
-					vectorToString(names, ","), seqBase_.seq_,
+					//vectorToString(names, ","),
+          seqBase_.seq_,
 					seqBase_.getFastqQualString(SangerQualOffset)), delim);
 }
 
@@ -431,7 +434,7 @@ std::string genPopClusInfoWithBars::getInfo(const std::string & delim) const {
 
 genPopInfoWithBars::genPopInfoWithBars(const std::string & targetName) :
 		targetName_(targetName) {
-	auto underScorePos = targetName_.find("_");
+	auto underScorePos = targetName_.find('_');
 	if(std::string::npos != underScorePos){
 		geneName_ = targetName_.substr(0, underScorePos);
 	}else{
