@@ -159,16 +159,24 @@ MipCollection::MipCollection(const bfs::path & mipArmIdFile,
 		throw std::runtime_error { ss.str() };
 	}
 	bool hasMinCapLengthCol = mipInfo.containsColumn("min_capture_length");
+	std::unordered_set<std::string> mipArmsPairs;
 	for (const auto & row : mipInfo.content_) {
 		if(std::all_of(row.begin(), row.end(), [](const std::string & col){ return "" == col;})){
 			continue;
 		}
 		auto currentMipName = row[mipInfo.getColPos("mip_id")];
+		auto currentMipPair = njh::pasteAsStr(row[mipInfo.getColPos("ligation_arm")], "--", row[mipInfo.getColPos("extension_arm")]);
+		if(njh::in(currentMipPair, mipArmsPairs)){
+			std::stringstream ss;
+			ss << __PRETTY_FUNCTION__ << ", error " << "already have mip arm pair: " << currentMipPair << "\n";
+			throw std::runtime_error{ss.str()};
+		}
 		if(njh::in(currentMipName, mips_)){
 			std::stringstream ss;
 			ss << "Error in: " << __PRETTY_FUNCTION__ <<  ": Collection already contains " << currentMipName << std::endl;
 			throw std::runtime_error{ss.str()};
 		}
+		mipArmsPairs.emplace(currentMipPair);
 		mips_[row[mipInfo.getColPos("mip_id")]] = Mip(
 				estd::stou(
 						row[mipInfo.getColPos("extension_barcode_length")]),
