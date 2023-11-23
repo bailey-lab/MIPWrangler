@@ -130,7 +130,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 	}
 
 
-
+//  std::cout << __FILE__ << " : " << __LINE__ << " : " << __PRETTY_FUNCTION__ << std::endl;
 
 
 
@@ -459,7 +459,12 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 					allExtractStats.increaseCount(mip.name_, eCase);
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 				}else if(bestMips.size() > 1){
-					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
+//					std::cout << __FILE_NAME__ << " " << __LINE__ << std::endl;
+//          std::cout << __FILE__ << " : " << __LINE__ << " : " << __PRETTY_FUNCTION__ << std::endl;
+//          std::cout << "bestMips.size(): " << bestMips.size() << std::endl;
+//          for(const auto & best : bestMips){
+//            std::cout << "\t" << best << std::endl;
+//          }
 					//too many matches found
 					allExtractStats.increaseIndeterminate();
 					MetaDataInName indeterminateMeta;

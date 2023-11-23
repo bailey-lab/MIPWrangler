@@ -881,6 +881,7 @@ int mipsterAnalysisRunner::mipExtractByArm(const njh::progutils::CmdArgs & input
 								currentSamplesExtracted.emplace_back(key);
 								auto samplePars = pars.createForSample(key);
 								MipExtractor mExtractor(pars.verbose_);
+
 								mExtractor.extractFilterSampleForMipsPairedStitch(sampleOpts,
 																																	mipMaster,
 																																	*alignerObjForFamilyDet,
