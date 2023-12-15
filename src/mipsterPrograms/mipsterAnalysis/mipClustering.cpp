@@ -111,14 +111,14 @@ std::vector<identicalCluster> collapseIdenticalReadsForBarCorrectedReads(
 	} else if (repQual == "bestSeq") {
 		for(auto & seq : ret){
 			std::vector<uint32_t> readCountsPerReads;
-			uint32_t readTotal = 0;
+			// uint32_t readTotal = 0;
 			std::vector<uint32_t> bestSeqPositions;
 			uint32_t maxReadCount = 0;
 			for(const auto subSeqPos : iter::range(seq.reads_.size())){
 				const auto & subSeq = seq.reads_[subSeqPos];
 				MetaDataInName subSeqMeta(subSeq->seqBase_.name_);
 				readCountsPerReads.emplace_back(subSeqMeta.getMeta<uint32_t>("readCnt"));
-				readTotal+= readCountsPerReads.back();
+				// readTotal+= readCountsPerReads.back();
 				if(maxReadCount > readCountsPerReads.back()){
 					maxReadCount = readCountsPerReads.back();
 					bestSeqPositions.clear();

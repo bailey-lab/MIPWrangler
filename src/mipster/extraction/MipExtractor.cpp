@@ -163,7 +163,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 				alignerObjForStitching.parts_.setMaxSize(maxLen);
 			}
 			//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
-			bool found = false;
+			// bool found = false;
 			std::unordered_map<std::string, std::pair<std::vector<Mip::ArmPosScore>, std::vector<Mip::ArmPosScore>>> possibleArms;
 			std::unordered_map<std::string, std::vector<Mip::ArmPosScore>> possibleExtArms;
 			//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
@@ -174,7 +174,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 				auto armPosMotif = mip.getPossibleExtArmPos(seq.seqBase_);
 				//if found arm and at the right position continue on;
 				if (!armPosMotif.empty()) {
-					found = true;
+					// found = true;
 					possibleExtArms.emplace(mip.name_, armPosMotif);
 					auto ligArmPosMotif = mip.getPossibleLigArmPos(seq.mateSeqBase_);
 					if(!ligArmPosMotif.empty()){
@@ -637,7 +637,7 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 			if (maxLen > alignerObjForFamilyDet.parts_.maxSize_) {
 				alignerObjForFamilyDet.parts_.setMaxSize(maxLen);
 			}
-			bool found = false;
+			// bool found = false;
 			std::unordered_map<std::string, std::pair<std::vector<Mip::ArmPosScore>, std::vector<Mip::ArmPosScore>>> possibleArms;
 			std::unordered_map<std::string, std::vector<Mip::ArmPosScore>> possibleExtArms;
 			for (const auto & mKey : allMipTargets) {
@@ -646,7 +646,7 @@ void MipExtractor::extractFilterSampleForMipsPaired(const std::vector<SeqIOOptio
 				auto armPosMotif = mip.getPossibleExtArmPos(seq.seqBase_);
 				//if found arm and at the right position continue on;
 				if (!armPosMotif.empty()) {
-					found = true;
+					// found = true;
 					possibleExtArms.emplace(mip.name_, armPosMotif);
 					auto ligArmPosMotif = mip.getPossibleLigArmPos(seq.mateSeqBase_);
 					if(!ligArmPosMotif.empty()){

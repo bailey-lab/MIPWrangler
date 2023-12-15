@@ -78,8 +78,8 @@ int mipsterUtilsRunner::typeFinalHaplotypes(
 
 	njh::files::checkExistenceThrow(genomeFnp, __PRETTY_FUNCTION__);
 	BioCmdsUtils bRunner(setUp.pars_.verbose_);
-	bRunner.RunFaToTwoBit(genomeFnp);
-	bRunner.RunBowtie2Index(genomeFnp);
+	auto twoBitStatus = bRunner.RunFaToTwoBit(genomeFnp);
+	auto bowtie2Status = bRunner.RunBowtie2Index(genomeFnp);
 
 	auto gprefix = bfs::path(genomeFnp).replace_extension("");
 	auto twoBitFnp = gprefix.string() + ".2bit";

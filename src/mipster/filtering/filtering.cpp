@@ -44,7 +44,7 @@ void filterOnMultipleLigBar(
 		// look to see if there is a majority for the second barcodes
 		// if there is a tie take all ties
 		/**@todo improve what to do with the second barcode disagreement */
-		bool tiedMax = false;
+		// bool tiedMax = false;
 		auto ligKeys = getVectorOfMapKeys(ligBarReads);
 		std::vector<uint32_t> cov;
 		for(const auto & ligBar : ligKeys) {
@@ -52,9 +52,9 @@ void filterOnMultipleLigBar(
 		}
 		auto maxEl = std::max_element(cov.begin(), cov.end());
 		auto positions = getPositionsOfTarget(cov, *maxEl);
-		if(positions.size() > 1) {
-			tiedMax = true;
-		}
+		// if(positions.size() > 1) {
+		// 	tiedMax = true;
+		// }
 		//add the reads with the most second barcode including ties
 		for(const auto & pos : positions) {
 			readsPerBarcode.push_back(ligBarReads.at(ligKeys[pos]));

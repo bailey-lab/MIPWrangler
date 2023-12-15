@@ -317,29 +317,29 @@ void SetUpMaster::checkDirStructThrow(const std::string & funcName) const{
 
 
 VecStr SetUpMaster::checkDirStruct() const{
-	bool passedAllChecks = true;
+	// bool passedAllChecks = true;
 	VecStr warnings;
 	//check for directories
 	if (!checkForFileDirExistence(directoryMaster_.masterDir_, warnings)) {
-		passedAllChecks = false;
+		// passedAllChecks = false;
 	}
 	if (!checkForFileDirExistence(directoryMaster_.logsDir_, warnings)) {
-		passedAllChecks = false;
+		// passedAllChecks = false;
 	}
 	if (!checkForFileDirExistence(directoryMaster_.populationClusteringDir_, warnings)) {
-		passedAllChecks = false;
+		// passedAllChecks = false;
 	}
 	if (!checkForFileDirExistence(directoryMaster_.resourceDir_, warnings)) {
-		passedAllChecks = false;
+		// passedAllChecks = false;
 	}
 	if (!checkForFileDirExistence(directoryMaster_.serResourceDir_, warnings)) {
-		passedAllChecks = false;
+		// passedAllChecks = false;
 	}
 	//check for files
 	bool armFilePass = false;
 	bool mipSampFilePass = false;
 	if(!checkForFileDirExistence(mipArmFnp_, warnings)){
-		passedAllChecks = false;
+		// passedAllChecks = false;
 	}else{
 		//check header
 		table mipInfo(mipArmFnp_, "whitespace", true);
@@ -364,7 +364,7 @@ VecStr SetUpMaster::checkDirStruct() const{
 		}
 	}
 	if(!checkForFileDirExistence(mipsSampsNamesFnp_, warnings)){
-		passedAllChecks = false;
+		// passedAllChecks = false;
 	}else{
 		table mipSampInfo(mipsSampsNamesFnp_, "\t", true);
 		VecStr missingCols;

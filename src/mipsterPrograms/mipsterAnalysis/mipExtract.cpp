@@ -87,7 +87,7 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 		if (maxLen >= alignerObjForFamilyDet.parts_.maxSize_) {
 			alignerObjForFamilyDet.parts_.setMaxSize(maxLen);
 		}
-		bool found = false;
+		// bool found = false;
 		std::unordered_map<std::string, std::pair<std::vector<Mip::ArmPosScore>, std::vector<Mip::ArmPosScore>>> possibleArms;
 		std::unordered_map<std::string, std::vector<Mip::ArmPosScore>> possibleExtArms;
 
@@ -97,7 +97,7 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 			auto armPosMotif = mip.getPossibleExtArmPos(read);
 			//if found arm and at the right position continue on;
 			if (!armPosMotif.empty()) {
-				found = true;
+				// found = true;
 				possibleExtArms.emplace(mip.name_, armPosMotif);
 				auto ligArmPosMotif = mip.getPossibleLigArmPos(read);
 				if(!ligArmPosMotif.empty()){

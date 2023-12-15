@@ -916,20 +916,20 @@ void MipsOnGenome::genBeds(const comparison & allowableError) {
 			while(genomeQueue.getVal(genome)){
 				std::vector<std::shared_ptr<Bed6RecordCore>> regions;
 				OutOptions outOpts(njh::files::make_path(bedsPerGenomeDir_, genome + ".bed"));
-				bool needUpdate = false;
+				// bool needUpdate = false;
 				if(outOpts.outExists()){
 					auto writeTime = njh::files::last_write_time(outOpts.outName());
 					for(const auto & mip : mipArms_->mips_){
 						auto mipBedFnp = njh::files::make_path(bedsDir_, njh::pasteAsStr(genome, "_", mip.first, ".bed"));
 						if(bfs::exists(mipBedFnp)){
 							if(njh::files::last_write_time(mipBedFnp) < writeTime){
-								needUpdate = true;
+								// needUpdate = true;
 								break;
 							}
 						}
 					}
 				}else{
-					needUpdate = true;
+					// needUpdate = true;
 				}
 				outOpts.overWriteFile_ = true;
 				OutputStream outOut(outOpts);
