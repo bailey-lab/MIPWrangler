@@ -197,7 +197,8 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 					//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
 					SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
-					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
+					if (njh::notIn(stitchedRes.status_, mip.allowableStatuses)) {
+					//if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
 //					if (stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
 //							 stitchedRes.status_== PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP) {
 						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
@@ -259,7 +260,8 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 					//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
 					SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
-					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
+					if (njh::notIn(stitchedRes.status_, currentMip.allowableStatuses)) {
+					// if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
 //					if (stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
 //							 stitchedRes.status_== PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP) {
 						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
@@ -322,7 +324,8 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 				//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
 				SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
 				//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
-				if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
+				if (njh::notIn(stitchedRes.status_, mip.allowableStatuses)) {
+				// if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
 //				if (stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
 //						 stitchedRes.status_== PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP) {
 
@@ -408,7 +411,8 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 					//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
 					SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
-					if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
+					if (njh::notIn(stitchedRes.status_, mip.allowableStatuses)) {
+					// if(stitchedRes.status_ != PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2){
 //					if(stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
 //						 stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP){
 						//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
@@ -531,7 +535,20 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 	auto mipNameKeys = getVectorOfMapKeys(pairStitchingCounts);
 	MipNameSorter::sort(mipNameKeys);
 	for(const auto & mipKey : mipNameKeys){
-		if(0 == pairStitchingCounts[mipKey].r1EndsInR2Combined && !pars.keepIntermediateFiles){
+		// get amount extracted
+		const auto & mip = mipMaster.mips_->mips_.at(mipKey);
+		uint32_t amountExtracted = 0;
+		if(njh::in(PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2, mip.allowableStatuses)) {
+			amountExtracted += pairStitchingCounts[mipKey].r1EndsInR2Combined;
+		}
+		if(njh::in(PairedReadProcessor::ReadPairOverLapStatus::PERFECTOVERLAP, mip.allowableStatuses)) {
+			amountExtracted += pairStitchingCounts[mipKey].perfectOverlapCombined;
+		}
+		if(njh::in(PairedReadProcessor::ReadPairOverLapStatus::R1BEGINSINR2, mip.allowableStatuses)) {
+			amountExtracted += pairStitchingCounts[mipKey].r1BeginsInR2Combined;
+		}
+
+		if(0 == amountExtracted && !pars.keepIntermediateFiles){
 			auto extractionDirForMipKey = njh::files::make_path(sampDirMaster.extractDir_, mipKey);
 			if(bfs::exists(extractionDirForMipKey)){
 				njh::files::rmDirForce(extractionDirForMipKey);

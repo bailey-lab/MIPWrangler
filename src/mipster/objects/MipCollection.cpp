@@ -140,24 +140,14 @@ VecStr MipCollection::getMipRegionsForFams(const VecStr & mipFams) const{
 MipCollection::MipCollection(const bfs::path & mipArmIdFile,
 		uint32_t allowableArmError) :mipArmIdFnp_(mipArmIdFile),
 		allowableArmError_(allowableArmError) {
+	VecStr allowableOverlapStatuses{"perfectoverlap", "r1beginsinr2", "r1endsinr2"};
 	table mipInfo(mipArmIdFile.string(), "whitespace", true);
 	VecStr neededColumns = { "mip_id", "extension_arm", "ligation_arm",
 			"mip_family", "extension_barcode_length", "ligation_barcode_length",
 			"gene_name", "mipset"};
-	VecStr columnsNotFound;
-	for (const auto & col : neededColumns) {
-		if (!njh::in(col, mipInfo.columnNames_)) {
-			columnsNotFound.emplace_back(col);
-		}
-	}
-	if (!columnsNotFound.empty()) {
-		std::stringstream ss;
-		ss << "Need to have " << vectorToString(neededColumns, ",") << std::endl;
-		ss << "Did not find " << vectorToString(columnsNotFound, ",") << std::endl;
-		ss << "Only have " << vectorToString(mipInfo.columnNames_, ",")
-				<< std::endl;
-		throw std::runtime_error { ss.str() };
-	}
+	mipInfo.checkForColumnsThrow(neededColumns, __PRETTY_FUNCTION__);
+	bool hasOverlapStatusesCol = mipInfo.containsColumn("pairOverlapStatusesAllowed");
+
 	bool hasMinCapLengthCol = mipInfo.containsColumn("min_capture_length");
 	std::unordered_set<std::string> mipArmsPairs;
 	for (const auto & row : mipInfo.content_) {
@@ -193,6 +183,34 @@ MipCollection::MipCollection(const bfs::path & mipArmIdFile,
 			mips_[row[mipInfo.getColPos("mip_id")]].setMinCaptureLength(
 					njh::StrToNumConverter::stoToNum<uint32_t>(
 							row[mipInfo.getColPos("min_capture_length")]));
+		}
+		if (hasOverlapStatusesCol) {
+			auto overlapStatusesOriginal = tokenizeString(row[mipInfo.getColPos("pairOverlapStatusesAllowed")], ",");
+
+			auto overlapStatuses = overlapStatusesOriginal;
+			njh::for_each(overlapStatuses, [](std::string & status) {njh::strToLower(status);});
+			VecStr notRecStatus;
+			for(const auto & status : iter::enumerate(overlapStatuses)) {
+				if(njh::notIn(status.element, allowableOverlapStatuses)) {
+					notRecStatus.emplace_back(overlapStatusesOriginal[status.index]);
+				}
+			}
+			if(!notRecStatus.empty()) {
+				std::stringstream ss;
+				ss << __PRETTY_FUNCTION__ << ", error " << "unrecognized statuses: " << njh::conToStr(overlapStatusesOriginal) << "\n";
+				ss << "options are (not case sensitive): " << njh::conToStr(allowableOverlapStatuses, ",") << "\n";
+				throw std::runtime_error { ss.str() };
+			}
+			VecStr allowableOverlapStatuses2{"", "", ""};
+			if(njh::in(std::string("perfectoverlap"), overlapStatuses)) {
+				mips_[row[mipInfo.getColPos("mip_id")]].allowableStatuses.emplace_back(PairedReadProcessor::ReadPairOverLapStatus::PERFECTOVERLAP);
+			}
+			if(njh::in(std::string("r1beginsinr2"), overlapStatuses)) {
+				mips_[row[mipInfo.getColPos("mip_id")]].allowableStatuses.emplace_back(PairedReadProcessor::ReadPairOverLapStatus::R1BEGINSINR2);
+			}
+			if(njh::in(std::string("r1endsinr2"), overlapStatuses)) {
+				mips_[row[mipInfo.getColPos("mip_id")]].allowableStatuses.emplace_back(PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2);
+			}
 		}
 	}
 	std::set<std::string> mipFamilies;

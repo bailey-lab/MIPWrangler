@@ -24,7 +24,7 @@
 // along with MIPWrangler.  If not, see <http://www.gnu.org/licenses/>.
 //
 #include <njhseq/objects/helperObjects/motif.hpp>
-#include <njhseq/objects/seqObjects/readObject.hpp>
+#include <SeekDeep/objects/IlluminaUtils/PairedReadProcessor.hpp>
 
 #include "mipster/common.h"
 #include "mipster/objects/BarcodeInfo.hpp"
@@ -43,9 +43,9 @@ public:
 
 	//members
 	std::string name_;
-	std::string familyName_ = "";
-	std::string regionGroup_ = "";
-	std::string mipSet_ = "";
+	std::string familyName_;
+	std::string regionGroup_;
+	std::string mipSet_;
 
 	uint32_t extBarcodeLen_;
 	uint32_t ligBarcodeLen_ = 0;
@@ -61,6 +61,8 @@ public:
 	motif igationArmMotObj5_to_3prime_;
 	motif extentionArmMotObj_;
 
+	std::vector<PairedReadProcessor::ReadPairOverLapStatus> allowableStatuses{PairedReadProcessor::ReadPairOverLapStatus::R1ENDSINR2};
+
 	struct ArmPosScore {
 	public:
 		size_t pos_ = std::numeric_limits<size_t>::max();
@@ -75,18 +77,18 @@ public:
 	void setWiggleRoomInArm(uint32_t wiggleRoom);
 	void setMinCaptureLength(uint32_t min_capture_length);
 
-	std::vector<ArmPosScore> getPossibleExtArmPos(const seqInfo & read) const;
-	std::vector<ArmPosScore> getPossibleLigArmPos(const seqInfo & read) const;
-	std::vector<ArmPosScore> getPossibleLigArmPosFront(const seqInfo & read) const;
+	[[nodiscard]] std::vector<ArmPosScore> getPossibleExtArmPos(const seqInfo & read) const;
+	[[nodiscard]] std::vector<ArmPosScore> getPossibleLigArmPos(const seqInfo & read) const;
+	[[nodiscard]] std::vector<ArmPosScore> getPossibleLigArmPosFront(const seqInfo & read) const;
 
 	BarcodeInfo determineExtBarcodeTrim(seqInfo & read) const;
-	BarcodeInfo determineExtBarcode(const seqInfo & read) const;
+	[[nodiscard]] BarcodeInfo determineExtBarcode(const seqInfo & read) const;
 
 	void determineLigBarcodeTrim(seqInfo & read, BarcodeInfo & info) const;
 	void determineLigBarcode(const seqInfo & read, BarcodeInfo & info) const;
 
 	BarcodeInfo determineBarcodesTrim(seqInfo & read) const;
-	BarcodeInfo determineBarcodes(const seqInfo & read) const;
+	[[nodiscard]] BarcodeInfo determineBarcodes(const seqInfo & read) const;
 
 	SinlgeMipExtractInfo::extractCase checkRead(seqInfo & read,
 			const QualFilteringPars & qFilPars) const;

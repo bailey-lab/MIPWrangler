@@ -352,11 +352,14 @@ std::vector<Mip::ArmPosScore> Mip::getPossibleLigArmPosFront(const seqInfo & rea
 
 
 VecStr Mip::writeInfoLineHeader(){
-	return VecStr{"mip_family","mip_id",
-		"extension_arm","ligation_arm",
+	return VecStr{
+		"mip_family", "mip_id",
+		"extension_arm", "ligation_arm",
 		"extension_barcode_length",
-		"ligation_barcode_length","gene_name",
-		"mipset"};
+		"ligation_barcode_length", "gene_name",
+		"mipset",
+		"pairOverlapStatusesAllowed"
+	};
 }
 
 void Mip::writeInfoLine(std::ostream & out) const{
@@ -367,7 +370,13 @@ void Mip::writeInfoLine(std::ostream & out) const{
 			<< "\t" << extBarcodeLen_
 			<< "\t" << ligBarcodeLen_
 			<< "\t" << regionGroup_
-			<< "\t" << mipSet_ << "\n";
+			<< "\t" << mipSet_;
+	VecStr allowableStatusesStrs;
+	for(const auto  status : allowableStatuses) {
+		allowableStatusesStrs.emplace_back(PairedReadProcessor::getOverlapStatusStr(status));
+	}
+	out
+			<< "\t" << njh::conToStr(allowableStatusesStrs, ",")<< "\n";
 }
 
 void Mip::writeOutArms(const OutOptions & opts) const{
