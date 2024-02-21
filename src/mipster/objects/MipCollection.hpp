@@ -75,6 +75,7 @@ public:
 	void setAllWiggleRoomInArm(uint32_t wiigleRoom);
 	void setAllMinCaptureLength(uint32_t min_capture_length, bool force = false);
 
+	void writeMipArmsFile(const OutOptions & outOpts) const;
 };
 
 }  // namespace njhseq

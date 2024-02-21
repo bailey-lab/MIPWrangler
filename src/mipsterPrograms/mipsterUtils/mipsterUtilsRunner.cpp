@@ -54,7 +54,7 @@ mipsterUtilsRunner::mipsterUtilsRunner()
 																		 addFunc("createMipArmFromSelectedMips", createMipArmFromSelectedMips, true),
 																		 addFunc("typeFinalHaplotypes", typeFinalHaplotypes, false),
 																		 addFunc("createPrimerFileFromArmFile", createPrimerFileFromArmFile, false),
-																		 addFunc("ExtractTargetsFromGenomes", ExtractTargetsFromGenomes, true),
+																		 addFunc("ExtractTargetsFromGenomes", ExtractTargetsFromGenomes, false),
 																		 addFunc("benchmarkingForControlMixtures", benchmarkingForControlMixtures, false),
 },
                     "MIPWranglerUtils") {}

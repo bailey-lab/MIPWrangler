@@ -201,7 +201,7 @@ MipCollection::MipCollection(const bfs::path & mipArmIdFile,
 				ss << "options are (not case sensitive): " << njh::conToStr(allowableOverlapStatuses, ",") << "\n";
 				throw std::runtime_error { ss.str() };
 			}
-			VecStr allowableOverlapStatuses2{"", "", ""};
+
 			if(njh::in(std::string("perfectoverlap"), overlapStatuses)) {
 				mips_[row[mipInfo.getColPos("mip_id")]].allowableStatuses.emplace_back(PairedReadProcessor::ReadPairOverLapStatus::PERFECTOVERLAP);
 			}
@@ -326,6 +326,55 @@ bool MipCollection::hasMipFamily(const std::string & mipFam) const {
 bool MipCollection::hasMipTarget(const std::string & mipTar) const {
 	return njh::in(mipTar, mips_);
 }
+
+
+void MipCollection::writeMipArmsFile(const OutOptions & outOpts) const {
+	OutputStream out(outOpts	);
+	bool writeMinCaptureLength = true;
+	for(const auto & mip : mips_) {
+		if(std::numeric_limits<uint32_t>::max() == mip.second.min_capture_length_) {
+			writeMinCaptureLength = false;
+			break;
+		}
+	}
+	out << "mip_id"
+	<< "\t" << "mip_family"
+	<< "\t" << "gene_name"
+	<< "\t" << "mipset"
+	<< "\t" << "extension_arm"
+	<< "\t" << "ligation_arm"
+	<< "\t" << "extension_barcode_length"
+	<< "\t" << "ligation_barcode_length"
+	<< "\t" << "pairOverlapStatusesAllowed";
+	if(writeMinCaptureLength) {
+		out << "\t" << "min_capture_length";
+	}
+	out << std::endl;
+	for (const auto& mip: mips_) {
+		VecStr overlaps;
+		if(mip.second.allowableStatuses.empty()) {
+			overlaps.emplace_back("R1ENDSINR2");
+		} else {
+			for(const auto & stat : mip.second.allowableStatuses) {
+				overlaps.emplace_back(PairedReadProcessor::getOverlapStatusStr(stat));
+			}
+		}
+		out << mip.second.name_
+				<< "\t" << mip.second.familyName_
+				<< "\t" << mip.second.regionGroup_
+				<< "\t" << mip.second.mipSet_
+				<< "\t" << mip.second.extentionArm_
+				<< "\t" << mip.second.ligationArm_
+				<< "\t" << mip.second.extBarcodeLen_
+				<< "\t" << mip.second.ligBarcodeLen_
+				<< "\t" << njh::conToStr(overlaps, ",");
+		if (writeMinCaptureLength) {
+			out << "\t" << mip.second.min_capture_length_;
+		}
+		out << std::endl;
+	}
+}
+
 
 }  // namespace njhseq
 
