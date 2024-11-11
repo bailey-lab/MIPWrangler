@@ -54,37 +54,31 @@ MipsSamplesNames::MipsSamplesNames(const VecStr & mips, const VecStr & samples) 
 	removeDuplicates(mips_);
 	MipNameSorter::sort(mips_);
 }
-MipsSamplesNames::MipsSamplesNames(const bfs::path & mipSampleFilename) {
-	table mipSampInfo(mipSampleFilename, "\t", true);
-	VecStr missingCols;
-	VecStr neededCols { "mips", "samples" };
-	for (const auto & col : neededCols) {
-		if (!njh::in(col, mipSampInfo.columnNames_)) {
-			missingCols.emplace_back(col);
+
+
+MipsSamplesNames::MipsSamplesNames(const bfs::path& mipSampleFilename) {
+	if (njh::endsWith(mipSampleFilename.string(), ".json") || njh::endsWith(mipSampleFilename.string(), ".json.gz")) {
+		auto jsonContent = njh::json::parseFile(mipSampleFilename.string());
+		samples_ = njh::json::jsonArrayToStrVec(jsonContent["samples"]);
+		mips_ = njh::json::jsonArrayToStrVec(jsonContent["mips"]);
+	} else {
+		table mipSampInfo(mipSampleFilename, "\t", true);
+		VecStr neededCols{"mips", "samples"};
+		mipSampInfo.checkForColumnsThrow(neededCols, __PRETTY_FUNCTION__);
+		mips_ = mipSampInfo.getColumn("mips");
+		for (auto& m: mips_) {
+			njh::trim(m);
 		}
-	}
-	if (!missingCols.empty()) {
-		std::stringstream ss;
-		ss << "Error in : " << __PRETTY_FUNCTION__
-				<< ", missing the following columns from " << mipSampleFilename << ", "
-				<< njh::conToStr(missingCols, ",") << std::endl;
-		ss << "Need the following columns, " << njh::conToStr(neededCols)
-				<< std::endl;
-		throw std::runtime_error { ss.str() };
-	}
-	mips_ = mipSampInfo.getColumn("mips");
-	for(auto & m : mips_){
-		njh::trim(m);
-	}
-	samples_ = mipSampInfo.getColumn("samples");
-	for(auto & s : samples_){
-		njh::trim(s);
+		samples_ = mipSampInfo.getColumn("samples");
+		for (auto& s: samples_) {
+			njh::trim(s);
+		}
+		//remove blanks, this often happens because the columns are different lengths
+		removeElement(samples_, std::string(""));
+		removeElement(mips_, std::string(""));
 	}
 	njh::sort(samples_);
 	MipNameSorter::sort(mips_);
-	//remove blanks, this often happens because the columns are different lengths
-	removeElement(samples_, std::string(""));
-	removeElement(mips_, std::string(""));
 	//remove duplicates
 	removeDuplicates(samples_);
 	removeDuplicates(mips_);

@@ -184,7 +184,6 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 
 				//quality control
 				SinlgeMipExtractInfo::extractCase eCase = mip.checkRead(read, qFilPars);
-
 				std::string failedQaulifierName = MipExtractionStats::getNameForCase(
 						eCase);
 				//log and write read

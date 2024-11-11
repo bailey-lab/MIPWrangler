@@ -147,7 +147,6 @@ MipCollection::MipCollection(const bfs::path & mipArmIdFile,
 			"gene_name", "mipset"};
 	mipInfo.checkForColumnsThrow(neededColumns, __PRETTY_FUNCTION__);
 	bool hasOverlapStatusesCol = mipInfo.containsColumn("pairOverlapStatusesAllowed");
-
 	bool hasMinCapLengthCol = mipInfo.containsColumn("min_capture_length");
 	std::unordered_set<std::string> mipArmsPairs;
 	for (const auto & row : mipInfo.content_) {

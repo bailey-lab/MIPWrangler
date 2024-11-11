@@ -362,7 +362,7 @@ VecStr Mip::writeInfoLineHeader(){
 	};
 }
 
-void Mip::writeInfoLine(std::ostream & out) const{
+void Mip::writeInfoLine(std::ostream& out) const {
 	out << familyName_
 			<< "\t" << name_
 			<< "\t" << extentionArm_
@@ -372,11 +372,10 @@ void Mip::writeInfoLine(std::ostream & out) const{
 			<< "\t" << regionGroup_
 			<< "\t" << mipSet_;
 	VecStr allowableStatusesStrs;
-	for(const auto  status : allowableStatuses) {
+	for (const auto status: allowableStatuses) {
 		allowableStatusesStrs.emplace_back(PairedReadProcessor::getOverlapStatusStr(status));
 	}
-	out
-			<< "\t" << njh::conToStr(allowableStatusesStrs, ",")<< "\n";
+	out << "\t" << njh::conToStr(allowableStatusesStrs, ",") << "\n";
 }
 
 void Mip::writeOutArms(const OutOptions & opts) const{
