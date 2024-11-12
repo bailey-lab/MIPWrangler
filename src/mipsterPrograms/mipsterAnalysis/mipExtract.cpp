@@ -70,6 +70,7 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 	readerOpt.openIn();
 	seqInfo read;
 	uint32_t readCount = 1;
+
 	while (readerOpt.readNextRead(read)) {
 		if (readCount % 100 == 0 && verbose) {
 			std::cout << "\r" << "currently on " << readCount;
@@ -121,6 +122,7 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 				if(!allExtractStats.haveStatFor(mip.name_)){
 					njh::files::makeDirP(sampDirMaster.extractDir_.string(), njh::files::MkdirPar(mip.name_));
 				}
+
 				mipOuts.add(mip.name_ + failedQaulifierName, read);
 				allExtractStats.increaseCount(mip.name_, eCase);
 			}else{
@@ -135,6 +137,7 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 				if(!allExtractStats.haveStatFor(currentMip.name_)){
 					njh::files::makeDirP(sampDirMaster.extractDir_.string(), njh::files::MkdirPar(currentMip.name_));
 				}
+
 				mipOuts.add(currentMip.name_ + failedQaulifierName, read);
 				allExtractStats.increaseCount(currentMip.name_, eCase);
 			}
@@ -151,6 +154,7 @@ void extractFilterSampleForMips(const SeqIOOptions & sampleIOOpts,
 			if(!allExtractStats.haveStatFor(mip.name_)){
 				njh::files::makeDirP(sampDirMaster.extractDir_.string(), njh::files::MkdirPar(mip.name_));
 			}
+
 			mipOuts.add(mip.name_ + failedQaulifierName, read);
 			allExtractStats.increaseCount(mip.name_, eCase);
 		}else{

@@ -325,9 +325,12 @@ std::vector<Mip::ArmPosScore> Mip::getPossibleLigArmPos(const seqInfo & read) co
 	std::vector<Mip::ArmPosScore> ret;
 	std::vector<size_t> positions;
 	if (wiggleRoomArm_ + ligBarcodeLen_ + ligationArm_.length() < len(read)) {
+
 		positions = ligationArmMotObj_.findPositionsFull(read.seq_, allowableErrors_,
 				len(read) - (wiggleRoomArm_ + ligBarcodeLen_ + ligationArm_.length()),
 				len(read) - (wiggleRoomArm_ + ligBarcodeLen_));
+
+
 		for(const auto pos : positions){
 			auto score = ligationArmMotObj_.scoreMotif(read.seq_.begin() + pos, read.seq_.begin() + pos + ligationArmMotObj_.size());
 			ret.emplace_back(Mip::ArmPosScore{pos, score});

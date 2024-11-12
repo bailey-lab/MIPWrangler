@@ -132,6 +132,10 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 
 //  std::cout << __FILE__ << " : " << __LINE__ << " : " << __PRETTY_FUNCTION__ << std::endl;
 
+	VecStr testTargets{"chr14snp450_S0_Sub0_mip0_ref","chr9snp92_S0_Sub0_mip0_ref",
+		"chr4snp784_S0_Sub0_mip0_ref","chr11snp312_S0_Sub0_mip7_ref","chr8snp348_S0_Sub0_mip2_ref",
+		"ideel-barcode-chr4-485881_S0_Sub0_mip0_ref","ideel-barcode-chr9-1341618_S0_Sub0_mip0_ref",
+		"ideel-barcode-chr11-1360267_S0_Sub0_mip0_ref","chr8snp247_S0_Sub0_mip2_ref"};
 
 
 	for(const auto & sampleIOOpt : sampleIOOpts){
@@ -144,7 +148,7 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 		PairedRead seq;
 		uint32_t readCount = 1;
 		//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
-
+		std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		while (readerOpt.readNextRead(seq)) {
 			if (readCount % 100 == 0 && verbose_) {
 				std::cout << "\r" << "currently on " << readCount;
@@ -190,10 +194,12 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 					mipOuts.add("unmatchedReads", seq);
 				}else if(possibleExtArms.size() == 1){
 					const auto & mip = mipMaster.mips_->mips_.at(possibleExtArms.begin()->first);
+
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					//stitching
 					++pairStitchingCounts[mip.name_].total;
 					auto stitchedRes = pProcessor.processPairedEnd(seq,pairStitchingCounts[mip.name_], alignerObjForStitching);
+
 					//for now just accepting r1 ends in r2 (no overlaps or perfect overlaps)
 					SinlgeMipExtractInfo::extractCase eCase{SinlgeMipExtractInfo::extractCase::NONE};
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
@@ -315,6 +321,8 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 				//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 				//only one possible match
 				const auto & mip = mipMaster.mips_->mips_.at(possibleArms.begin()->first);
+
+
 				//stitching
 				auto stitchedRes = pProcessor.processPairedEnd(seq,pairStitchingCounts[mip.name_], alignerObjForStitching);
 				++pairStitchingCounts[mip.name_].total;
@@ -329,7 +337,38 @@ void MipExtractor::extractFilterSampleForMipsPairedStitch(const std::vector<SeqI
 //				if (stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::NONE ||
 //						 stitchedRes.status_== PairedReadProcessor::ReadPairOverLapStatus::NOOVERLAP) {
 
+					if ((mip.name_.find("ideel-barcode-chr4-485881_S0_Sub0_mip0") != std::string::npos ||  njh::in(mip.name_, testTargets)) &&
+						stitchedRes.status_ == PairedReadProcessor::ReadPairOverLapStatus::R1BEGINSINR2) {
+						std::cout << __FILE__ << " " << __LINE__ << std::endl;
+						auto extArmInStitched = mip.getPossibleExtArmPos(*stitchedRes.combinedSeq_);
+						// auto revComp = *stitchedRes.combinedSeq_;
+						// revComp.reverseComplementRead(false, true);
+						std::cout << __FILE__ << " " << __LINE__ << std::endl;
+						auto ligArmInStitched = mip.getPossibleLigArmPos(*stitchedRes.combinedSeq_);
+						auto positions = mip.ligationArmMotObj_.findPositionsFull(stitchedRes.combinedSeq_->seq_, mip.allowableErrors_,
+								len(*stitchedRes.combinedSeq_) - (mip.wiggleRoomArm_ + mip.ligBarcodeLen_ + mip.ligationArm_.length()),
+								len(*stitchedRes.combinedSeq_) - (mip.wiggleRoomArm_ + mip.ligBarcodeLen_));
+						std::cout << "extArmInStitched.size(): " << extArmInStitched.size() << " " << "ligArmInStitched.size(): " << ligArmInStitched.size() << std::endl;
+						std::cout << "len(read) - (wiggleRoomArm_ + ligBarcodeLen_ + ligationArm_.length()): " << len(*stitchedRes.combinedSeq_) - (mip.wiggleRoomArm_ + mip.ligBarcodeLen_ + mip.ligationArm_.length()) << std::endl;
+						std::cout << "len(read) - (wiggleRoomArm_ + ligBarcodeLen_): " << len(*stitchedRes.combinedSeq_) - (mip.wiggleRoomArm_ + mip.ligBarcodeLen_)<< std::endl;
+						std::cout << "wiggleRoomArm_: " << mip.wiggleRoomArm_ << std::endl;
 
+						std::cout << "positions.size() " << positions.size() << std::endl;
+						seq.mateSeqBase_.outPutSeqAnsi(std::cout);
+						stitchedRes.combinedSeq_->outPutSeqAnsi(std::cout);
+						mip.extentionArmObj_.outPutSeqAnsi(std::cout);
+						mip.ligationArmObj_.outPutSeqAnsi(std::cout);
+						auto ligArmPosMotif = mip.getPossibleLigArmPos(seq.mateSeqBase_);
+						std::cout << "ligArmPosMotif.size(): " << ligArmPosMotif.size() << std::endl;
+
+						if ( extArmInStitched.size() == 1 && ligArmInStitched.size() == 1) {
+							std::cout << "extArmInStitched: " << std::endl;
+							std::cout << "\t" << extArmInStitched.front().pos_ << " " << extArmInStitched.front().pos_ + mip.extentionArm_.size() << std::endl;
+							std::cout << "ligArmInStitched: " << std::endl;
+							std::cout << "\t" << ligArmInStitched.front().pos_ << " " << ligArmInStitched.front().pos_ + mip.ligationArm_.size() << std::endl;
+						}
+						std::cout << __FILE__ << " " << __LINE__ << std::endl;
+					}
 					//std::cout << __PRETTY_FUNCTION__ << " " << __LINE__ << std::endl;
 					eCase = SinlgeMipExtractInfo::extractCase::BADSTITCH;
 					//log and write read
