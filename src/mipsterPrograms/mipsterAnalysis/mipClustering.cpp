@@ -165,7 +165,6 @@ std::vector<identicalCluster> collapseIdenticalReadsForBarCorrectedReads(
 		throw std::runtime_error { ss.str() };
 	}
   //identicalCluster::setIdneticalClusterQual(ret, repQual);
-  readVec::allSetLetterCount(ret);
   readVec::allUpdateName(ret);
   return ret;
 }

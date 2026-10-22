@@ -434,11 +434,7 @@ table MipsOnGenome::getGenomeLocsForMipTar(const std::string & tar) const{
 			uint32_t longestHomopolymer = 0;
 			double gcContent = 0;
 			if (njh::in(genome.first, seqsByName)) {
-				seqsByName[genome.first]->setLetterCount();
-				seqsByName[genome.first]->counter_.resetAlphabet(true);
-				seqsByName[genome.first]->counter_.setFractions();
-				seqsByName[genome.first]->counter_.calcGcContent();
-				gcContent = seqsByName[genome.first]->counter_.gcContent_;
+				gcContent = seqsByName[genome.first]->getGCContent();
 				seqsByName[genome.first]->createCondensedSeq();
 				longestHomopolymer = vectorMaximum(
 						seqsByName[genome.first]->condensedSeqCount);
@@ -474,11 +470,7 @@ table MipsOnGenome::getGenomeLocsForAllMipTars() const {
 				uint32_t longestHomopolymer = 0;
 				double gcContent = 0;
 				if (njh::in(genome, seqsByName)) {
-					seqsByName[genome]->setLetterCount();
-					seqsByName[genome]->counter_.resetAlphabet(true);
-					seqsByName[genome]->counter_.setFractions();
-					seqsByName[genome]->counter_.calcGcContent();
-					gcContent = seqsByName[genome]->counter_.gcContent_;
+					gcContent = seqsByName[genome]->getGCContent();
 					seqsByName[genome]->createCondensedSeq();
 					longestHomopolymer = vectorMaximum(
 							seqsByName[genome]->condensedSeqCount);
@@ -523,11 +515,7 @@ table MipsOnGenome::getGenomeLocsForGenome(const std::string & genome) const {
 			uint32_t longestHomopolymer = 0;
 			double gcContent = 0;
 			if (njh::in(genome, seqsByName)) {
-				seqsByName[genome]->setLetterCount();
-				seqsByName[genome]->counter_.resetAlphabet(true);
-				seqsByName[genome]->counter_.setFractions();
-				seqsByName[genome]->counter_.calcGcContent();
-				gcContent = seqsByName[genome]->counter_.gcContent_;
+				gcContent = seqsByName[genome]->getGCContent();
 				seqsByName[genome]->createCondensedSeq();
 				longestHomopolymer = vectorMaximum(
 						seqsByName[genome]->condensedSeqCount);
@@ -628,11 +616,7 @@ table MipsOnGenome::getMipTarStatsForGenomes(const VecStr & genomes,
 				double gcContent = 0;
 				uint32_t longestHomopolymer = 0;
 				if("" != refSeq->seqBase_.name_){
-					refSeq->setLetterCount();
-					refSeq->counter_.resetAlphabet(true);
-					refSeq->counter_.setFractions();
-					refSeq->counter_.calcGcContent();
-					gcContent = refSeq->counter_.gcContent_;
+					gcContent = refSeq->getGCContent();
 					refSeq->createCondensedSeq();
 					longestHomopolymer = vectorMaximum(refSeq->condensedSeqCount);
 //					auto tandems = aligner::findTandemRepeatsInSequence(refSeq->seqBase_.seq_, 2, -2, -7, 20);
@@ -749,11 +733,7 @@ table MipsOnGenome::getMipTarStatsForGenome(const std::string & genome,
 			double gcContent = 0;
 			uint32_t longestHomopolymer = 0;
 			if ("" != refSeq->seqBase_.name_) {
-				refSeq->setLetterCount();
-				refSeq->counter_.resetAlphabet(true);
-				refSeq->counter_.setFractions();
-				refSeq->counter_.calcGcContent();
-				gcContent = refSeq->counter_.gcContent_;
+				gcContent = refSeq->getGCContent();
 				refSeq->createCondensedSeq();
 				longestHomopolymer = vectorMaximum(refSeq->condensedSeqCount);
 				auto tandems = aligner::findTandemRepeatsInSequence(
