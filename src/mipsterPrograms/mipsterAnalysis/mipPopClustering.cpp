@@ -98,6 +98,9 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 			mipFamilyDir,
 			PopNamesInfo(pars.mipName, foundSamples, VecStr{}),
 			pars.clusteringCutOffs);
+	//each sample's files are kept compressed in memory between steps, the final haplotypes are written to sampleFinalHaplotypes.fastq.gz at the end
+	sampColl.storeSampleStatesInMemory_ = true;
+	const bool writeSampleDirs = pars.writeSampleDirs || pars.keepIntermediateFiles;
 
 	if(!pars.sampleMetaFnp.empty()){
 		sampColl.addGroupMetaData(pars.sampleMetaFnp);
@@ -231,6 +234,18 @@ void runPopClusForMip(const MipFamSamp & mipSamp,
 			}
 			sampColl.dumpSample(samp);
 		}
+		//one gzip member per sample with the same text as samplesOutput/<sample>/final/<sample>.fastq.gz
+		njh::BlockGzipOutputStream finalHaplosOut(njh::files::make_path(mipFamilyDir, "sampleFinalHaplotypes.fastq.gz"), true);
+		for (const auto & samp : foundSamples) {
+			auto state = sampColl.sampleStates().get(samp);
+			if (state && state->final_) {
+				finalHaplosOut.writeBlock(samp, *state->final_);
+			}
+		}
+		finalHaplosOut.closeBlocks();
+	}
+	if (writeSampleDirs) {
+		sampColl.writeSampleStatesToDisk();
 	}
 	//std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	if(pars.cacheAlignments){

@@ -29,6 +29,8 @@
 #include "mipster/objects/MipCollection.hpp"
 #include "mipster/info/MipsSamplesNames.hpp"
 
+#include <njhcpp/IO/BlockGzip.hpp>
+
 
 namespace njhseq {
 
@@ -123,6 +125,42 @@ public:
 	bfs::path pathPopClusFinalHaplo(const MipFamSamp & mipSampName) const;
 	//bfs::path pathPopClusOriginalHaplo(const MipFamSamp & mipSampName) const;
 
+	/**@brief the mip family's final haplotypes for all samples, one gzip member per sample indexed by sample name in <file>.idx
+	 *
+	 * @param mipFam the mip family
+	 * @return the path to the file
+	 */
+	bfs::path pathPopClusFinalHaplos(const std::string & mipFam) const;
+
+	/**@brief whether a sample has final haplotypes for a mip family, in pathPopClusFinalHaplos() or else in the per sample file pathPopClusFinalHaplo()
+	 *
+	 * @param mipSampName the mip family and sample
+	 * @return true if there are final haplotypes
+	 */
+	bool hasPopClusFinalHaplo(const MipFamSamp & mipSampName) const;
+
+	/**@brief the fastq text of a sample's final haplotypes, from pathPopClusFinalHaplos() or else pathPopClusFinalHaplo()
+	 *
+	 * @param mipSampName the mip family and sample
+	 * @return the fastq text
+	 */
+	std::string getPopClusFinalHaploText(const MipFamSamp & mipSampName) const;
+
+	/**@brief read a sample's final haplotypes, the same as reading pathPopClusFinalHaplo() with SeqIOOptions::genFastqIn(fnp, processed)
+	 *
+	 * @param mipSampName the mip family and sample
+	 * @param processed whether to process the read names for count/fraction
+	 * @return the haplotypes
+	 */
+	std::vector<seqInfo> readPopClusFinalHaplo(const MipFamSamp & mipSampName, bool processed) const;
+
+	/**@brief write a sample's final haplotypes to a gzipped fastq file if it doesn't exist yet, for code that needs them in a file
+	 *
+	 * @param mipSampName the mip family and sample
+	 * @param fnp the file to write
+	 */
+	void writePopClusFinalHaploFile(const MipFamSamp & mipSampName, const bfs::path & fnp) const;
+
 	bfs::path pathMipSampBarCorHap(const MipFamSamp & mipSampName) const;
 	bfs::path pathMipSampBarCorBars(const MipFamSamp & mipSampName,
 			const std::string & mipTarName) const;
@@ -152,6 +190,17 @@ public:
 			const std::vector<MipFamSamp> & samplesExtracted,
 			uint32_t numThreads,
 			const OutOptions & outOpts) const;
+
+private:
+	/**@brief the index of pathPopClusFinalHaplos(), read once per mip family
+	 *
+	 * @param mipFam the mip family
+	 * @return the index, nullptr if the mip family has no such file
+	 */
+	std::shared_ptr<const njh::BlockGzipIndex> getPopClusFinalHaplosIndex(const std::string & mipFam) const;
+
+	mutable std::mutex popClusFinalHaplosIndexesMut_;
+	mutable std::unordered_map<std::string, std::shared_ptr<const njh::BlockGzipIndex>> popClusFinalHaplosIndexes_;
 
 
 

@@ -161,11 +161,7 @@ int mipsterUtilsRunner::writeOutPossibleHaplotypes(
 				if(njh::in(mipFam,mipMaster.names_->mips_ )){
 					//std::cout << mipMaster.pathPopClusFinalHaplo(MipFamSamp(mipFam, samp)) << std::endl;
 
-					auto seqOpts = SeqIOOptions::genFastqIn(mipMaster.pathPopClusFinalHaplo(MipFamSamp(mipFam, samp)).string(), true);
-					seqInfo seq;
-					SeqInput reader(seqOpts);
-					reader.openIn();
-					while(reader.readNextRead(seq)){
+					for(const auto & seq : mipMaster.readPopClusFinalHaplo(MipFamSamp(mipFam, samp), true)){
 						if(seq.frac_ >freqCutOff){
 							readVec::getMaxLength(seq, maxSize);
 							mog.addMipSeqToMipSeqMap(seq);
@@ -316,11 +312,7 @@ int mipsterUtilsRunner::processMipOverlapGraph(
 				if(njh::in(mipFam,mipMaster.names_->mips_ )){
 					//std::cout << mipMaster.pathPopClusFinalHaplo(MipFamSamp(mipFam, samp)) << std::endl;
 
-					auto seqOpts = SeqIOOptions::genFastqIn(mipMaster.pathPopClusFinalHaplo(MipFamSamp(mipFam, samp)).string(), true);
-					seqInfo seq;
-					SeqInput reader(seqOpts);
-					reader.openIn();
-					while(reader.readNextRead(seq)){
+					for(const auto & seq : mipMaster.readPopClusFinalHaplo(MipFamSamp(mipFam, samp), true)){
 						readVec::getMaxLength(seq, maxSize);
 						mog.addMipSeqToMipSeqMap(seq);
 					}

@@ -107,8 +107,8 @@ int mipsterUtilsRunner::benchmarkingForControlMixtures(const njh::progutils::Cmd
 	performanceOut << "sample\tmix\tmipFamily\ttotalBarcodes\trecoveredHaps\tfalseHaps\ttotalHaps\ttotalExpectedHaps\thapRecovery\tfalseHapsRate\tRMSE" << std::endl;
 	for(const auto & sample : bencher.samplesToMix_){
 		for(const auto & mipFamily : familiesForMix[sample.second]){
-			bfs::path resultsFnp = mipMaster.pathPopClusFinalHaplo(MipFamSamp(mipFamily, sample.first));
-			if(bfs::exists(resultsFnp)){
+			MipFamSamp resultsPair(mipFamily, sample.first);
+			if(mipMaster.hasPopClusFinalHaplo(resultsPair)){
 				bfs::path expectedSeqeuncesFnp = njh::files::make_path(extractionDir, "fastas", "byFamily", mipFamily + ".fasta");
 				SeqInput expReader(SeqIOOptions::genFastaIn(expectedSeqeuncesFnp));
 				auto allExpSeqs = expReader.readAllReadsPtrs<seqInfo>();
@@ -132,7 +132,7 @@ int mipsterUtilsRunner::benchmarkingForControlMixtures(const njh::progutils::Cmd
 						nameKey[seq->name_] = njh::conToStr(expecteds, ",");
 					}
 				}
-				auto resSeqs = SeqInput::getSeqVec<seqInfo>(SeqIOOptions::genFastqIn(resultsFnp));
+				auto resSeqs = mipMaster.readPopClusFinalHaplo(resultsPair, false);
 				double barCodeTotal = 0;
 				for (const auto & resSeq : resSeqs) {
 					MetaDataInName seqMeta(resSeq.name_);

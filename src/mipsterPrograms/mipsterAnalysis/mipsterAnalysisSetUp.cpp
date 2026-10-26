@@ -379,6 +379,7 @@ void mipsterAnalysisSetUp::setUpMipPopulationClustering(
 
 
   setOption(pars.keepIntermediateFiles, "--keepIntermediateFiles", "Keep Intermediate Files");
+  setOption(pars.writeSampleDirs, "--writeSampleDirs", "Write the per sample directories under samplesOutput/ (always written with --keepIntermediateFiles), otherwise each sample's final haplotypes are only in sampleFinalHaplotypes.fastq.gz");
 
 
   pars_.ioOptions_.lowerCaseBases_ = "upper";
@@ -441,6 +442,7 @@ void mipsterAnalysisSetUp::setUpMipPopulationClusteringMultiple(
   setOption(pars_.chiOpts_.parentFreqs_, "-parfreqs", "ParentFrequence_multiplier_cutoff");
 
   setOption(pars.keepIntermediateFiles, "--keepIntermediateFiles", "Keep Intermediate Files");
+  setOption(pars.writeSampleDirs, "--writeSampleDirs", "Write the per sample directories under samplesOutput/ (always written with --keepIntermediateFiles), otherwise each sample's final haplotypes are only in sampleFinalHaplotypes.fastq.gz");
 
 
 

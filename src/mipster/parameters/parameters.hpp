@@ -259,6 +259,7 @@ struct mipPopulationClusteringPars : mipCorePars{
 
 	bool keepIntermediateFiles = false;
 	bool cacheAlignments = false;
+	bool writeSampleDirs = false; //! write the per sample directories under samplesOutput/, otherwise each sample's final haplotypes only go in sampleFinalHaplotypes.fastq.gz
 
 };
 
@@ -280,6 +281,7 @@ struct mipPopulationClusteringParsMultiple : public mipPopulationClusteringPars{
 
 		ret.keepIntermediateFiles = keepIntermediateFiles;
 		ret.cacheAlignments = cacheAlignments;
+		ret.writeSampleDirs = writeSampleDirs;
 
 		ret.mipName = newMipName;
 		auto refPopFile = njh::files::make_path(ret.previousPopDir, ret.mipName + ".fasta");

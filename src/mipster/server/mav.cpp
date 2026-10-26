@@ -111,10 +111,20 @@ mav::mav(const Json::Value & config) :
 
 		auto mipFamsSampsPopClustered = parseJsonForMipSamps(
 						config["mipFamsSampsPopClustered"]);
+		//per sample files written from the mip families' sampleFinalHaplotypes.fastq.gz, cleared each start so they match the current results
+		auto finalHaplosDir = njh::files::make_path(mipMaster_->getMipSerDir(), "popClusFinalHaplos");
+		if (bfs::exists(finalHaplosDir)) {
+			njh::files::rmDirForce(finalHaplosDir);
+		}
 		for (const auto & mipSamp : mipFamsSampsPopClustered) {
-			seqs_->updateAddCache(mipSamp.mipFam_ + "_" + mipSamp.samp_ + "_final",
-					SeqIOOptions::genFastqInGz(
-							mipMaster_->pathPopClusFinalHaplo(mipSamp).string(), true));
+			auto searchTerm = mipSamp.mipFam_ + "_" + mipSamp.samp_ + "_final";
+			auto finalHaploFnp = mipMaster_->pathPopClusFinalHaplo(mipSamp);
+			if (!bfs::exists(finalHaploFnp)) {
+				finalHaploFnp = njh::files::make_path(finalHaplosDir, mipSamp.mipFam_, mipSamp.samp_ + ".fastq.gz");
+				finalHaplosToWrite_.emplace(searchTerm, mipSamp);
+			}
+			seqs_->updateAddCache(searchTerm,
+					SeqIOOptions::genFastqInGz(finalHaploFnp.string(), true));
 			/*seqs_->updateAddCache(mipSamp.mipFam_ + "_" + mipSamp.samp_ + "_original",
 					SeqIOOptions::genFastqIn(
 							mipMaster_->pathPopClusOriginalHaplo(mipSamp).string(), true));*/
@@ -146,6 +156,16 @@ VecStr mav::requiredOptions() const {
 			"samplesExtracted", "mipsSamplesFile", "mipArmsFileName",
 			"seqFileSuffix", "samplesExtracted", "mipFamsPopClustered",
 			"mipFamsSampsPopClustered" , "resources"});
+}
+
+void mav::writeFinalHaploFileIfNeeded(const std::string & searchTerm){
+	std::lock_guard<std::mutex> lock(finalHaplosToWriteMut_);
+	auto search = finalHaplosToWrite_.find(searchTerm);
+	if (finalHaplosToWrite_.end() != search) {
+		mipMaster_->writePopClusFinalHaploFile(search->second,
+				seqs_->cache_.at(searchTerm).ioOpts_.opts_.firstName_);
+		finalHaplosToWrite_.erase(search);
+	}
 }
 
 void mav::mainPageHandler(std::shared_ptr<restbed::Session> session){
@@ -381,7 +401,7 @@ int mavRunner(const njh::progutils::CmdArgs & inputCommands){
   //collect master table info for all extraction info
   auto samplesExtracted = mipMaster.getPairsWithExtracted(mipCorepars.numThreads);
   auto mipFamsPopClustered = mipMaster.getMipFamsWithPopClustered(mipCorepars.numThreads);
-  auto mipFamsSampsPopClustered = mipMaster.getPairsWithClustered(mipCorepars.numThreads);
+  auto mipFamsSampsPopClustered = mipMaster.getPairsWithPopClustered(mipCorepars.numThreads);
 
 
   Json::Value appConfig;

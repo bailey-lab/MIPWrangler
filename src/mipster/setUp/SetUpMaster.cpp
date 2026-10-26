@@ -541,7 +541,7 @@ std::vector<MipFamSamp> SetUpMaster::getPairsWithPopClustered(uint32_t numThread
 		while(sampQueue.getVal(samp)){
 			for(const auto & mipFam : mipMaster.names_->mips_){
 				MipFamSamp pair(mipFam, samp);
-				if (bfs::exists(pathPopClusFinalHaplo(pair))) {
+				if (hasPopClusFinalHaplo(pair)) {
 					currentPairs.emplace_back(pair);
 				}
 			}
@@ -895,6 +895,71 @@ bfs::path SetUpMaster::pathPopClusFinalHaplo(const MipFamSamp & mipSampName) con
 	return njh::files::make_path(directoryMaster_.populationClusteringDir_,
 				mipSampName.mipFam_, "analysis", "samplesOutput",mipSampName.samp_, "final",
 				mipSampName.samp_ + ".fastq.gz");
+}
+
+bfs::path SetUpMaster::pathPopClusFinalHaplos(const std::string & mipFam) const{
+	return njh::files::make_path(directoryMaster_.populationClusteringDir_,
+				mipFam, "analysis", "sampleFinalHaplotypes.fastq.gz");
+}
+
+std::shared_ptr<const njh::BlockGzipIndex> SetUpMaster::getPopClusFinalHaplosIndex(const std::string & mipFam) const{
+	std::lock_guard<std::mutex> lock(popClusFinalHaplosIndexesMut_);
+	auto search = popClusFinalHaplosIndexes_.find(mipFam);
+	if(popClusFinalHaplosIndexes_.end() != search){
+		return search->second;
+	}
+	std::shared_ptr<const njh::BlockGzipIndex> index;
+	auto fnp = pathPopClusFinalHaplos(mipFam);
+	if(bfs::exists(njh::BlockGzipOutputStream::indexPath(fnp))){
+		index = std::make_shared<const njh::BlockGzipIndex>(fnp);
+	}
+	popClusFinalHaplosIndexes_[mipFam] = index;
+	return index;
+}
+
+bool SetUpMaster::hasPopClusFinalHaplo(const MipFamSamp & mipSampName) const{
+	auto index = getPopClusFinalHaplosIndex(mipSampName.mipFam_);
+	if(nullptr != index){
+		return index->has(mipSampName.samp_);
+	}
+	return bfs::exists(pathPopClusFinalHaplo(mipSampName));
+}
+
+std::string SetUpMaster::getPopClusFinalHaploText(const MipFamSamp & mipSampName) const{
+	auto index = getPopClusFinalHaplosIndex(mipSampName.mipFam_);
+	if(nullptr != index){
+		return index->readBlock(mipSampName.samp_);
+	}
+	InputStream in{InOptions(pathPopClusFinalHaplo(mipSampName))};
+	std::stringstream ss;
+	ss << in.rdbuf();
+	return ss.str();
+}
+
+std::vector<seqInfo> SetUpMaster::readPopClusFinalHaplo(const MipFamSamp & mipSampName, bool processed) const{
+	std::stringstream text(getPopClusFinalHaploText(mipSampName));
+	auto opts = SeqIOOptions::genFastqIn("", processed);
+	SeqInput reader(opts);
+	std::vector<seqInfo> ret;
+	seqInfo seq;
+	while(reader.readNextFastqStream(text, SangerQualOffset, seq, processed)){
+		ret.emplace_back(seq);
+	}
+	//the same handling as SeqInput::readAllReads
+	readVec::handelLowerCaseBases(ret, opts.lowerCaseBases_);
+	if (opts.removeGaps_) {
+		readVec::removeGapsFromReads(ret);
+	}
+	return ret;
+}
+
+void SetUpMaster::writePopClusFinalHaploFile(const MipFamSamp & mipSampName, const bfs::path & fnp) const{
+	if(bfs::exists(fnp)){
+		return;
+	}
+	njh::files::makeDirP(njh::files::MkdirPar(fnp.parent_path()));
+	OutputStream out{OutOptions(fnp)};
+	out << getPopClusFinalHaploText(mipSampName);
 }
 /*
 bfs::path SetUpMaster::pathPopClusOriginalHaplo(const MipFamSamp & mipSampName) const{

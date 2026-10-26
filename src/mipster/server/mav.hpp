@@ -55,6 +55,11 @@ class mav: public njhseq::SeqApp {
 	std::unordered_map<std::string, TableCache> popClusInfoByTar_;
 	std::unordered_map<std::string, TableCache> popClusPopInfoByTar_;
 
+	//final haplotype cache entries whose file is written from SetUpMaster::pathPopClusFinalHaplos() the first time they're used
+	std::unordered_map<std::string, MipFamSamp> finalHaplosToWrite_;
+	std::mutex finalHaplosToWriteMut_;
+	void writeFinalHaploFileIfNeeded(const std::string & searchTerm);
+
 
 	/*
 	std::unordered_map<std::string, SeqIOOptsWithTime> popHapsByTar_;

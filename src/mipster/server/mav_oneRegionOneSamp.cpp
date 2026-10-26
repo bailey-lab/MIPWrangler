@@ -74,6 +74,7 @@ void mav::getMipOverlapGraphDataHandler(std::shared_ptr<restbed::Session> sessio
 			for (const auto & mipName : mipFams) {
 				std::string searchTerm = mipName + "_" + sample + "_final";
 				if (njh::in(searchTerm, seqs_->cache_)) {
+					writeFinalHaploFileIfNeeded(searchTerm);
 					addOtherVec(finalSeqs,
 							seqs_->cache_.at(searchTerm).ioOpts_.getPtrs<seqInfo>());
 				} else {

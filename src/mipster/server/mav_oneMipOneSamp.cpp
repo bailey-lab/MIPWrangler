@@ -119,6 +119,7 @@ void mav::getMipOneSampFinalSeqsPostHandler(std::shared_ptr<restbed::Session> se
 
 	std::string searchTerm = mipFam + "_" + sample + "_final";
 	if (njh::in(searchTerm, seqs_->cache_)) {
+		writeFinalHaploFileIfNeeded(searchTerm);
 		uint32_t sesUid = std::numeric_limits<uint32_t>::max();
 		//check to see if there is a session already started associated with this seq
 		if (!postData.isMember("sessionUID")) {

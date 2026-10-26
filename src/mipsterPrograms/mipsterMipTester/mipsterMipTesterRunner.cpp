@@ -125,12 +125,8 @@ int mipsterMipTesterRunner::callMircosateliteSizes(
 					//outOpts.out_.append_ = true;
 					SeqOutput writer(outOpts);
 					writer.openOut();
-					seqInfo seq;
 					for(const auto & pair : bySample.at(samp)) {
-						SeqIOOptions opts = SeqIOOptions::genFastqIn(mipMaster.pathPopClusFinalHaplo(pair));
-						SeqInput reader(opts);
-						reader.openIn();
-						while(reader.readNextRead(seq)) {
+						for(auto & seq : mipMaster.readPopClusFinalHaplo(pair, false)) {
 							MetaDataInName meta(seq.name_);
 							auto mipTar = mipMaster.mips_->getMipsForFamily(meta.getMeta("mipFam")).front();
 							//seq.prepend(njh::strToLowerRet(mipMaster.mips_->mips_[mipTar].extentionArm_));
