@@ -50,8 +50,7 @@ Mip::Mip(uint32_t extMbLen, uint32_t ligMbLen, const std::string & ligationArm,
 		igationArmMotObj5_to_3prime_(stringToUpperReturn(ligationArm)),
 		extentionArmMotObj_(extentionArm_) {
 	//check for names
-
-	std::regex namePat{".*_mip([0-9]+)[_]*.*$"};
+	static const std::regex namePat{".*_mip([0-9]+)[_]*.*$"};
 	//std::regex namePat{".*mip([0-9]+)[_.*]*$"};
 	std::smatch match;
 
