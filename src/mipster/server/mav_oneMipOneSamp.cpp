@@ -71,8 +71,8 @@ void mav::getMipOneSampOriginalSeqsPostHandler(std::shared_ptr<restbed::Session>
 	std::string searchTerm = mipFam + "_" + sample + "_original";
 	if (njh::in(searchTerm, seqs_->cache_)) {
 		uint32_t sesUid = std::numeric_limits<uint32_t>::max();
-		//check to see if there is a session already started associated with this seq
-		if (!postData.isMember("sessionUID")) {
+		//check to see if there is a session already started associated with this seq, a closed or unknown session gets a new one
+		if (!postData.isMember("sessionUID") || !njh::in(postData["sessionUID"].asUInt(), seqsBySession_)) {
 			sesUid = startSeqCacheSession();
 		} else {
 			sesUid = postData["sessionUID"].asUInt();
@@ -121,8 +121,8 @@ void mav::getMipOneSampFinalSeqsPostHandler(std::shared_ptr<restbed::Session> se
 	if (njh::in(searchTerm, seqs_->cache_)) {
 		writeFinalHaploFileIfNeeded(searchTerm);
 		uint32_t sesUid = std::numeric_limits<uint32_t>::max();
-		//check to see if there is a session already started associated with this seq
-		if (!postData.isMember("sessionUID")) {
+		//check to see if there is a session already started associated with this seq, a closed or unknown session gets a new one
+		if (!postData.isMember("sessionUID") || !njh::in(postData["sessionUID"].asUInt(), seqsBySession_)) {
 			sesUid = startSeqCacheSession();
 		} else {
 			sesUid = postData["sessionUID"].asUInt();

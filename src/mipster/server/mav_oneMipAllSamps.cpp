@@ -134,8 +134,8 @@ void mav::getOneMipPopSeqsPostHandler(
 		std::cerr << checker.message_.str() << std::endl;
 	} else {
 		uint32_t sesUid = std::numeric_limits<uint32_t>::max();
-		//check to see if there is a session already started associated with this seq
-		if (!postData.isMember("sessionUID")) {
+		//check to see if there is a session already started associated with this seq, a closed or unknown session gets a new one
+		if (!postData.isMember("sessionUID") || !njh::in(postData["sessionUID"].asUInt(), seqsBySession_)) {
 			sesUid = startSeqCacheSession();
 		} else {
 			sesUid = postData["sessionUID"].asUInt();
